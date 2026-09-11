@@ -1,0 +1,162 @@
+[
+    {
+        "code": "F01",
+        "name": "Autenticación y Verificación de Credenciales de Administrador",
+        "category": "Funcional",
+        "expected": "Usuario existe y hash de contraseña coincide",
+        "actual": "Usuario autenticado correctamente",
+        "passed": true,
+        "time_ms": 183.58,
+        "notes": ""
+    },
+    {
+        "code": "F02",
+        "name": "Cálculo Automático de Edad a partir de Fecha de Nacimiento",
+        "category": "Funcional",
+        "expected": "26 años",
+        "actual": "26 años",
+        "passed": true,
+        "time_ms": 1.3,
+        "notes": ""
+    },
+    {
+        "code": "F03",
+        "name": "Edición 100% Completa de Nivel Educativo y Demografía con Auditoría",
+        "category": "Funcional",
+        "expected": "nivel_educativo: Maestría \/ Posgrado, barrio: Alcaraván, audit log registrado",
+        "actual": "nivel_educativo: Maestría \/ Posgrado, barrio: Alcaraván, audit: OK",
+        "passed": true,
+        "time_ms": 13.47,
+        "notes": ""
+    },
+    {
+        "code": "F04",
+        "name": "Registro de Visita para Ciudadano Existente con Clave Foránea",
+        "category": "Funcional",
+        "expected": "Visita creada y vinculada correctamente a id_form_pvd",
+        "actual": "Visita persistida con FK válida",
+        "passed": true,
+        "time_ms": 5.86,
+        "notes": ""
+    },
+    {
+        "code": "F05",
+        "name": "Auto-registro Atómico de Ciudadano Nuevo durante Registro de Visita",
+        "category": "Funcional",
+        "expected": "Ciudadano nuevo creado y visita vinculada en una sola transacción",
+        "actual": "Ciudadano 7778889992 creado con id 23871 y visita vinculada",
+        "passed": true,
+        "time_ms": 4.52,
+        "notes": ""
+    },
+    {
+        "code": "F06",
+        "name": "Registro y Persistencia de Préstamos con Categoría Reclasificada",
+        "category": "Funcional",
+        "expected": "Convenios Formativos y Cursos SENA \/ Alcaldía",
+        "actual": "Convenios Formativos y Cursos SENA \/ Alcaldía",
+        "passed": true,
+        "time_ms": 1.95,
+        "notes": ""
+    },
+    {
+        "code": "F07",
+        "name": "Registro de Impresiones con Conteo de Hojas y Consumo",
+        "category": "Funcional",
+        "expected": "14 hojas registradas",
+        "actual": "14 hojas registradas",
+        "passed": true,
+        "time_ms": 1.74,
+        "notes": ""
+    },
+    {
+        "code": "F08",
+        "name": "Motor de Predicción IA (Próximos Trámites y Previsión de Aforo)",
+        "category": "Funcional",
+        "expected": "Array de predicciones con porcentaje y objeto de aforo con visitas_estimadas",
+        "actual": "Predicciones: 1, Aforo estimado: 18",
+        "passed": true,
+        "time_ms": 77.17,
+        "notes": ""
+    },
+    {
+        "code": "F09",
+        "name": "Generación de Reporte Excel (.xlsx) con Columnas Seleccionadas",
+        "category": "Exportación",
+        "expected": "Respuesta HTTP 200 con archivo .xlsx y mime phpspreadsheet",
+        "actual": "Archivo .xlsx generado exitosamente con cabeceras verdes\/oro (1.000 registros)",
+        "passed": true,
+        "time_ms": 591.51,
+        "notes": ""
+    },
+    {
+        "code": "F10",
+        "name": "Generación de Reporte CSV para Big Data \/ Power BI",
+        "category": "Exportación",
+        "expected": "Respuesta HTTP 200 con archivo .csv delimitado por comas",
+        "actual": "Archivo .csv generado correctamente con UTF-8",
+        "passed": true,
+        "time_ms": 457.26,
+        "notes": ""
+    },
+    {
+        "code": "L01",
+        "name": "Cálculo Integral de Métricas Dashboard (25 ejecuciones)",
+        "category": "Rendimiento",
+        "expected": "Latencia media < 150ms sobre 154.996 visitas",
+        "actual": "Media: 40.3ms (Min: 39.2ms, P95: 41.2ms, Memoria: 20.94MB)",
+        "passed": true,
+        "time_ms": 40.33,
+        "notes": "P95: 41.2ms"
+    },
+    {
+        "code": "L02",
+        "name": "Búsqueda Compuesta en 23.847 Ciudadanos (40 consultas)",
+        "category": "Rendimiento",
+        "expected": "Latencia media < 50ms con búsqueda por cédula, nombre y barrio",
+        "actual": "Media: 4.6ms por consulta",
+        "passed": true,
+        "time_ms": 4.59,
+        "notes": ""
+    },
+    {
+        "code": "L03",
+        "name": "Consulta Paginada con Relaciones Eloquent (30 consultas)",
+        "category": "Rendimiento",
+        "expected": "Latencia media < 60ms con eager loading de relaciones",
+        "actual": "Media: 1ms",
+        "passed": true,
+        "time_ms": 0.96,
+        "notes": ""
+    },
+    {
+        "code": "L04",
+        "name": "Extracción y Mapeo en Memoria de 2.000 Registros para Exportación",
+        "category": "Carga",
+        "expected": "Tiempo de procesamiento de 2.000 filas < 300ms",
+        "actual": "Procesados 2.000 registros en 49.3ms",
+        "passed": true,
+        "time_ms": 49.28,
+        "notes": ""
+    },
+    {
+        "code": "S01",
+        "name": "Integridad Transaccional ACID (Rollback ante Excepción Inesperada)",
+        "category": "Estrés \/ Seguridad",
+        "expected": "Cero registros huérfanos tras fallo forzado (DB::rollBack efectivo)",
+        "actual": "Rollback 100% exitoso: el registro no existe en la BD",
+        "passed": true,
+        "time_ms": 1.41,
+        "notes": ""
+    },
+    {
+        "code": "S02",
+        "name": "Ráfaga de Inserción Transaccional (100 registros concurrentes)",
+        "category": "Estrés",
+        "expected": "Tiempo < 100ms con throughput > 1.000 operaciones\/segundo",
+        "actual": "Completado en 3.2ms (31124 ops\/segundo)",
+        "passed": true,
+        "time_ms": 3.21,
+        "notes": ""
+    }
+]
