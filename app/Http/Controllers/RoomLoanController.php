@@ -43,8 +43,29 @@ class RoomLoanController extends Controller
             ->orderBy('tipo_actividad')
             ->pluck('tipo_actividad');
 
+        // Eventos completos para la vista de calendario
+        $selectedMonth = $request->get('mes', now()->format('Y-m'));
+        try {
+            $monthCarbon = \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth);
+        } catch (\Exception $e) {
+            $monthCarbon = now();
+            $selectedMonth = now()->format('Y-m');
+        }
+
+        $monthStart = $monthCarbon->copy()->startOfMonth()->subDays(7)->toDateString();
+        $monthEnd = $monthCarbon->copy()->endOfMonth()->addDays(7)->toDateString();
+
+        $calendarLoans = RoomLoan::with(['ciudadano', 'punto'])
+            ->whereBetween('fecha_prestamo', [$monthStart, $monthEnd])
+            ->when($filters['id_punto'] ?? null, fn($q, $p) => $q->where('id_punto', $p))
+            ->when($filters['tipo_actividad'] ?? null, fn($q, $t) => $q->where('tipo_actividad', $t))
+            ->orderBy('fecha_prestamo')
+            ->get();
+
         return Inertia::render('RoomLoans/Index', [
             'loans' => $loans,
+            'calendarLoans' => $calendarLoans,
+            'selectedMonth' => $selectedMonth,
             'filters' => $filters,
             'points' => $points,
             'tiposActividad' => $tiposActividad,

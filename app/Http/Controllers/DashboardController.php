@@ -19,20 +19,51 @@ class DashboardController extends Controller
 
     public function index(Request $request): Response
     {
-        $user = $request->user();
-        $pointId = $request->get('id_punto', $user?->id_punto);
+        $rawPoint = $request->get('id_punto');
+        $rawZona = $request->get('zona');
+        $periodo = $request->get('periodo', 'mes');
+        $fechaDesde = $request->get('fecha_desde');
+        $fechaHasta = $request->get('fecha_hasta');
 
-        $stats = $this->statsService->getDashboardStats($pointId);
+        $pointId = null;
+        $zona = null;
+
+        // Interpretación de selectores combinados
+        if ($rawPoint === 'all' || $rawPoint === '' || $rawPoint === 'null') {
+            $pointId = null;
+            $zona = null;
+        } elseif ($rawPoint === 'zona_rural' || $rawZona === 'Rural') {
+            $pointId = null;
+            $zona = 'Rural';
+        } elseif ($rawPoint === 'zona_urbana' || $rawZona === 'Urbana') {
+            $pointId = null;
+            $zona = 'Urbana';
+        } elseif (is_numeric($rawPoint)) {
+            $pointId = (int) $rawPoint;
+            $zona = null;
+        }
+
+        $stats = $this->statsService->getDashboardStats([
+            'point_id' => $pointId,
+            'zona' => $zona,
+            'periodo' => $periodo,
+            'fecha_desde' => $fechaDesde,
+            'fecha_hasta' => $fechaHasta,
+        ]);
+
         $churnAlerts = $this->mlService->getCitizensAtRiskOfChurn(5);
         $tomorrowLoad = $this->mlService->predictTomorrowLoad($pointId);
 
-        $recentVisits = Visit::with(['ciudadano', 'punto', 'categoria', 'subcategoria', 'gestor'])
-            ->when($pointId, fn($q) => $q->where('id_punto', $pointId))
-            ->latest('created_at')
-            ->limit(7)
-            ->get();
+        $recentVisitsQuery = Visit::with(['ciudadano', 'punto', 'categoria', 'subcategoria', 'gestor']);
+        if ($pointId) {
+            $recentVisitsQuery->where('id_punto', $pointId);
+        } elseif ($zona) {
+            $recentVisitsQuery->whereHas('punto', fn($q) => $q->where('zona', $zona));
+        }
+        $recentVisits = $recentVisitsQuery->latest('created_at')->limit(8)->get();
 
-        $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'codigo', 'zona']);
+        $points = Point::where('activo', true)
+            ->get(['id_punto', 'nombre_punto', 'codigo', 'zona']);
 
         return Inertia::render('Dashboard', [
             'stats' => $stats,
@@ -40,7 +71,14 @@ class DashboardController extends Controller
             'tomorrowLoad' => $tomorrowLoad,
             'recentVisits' => $recentVisits,
             'points' => $points,
-            'selectedPointId' => $pointId ? (int) $pointId : null,
+            'filters' => [
+                'id_punto' => $pointId,
+                'zona' => $zona,
+                'periodo' => $periodo,
+                'fecha_desde' => $fechaDesde,
+                'fecha_hasta' => $fechaHasta,
+            ],
+            'selectedPointId' => $pointId,
         ]);
     }
 }
