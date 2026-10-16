@@ -28,3 +28,6 @@ Thumbs.db
 .claude/
 .mcp.json
 boost.json
+*.sql
+*.sql.gz
+
