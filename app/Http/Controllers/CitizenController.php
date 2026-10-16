@@ -51,9 +51,17 @@ class CitizenController extends Controller
         ]);
     }
 
-    public function store(StoreCitizenRequest $request): RedirectResponse
+    public function store(StoreCitizenRequest $request): RedirectResponse|JsonResponse
     {
         $citizen = $this->citizenService->createCitizen($request->validated());
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Ciudadano registrado exitosamente.',
+                'data' => $citizen,
+            ]);
+        }
 
         if ($request->boolean('crear_visita_inmediata')) {
             return redirect()->route('visitas.create', ['documento' => $citizen->documento])

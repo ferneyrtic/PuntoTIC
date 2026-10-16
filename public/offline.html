@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sin Conexión - PuntoTIC Acacías</title>
+    <link rel="icon" type="image/png" href="/images/icons/favicon-32x32.png">
+    <meta name="theme-color" content="#1B6B35">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F8FAFC;
+            color: #1E293B;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .container {
+            max-width: 480px;
+            width: 100%;
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+            padding: 2.25rem 2rem;
+            text-align: center;
+        }
+        .logo-wrap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        .logo-img {
+            height: 44px;
+            width: auto;
+            object-fit: contain;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #FEF3C7;
+            border: 1px solid #FCD34D;
+            color: #92400E;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            margin-bottom: 1.25rem;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #D97706;
+            border-radius: 9999px;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+        .icon-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 1.25rem;
+            background: #F1F5F9;
+            border: 1px solid #E2E8F0;
+            color: #64748B;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+        }
+        .icon-circle svg {
+            width: 36px;
+            height: 36px;
+        }
+        h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0F172A;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        p {
+            font-size: 0.875rem;
+            color: #64748B;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+        .info-box {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.875rem;
+            padding: 0.875rem 1rem;
+            text-align: left;
+            margin-bottom: 1.5rem;
+            font-size: 0.8125rem;
+            color: #475569;
+        }
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.625rem;
+            margin-bottom: 0.5rem;
+        }
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        .info-icon {
+            width: 16px;
+            height: 16px;
+            color: #1B6B35;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            background: #1B6B35;
+            color: #FFFFFF;
+            font-size: 0.875rem;
+            font-weight: 700;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            text-decoration: none;
+        }
+        .btn-primary:hover {
+            background: #14532D;
+            box-shadow: 0 4px 12px rgba(27, 107, 53, 0.25);
+        }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            background: transparent;
+            color: #475569;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid #CBD5E1;
+            cursor: pointer;
+            margin-top: 0.75rem;
+            transition: all 0.15s ease-in-out;
+        }
+        .btn-secondary:hover {
+            background: #F1F5F9;
+            color: #0F172A;
+        }
+        .footer-text {
+            font-size: 0.75rem;
+            color: #94A3B8;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-wrap">
+            <img src="/images/logo_alcaldia.png" alt="Alcaldía de Acacías" class="logo-img">
+        </div>
+
+        <div>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                <span>Modo Fuera de Línea</span>
+            </div>
+        </div>
+
+        <div class="icon-circle">
+            <!-- Lucide WifiOff Icon (Zero emojis) -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="2" y1="2" x2="22" y2="22"></line>
+                <path d="M8.5 16.5a5 5 0 0 1 7 0"></path>
+                <path d="M2 8.82a15 15 0 0 1 4.17-2.65"></path>
+                <path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"></path>
+                <path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"></path>
+                <path d="M5 13a10 10 0 0 1 5.24-2.76"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+            </svg>
+        </div>
+
+        <h1>Sin conexión a Internet</h1>
+        <p>No se pudo conectar con el servidor de PuntoTIC. Esta pantalla se mantendrá disponible mientras se restablece el acceso a la red.</p>
+
+        <div class="info-box">
+            <div class="info-row">
+                <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>La aplicación PWA está instalada y funcionando en este dispositivo.</span>
+            </div>
+            <div class="info-row">
+                <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Cuando regrese la señal, la página se recargará automáticamente.</span>
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="reconnect()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                <path d="M16 21h5v-5"></path>
+            </svg>
+            Reintentar Conexión
+        </button>
+
+        <button class="btn-secondary" onclick="window.history.back()">
+            Volver a la vista anterior
+        </button>
+
+        <div class="footer-text">
+            PuntoTIC — Alcaldía de Acacías &bull; PWA Fuera de Línea
+        </div>
+    </div>
+
+    <script>
+        function reconnect() {
+            if (navigator.onLine) {
+                window.location.reload();
+            } else {
+                fetch('/manifest.webmanifest', { cache: 'no-store' })
+                    .then(() => window.location.reload())
+                    .catch(() => {
+                        const btn = document.querySelector('.btn-primary');
+                        btn.innerText = 'Sin red aún, intentando...';
+                        setTimeout(() => {
+                            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path><path d="M16 21h5v-5"></path></svg> Reintentar Conexión';
+                        }, 1800);
+                    });
+            }
+        }
+
+        window.addEventListener('online', () => {
+            window.location.reload();
+        });
+    </script>
+</body>
+</html>

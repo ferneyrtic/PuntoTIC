@@ -74,9 +74,17 @@ class VisitController extends Controller
         ]);
     }
 
-    public function store(StoreVisitRequest $request): RedirectResponse
+    public function store(StoreVisitRequest $request): RedirectResponse|JsonResponse
     {
-        $this->visitService->registerVisit($request->validated());
+        $visit = $this->visitService->registerVisit($request->validated());
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Visita registrada exitosamente en el sistema.',
+                'data' => $visit,
+            ]);
+        }
 
         return redirect()->route('visitas.index')
             ->with('success', 'Visita registrada exitosamente en el sistema.');

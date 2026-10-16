@@ -19,7 +19,10 @@ import {
     MapPin,
     Calendar,
     Search,
+    Download,
 } from 'lucide-react';
+import PwaStatusBanner from '@/Components/PwaStatusBanner';
+import { promptPwaInstall, isPwaStandalone } from '@/services/pwaService';
 
 interface Props {
     header?: ReactNode;
@@ -30,9 +33,28 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dismissFlash, setDismissFlash] = useState(false);
     const [quickSearch, setQuickSearch] = useState('');
+    const [canInstallApp, setCanInstallApp] = useState(false);
+    const [isInstalled, setIsInstalled] = useState(false);
     const user = auth?.user;
 
     const currentUrl = window.location.pathname;
+
+    useEffect(() => {
+        setIsInstalled(isPwaStandalone());
+        const handleInstallable = (e: any) => {
+            setCanInstallApp(e.detail?.available ?? true);
+        };
+        const handleInstalled = () => {
+            setCanInstallApp(false);
+            setIsInstalled(true);
+        };
+        window.addEventListener('pwa-installable', handleInstallable);
+        window.addEventListener('pwa-installed', handleInstalled);
+        return () => {
+            window.removeEventListener('pwa-installable', handleInstallable);
+            window.removeEventListener('pwa-installed', handleInstalled);
+        };
+    }, []);
 
     useEffect(() => {
         setDismissFlash(false);
@@ -161,11 +183,11 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     >
                         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                     </button>
-                    <div className="bg-white p-1 rounded-xl shadow-sm">
+                    <div className="bg-white px-2.5 py-1 rounded-xl shadow-xs flex items-center justify-center">
                         <img
                             src="/images/logo_alcaldia.png"
                             alt="Logo Alcaldía"
-                            className="h-7 w-auto object-contain"
+                            className="h-8 w-auto max-w-[130px] object-contain"
                         />
                     </div>
                     <div>
@@ -198,27 +220,27 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full md:static'
                 }`}
             >
-                {/* Brand Header - Clean and uncrowded */}
-                <div className="p-5 border-b border-slate-800/60">
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                            <div className="h-10 w-10 rounded-xl bg-white p-1.5 flex items-center justify-center shrink-0 shadow-sm">
-                                <img
-                                    src="/images/logo_alcaldia.png"
-                                    alt="Alcaldía de Acacías"
-                                    className="h-full w-auto object-contain"
-                                />
+                {/* Brand Header - High Prominence Institutional Logo */}
+                <div className="p-4 border-b border-slate-800/60 bg-slate-950/40">
+                    {/* Official Banner Card: Full-width container giving maximum visibility to the logo */}
+                    <div className="bg-white rounded-2xl px-3.5 py-3 shadow-md border border-white/10 flex items-center justify-center mb-3 group transition-all duration-200 hover:shadow-lg">
+                        <img
+                            src="/images/logo_alcaldia.png"
+                            alt="Alcaldía de Acacías"
+                            className="h-11 w-full object-contain"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between px-1">
+                        <div>
+                            <div className="text-base font-black text-white tracking-tight flex items-center gap-1.5 leading-tight">
+                                <span>PuntoTIC</span>
+                                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
+                                    Acacías
+                                </span>
                             </div>
-                            <div className="min-w-0">
-                                <div className="text-base font-black text-white tracking-tight flex items-center gap-1.5 leading-tight">
-                                    <span>PuntoTIC</span>
-                                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-                                        Acacías
-                                    </span>
-                                </div>
-                                <div className="text-[11px] text-slate-400 font-medium mt-0.5">
-                                    Alcaldía Municipal
-                                </div>
+                            <div className="text-[11px] text-slate-400 font-medium truncate mt-1">
+                                Red de Puntos Vive Digital
                             </div>
                         </div>
 
@@ -268,6 +290,19 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     ))}
                 </nav>
 
+                {/* PWA Install Action in Sidebar */}
+                {canInstallApp && !isInstalled && (
+                    <div className="px-3.5 pb-2">
+                        <button
+                            onClick={() => promptPwaInstall()}
+                            className="btn-tactile w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-emerald-700/60 hover:bg-emerald-600 text-white text-xs font-bold border border-emerald-500/40 shadow-xs transition-all"
+                        >
+                            <Download className="w-4 h-4 text-emerald-300" />
+                            <span>Instalar App PuntoTIC</span>
+                        </button>
+                    </div>
+                )}
+
                 {/* User Footer Profile */}
                 <div className="p-3.5 border-t border-slate-800/80 bg-slate-950/60">
                     <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-900/80 border border-slate-800/60">
@@ -310,8 +345,21 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-6">
                 {/* Modern Command Topbar */}
-                <header className="bg-white sticky top-0 z-20 px-4 md:px-8 py-3 flex items-center justify-between border-b border-slate-200/80 shadow-2xs">
+                <header className="bg-white sticky top-0 z-20 px-4 md:px-8 py-2.5 flex items-center justify-between border-b border-slate-200/80 shadow-2xs">
                     <div className="flex items-center gap-3 min-w-0">
+                        {/* Institutional Brand Badge in Topbar */}
+                        <div className="hidden sm:flex items-center gap-2.5 pr-3 border-r border-slate-200">
+                            <img
+                                src="/images/escudo_acacias.png"
+                                alt="Escudo Alcaldía de Acacías"
+                                className="h-7 w-auto object-contain"
+                            />
+                            <div className="leading-tight">
+                                <span className="text-xs font-black text-slate-900 tracking-tight block">Alcaldía de Acacías</span>
+                                <span className="text-[10px] text-emerald-700 font-bold tracking-wide">Puntos Vive Digital</span>
+                            </div>
+                        </div>
+
                         {/* Active Sede Badge positioned elegantly in the Topbar */}
                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 shrink-0">
                             <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -353,6 +401,9 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                         </Link>
                     </div>
                 </header>
+
+                {/* PWA Connectivity & Synchronization Status Banner */}
+                <PwaStatusBanner />
 
                 {/* Animated Flash Toast Alerts */}
                 {flash?.success && !dismissFlash && (

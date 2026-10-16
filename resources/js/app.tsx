@@ -7,6 +7,8 @@ import { createRoot } from 'react-dom/client';
 
 const appName = import.meta.env.VITE_APP_NAME || 'PuntoTIC - Alcaldía de Acacías';
 
+import { registerPwaServiceWorker, initPwaInstallListener } from './services/pwaService';
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) =>
@@ -23,3 +25,8 @@ createInertiaApp({
         color: '#1B6B35',
     },
 });
+
+// Inicializar capacidades PWA (Service Worker y prompt de instalación)
+registerPwaServiceWorker();
+initPwaInstallListener();
+

@@ -18,8 +18,10 @@ import {
     RotateCcw,
     MapPin,
     AlertCircle,
+    Database,
 } from 'lucide-react';
 import axios from 'axios';
+import { addToOfflineQueue } from '@/services/pwaService';
 
 interface Props {
     points: Array<any>;
@@ -82,6 +84,7 @@ export default function VisitCreate({
         'Acceso libre a computador y tareas escolares'
     );
     const [selectedTime, setSelectedTime] = useState(60);
+    const [offlineSavedNotice, setOfflineSavedNotice] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         id_form_pvd: initialCitizen?.id_form_pvd || null,
@@ -239,7 +242,56 @@ export default function VisitCreate({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('visitas.store'));
+        const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+        if (isOffline) {
+            const visitorName =
+                mode === 'aula'
+                    ? selectedStudent?.nombre_completo || data.nombre_completo || 'Estudiante Aula Digital'
+                    : citizenFound
+                    ? `${citizenFound.primer_nombre} ${citizenFound.primer_apellido}`
+                    : data.nombre_completo || data.documento || 'Ciudadano PVD';
+
+            const serviceName =
+                mode === 'aula'
+                    ? data.servicio_texto || 'Acceso Aula Digital'
+                    : currentCategory?.nombre_categoria || 'Servicio TIC';
+
+            addToOfflineQueue('visita', data, `Visita: ${visitorName} — ${serviceName}`);
+            setOfflineSavedNotice(true);
+            setTimeout(() => setOfflineSavedNotice(false), 8000);
+
+            // Preparar para la siguiente atención
+            if (mode === 'aula') {
+                setSelectedStudent(null);
+                setStudentSearch('');
+                setData((prev) => ({
+                    ...prev,
+                    id_form_pvd: null,
+                    documento: '',
+                    nombre_completo: '',
+                }));
+            } else {
+                setCitizenFound(null);
+                setDocumentInput('');
+                reset();
+            }
+            return;
+        }
+
+        post(route('visitas.store'), {
+            onError: () => {
+                if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                    const visitorName =
+                        citizenFound
+                            ? `${citizenFound.primer_nombre} ${citizenFound.primer_apellido}`
+                            : data.nombre_completo || data.documento || 'Ciudadano PVD';
+                    addToOfflineQueue('visita', data, `Visita: ${visitorName}`);
+                    setOfflineSavedNotice(true);
+                    setTimeout(() => setOfflineSavedNotice(false), 8000);
+                }
+            },
+        });
     };
 
     return (
@@ -348,6 +400,23 @@ export default function VisitCreate({
                             <span>Aula Digital Rural — Registro Rápido Escolar</span>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Aviso de Registro Guardado en Modo Fuera de Línea */}
+            {offlineSavedNotice && (
+                <div className="max-w-2xl mx-auto mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 flex items-start gap-3 shadow-sm animate-fade-in-down">
+                    <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0 mt-0.5">
+                        <Database className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="text-sm font-bold text-amber-900">
+                            Registro Guardado Fuera de Línea
+                        </div>
+                        <p className="text-xs text-amber-800 mt-0.5">
+                            La visita fue almacenada de forma segura en este dispositivo. Tan pronto regrese la conexión con el servidor, se sincronizará automáticamente en segundo plano.
+                        </p>
+                    </div>
                 </div>
             )}
 

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { ArrowLeft, Save, UserCheck, AlertCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, UserCheck, AlertCircle, Sparkles, Database } from 'lucide-react';
+import { addToOfflineQueue } from '@/services/pwaService';
 
 interface Props {
     points: Array<any>;
@@ -10,7 +11,7 @@ interface Props {
 }
 
 export default function CitizenCreate({ points, documentTypes }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         documento: '',
         id_tipo: 1,
         nombres: '',
@@ -35,6 +36,7 @@ export default function CitizenCreate({ points, documentTypes }: Props) {
     });
 
     const [calculatingAge, setCalculatingAge] = useState<number | null>(null);
+    const [offlineSavedNotice, setOfflineSavedNotice] = useState(false);
 
     const handleBirthDateChange = (val: string) => {
         setData('fecha_nac', val);
@@ -55,7 +57,25 @@ export default function CitizenCreate({ points, documentTypes }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('ciudadanos.store'));
+        const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+        if (isOffline) {
+            addToOfflineQueue('ciudadano', data, `Ciudadano: ${data.nombres} ${data.apellidos} (CC ${data.documento})`);
+            setOfflineSavedNotice(true);
+            setTimeout(() => setOfflineSavedNotice(false), 8000);
+            reset();
+            return;
+        }
+
+        post(route('ciudadanos.store'), {
+            onError: () => {
+                if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                    addToOfflineQueue('ciudadano', data, `Ciudadano: ${data.nombres} ${data.apellidos} (CC ${data.documento})`);
+                    setOfflineSavedNotice(true);
+                    setTimeout(() => setOfflineSavedNotice(false), 8000);
+                }
+            }
+        });
     };
 
     return (
@@ -75,7 +95,22 @@ export default function CitizenCreate({ points, documentTypes }: Props) {
                 </div>
             }
         >
-            <Head title="Registrar Ciudadano" />
+            {/* Aviso de Registro Guardado en Modo Fuera de Línea */}
+            {offlineSavedNotice && (
+                <div className="max-w-4xl mx-auto mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 flex items-start gap-3 shadow-sm animate-fade-in-down">
+                    <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0 mt-0.5">
+                        <Database className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="text-sm font-bold text-amber-900">
+                            Ciudadano Guardado Fuera de Línea
+                        </div>
+                        <p className="text-xs text-amber-800 mt-0.5">
+                            La información del ciudadano fue almacenada de forma segura en este dispositivo. Tan pronto se restablezca la conexión, se sincronizará automáticamente con el servidor central.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
                 {/* Section 1: Identificación y Datos Personales */}
