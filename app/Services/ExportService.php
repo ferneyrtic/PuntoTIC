@@ -4,13 +4,35 @@ namespace App\Services;
 
 use App\Exports\CiudadanosExport;
 use App\Exports\ImpresionesExport;
+use App\Exports\ListadoAsistenciaExport;
 use App\Exports\PrestamosExport;
 use App\Exports\VisitasExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportService
 {
+    /**
+     * Exporta el Listado Oficial de Asistencia en formato institucional GTIC-F-16 V9.
+     */
+    public function exportListadoAsistencia(
+        array $filters = [],
+        ?string $eventoTema = null,
+        ?string $responsable = null,
+        bool $incluirFirma = true,
+        bool $asistentesUnicos = true
+    ): StreamedResponse {
+        $export = new ListadoAsistenciaExport(
+            $filters,
+            $eventoTema,
+            $responsable,
+            $incluirFirma,
+            $asistentesUnicos
+        );
+
+        return $export->download();
+    }
     /**
      * Exporta visitas a archivo Excel o CSV.
      */

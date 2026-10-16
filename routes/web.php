@@ -40,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
     // Exportaciones Avanzadas (Excel / CSV con selección de columnas)
     Route::get('/exportar', [ExportController::class, 'index'])->name('exportar.index');
     Route::get('/exportar/descargar', [ExportController::class, 'download'])->name('exportar.download');
+    Route::get('/exportar/listado-asistencia', [ExportController::class, 'listadoAsistencia'])->name('exportar.listado-asistencia');
 
     // Gestión de Categorías y Subcategorías
     Route::resource('categorias', CategoryController::class)->except(['create', 'show', 'edit']);
