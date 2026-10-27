@@ -1,58 +1,76 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PuntoTIC · Red Municipal de Puntos Vive Digital y Aulas Digitales
+### Alcaldía Municipal de Acacías · Meta, Colombia
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Plataforma institucional para la gestión operativa, registro de atenciones, control de acceso comunitario y analítica de uso de las salas de tecnología y conectividad pública en el municipio de Acacías.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📌 Documentación Completa de Cambios y Modernización
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Para consultar el registro técnico detallado de todas las mejoras, la arquitectura PWA offline, el rediseño visual y las optimizaciones de experiencia de usuario (UX/UI), consulta el documento:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+👉 **[DOCUMENTACION_CAMBIOS_PLATAFORMA_PVD.md](./DOCUMENTACION_CAMBIOS_PLATAFORMA_PVD.md)**
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🚀 Capacidades y Módulos Principales
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+* **Centro de Mando (Bento Grid):** Monitoreo en tiempo real de atenciones diarias, histogramas semanales, distribución porcentual entre sedes urbanas y rurales, y seguimiento de ciudadanos habituales.
+* **Registro de Visitas Dual:** Flujo especializado conmutable entre *Aula Digital* (formación de colegios y grados) y *Punto Vive Digital* (trámites ciudadanos y navegación libre).
+* **Directorio Ciudadano Inteligente:** Búsqueda instantánea por documento con autocompletado y perfil sociodemográfico.
+* **Préstamo de Salas y Auditorios:** Categorización comunitaria real (convenios SENA, colegios, ICBF, juntas de acción comunal, brigadas de salud y cineclub).
+* **Control de Impresiones:** Trazabilidad de copias e impresiones gratuitas de apoyo a la comunidad.
+* **Modo PWA Offline-First:** Resiliencia en campo mediante Service Workers y almacenamiento local en cola para operar en sedes rurales sin conexión y sincronizar automáticamente al recuperar red.
+* **Diseño Institucional Humano:** Interfaz moderna y accesible construida con Inertia.js, React, Tailwind CSS y vectoriales SVG de Lucide (sin emojis informales ni plantillas saturadas).
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
 
-## Agentic Development
+## 🛠️ Stack Tecnológico
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+* **Backend:** Laravel 11 / PHP 8.5
+* **Frontend:** Inertia.js + React 18 + TypeScript
+* **Estilos:** Tailwind CSS + animaciones y utilidades táctiles
+* **Visualización de Datos:** Recharts
+* **Iconografía:** Lucide React
+* **PWA:** Service Worker con estrategias de caché y sincronización local
 
+---
+
+## 💻 Puesta en Marcha Local
+
+### Requisitos
+* PHP >= 8.2 con extensiones `pdo`, `sqlite` o `mysql`, `gd`, `intl`, `zip`
+* Composer >= 2.x
+* Node.js >= 18.x & NPM
+
+### Instalación
 ```bash
-composer require laravel/boost --dev
+# 1. Clonar el repositorio
+git clone https://github.com/ferneyrtic/PuntoTIC.git
+cd PuntoTIC
 
-php artisan boost:install
+# 2. Instalar dependencias PHP
+composer install
+
+# 3. Instalar dependencias JavaScript
+npm install
+
+# 4. Configurar variables de entorno
+cp .env.example .env
+php artisan key:generate
+
+# 5. Ejecutar migraciones y datos de prueba
+php artisan migrate --seed
+
+# 6. Compilar activos de frontend
+npm run build
+
+# 7. Iniciar servidores de desarrollo
+php artisan serve
+npm run dev
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 🏛️ Créditos Institucionales
+Desarrollado para la **Alcaldía Municipal de Acacías** y la **Red de Puntos Vive Digital y Aulas Digitales** del Meta.
