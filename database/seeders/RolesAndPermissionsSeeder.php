@@ -221,5 +221,20 @@ class RolesAndPermissionsSeeder extends Seeder
             ]
         );
         $gestorChichimene->syncRoles(['Gestor Aula Digital']);
+
+        // 10. Wilber Avila (Gestor Aula Digital Chichimene / CPS TIC)
+        $wilberAvila = User::updateOrCreate(
+            ['email' => 'wilberavila.cps.tic@gmail.com'],
+            [
+                'name' => 'Wilber Avila',
+                'password' => Hash::make('Andrey2026'),
+                'id_punto' => 4,
+                'cargo' => 'Gestor Sala Chichimene',
+                'activo' => true,
+                'puede_acceder_pvd_general' => true,
+                'puede_acceder_aula_digital' => true,
+            ]
+        );
+        $wilberAvila->syncRoles(['Gestor Aula Digital', 'Gestor']);
     }
 }

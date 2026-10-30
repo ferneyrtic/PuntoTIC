@@ -17,6 +17,9 @@ import {
     ShieldCheck,
     Sparkles,
     Info,
+    Lock,
+    Building2,
+    User,
 } from 'lucide-react';
 
 interface Props {
@@ -24,9 +27,22 @@ interface Props {
     categories: Array<any>;
     dynamicFields: Array<any>;
     currentUserName?: string;
+    currentUserRole?: string;
+    responsableDefault?: string;
+    isAdmin?: boolean;
+    userPointId?: number | null;
 }
 
-export default function ExportsIndex({ points, categories, dynamicFields, currentUserName = 'ADMIN' }: Props) {
+export default function ExportsIndex({
+    points,
+    categories,
+    dynamicFields,
+    currentUserName = 'ADMIN',
+    currentUserRole = 'Gestor PVD',
+    responsableDefault = 'ADMIN',
+    isAdmin = false,
+    userPointId = null,
+}: Props) {
     const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const initialTipo = (searchParams?.get('tipo') as any) || 'visitas';
 
@@ -34,14 +50,16 @@ export default function ExportsIndex({ points, categories, dynamicFields, curren
         ['visitas', 'ciudadanos', 'prestamos', 'impresiones', 'asistencia'].includes(initialTipo) ? initialTipo : 'visitas'
     );
     const [format, setFormat] = useState<'xlsx' | 'csv'>('xlsx');
-    const [selectedPoint, setSelectedPoint] = useState(searchParams?.get('id_punto') || '');
+    const defaultPoint = !isAdmin && userPointId ? String(userPointId) : '';
+    const [selectedPoint, setSelectedPoint] = useState(
+        searchParams?.get('id_punto') || defaultPoint
+    );
     const [selectedCategory, setSelectedCategory] = useState(searchParams?.get('id_categoria') || '');
     const [dateFrom, setDateFrom] = useState(searchParams?.get('fecha_desde') || '');
     const [dateTo, setDateTo] = useState(searchParams?.get('fecha_hasta') || '');
 
     // Parámetros específicos para Listado Oficial de Asistencia GTIC-F-16 V9
     const [eventoTema, setEventoTema] = useState('Usuarios registrados en la plataforma REGISTROS PVD');
-    const [responsable, setResponsable] = useState(currentUserName || 'ADMIN');
     const [asistentesUnicos, setAsistentesUnicos] = useState(true);
     const [incluirFirma, setIncluirFirma] = useState(true);
 
@@ -95,15 +113,15 @@ export default function ExportsIndex({ points, categories, dynamicFields, curren
 
     const handleDownload = () => {
         const params = new URLSearchParams();
+        const activePoint = !isAdmin && userPointId ? String(userPointId) : selectedPoint;
 
         if (reportType === 'asistencia') {
             params.append('tipo', 'asistencia');
-            if (selectedPoint) params.append('id_punto', selectedPoint);
+            if (activePoint) params.append('id_punto', activePoint);
             if (selectedCategory) params.append('id_categoria', selectedCategory);
             if (dateFrom) params.append('fecha_desde', dateFrom);
             if (dateTo) params.append('fecha_hasta', dateTo);
             if (eventoTema) params.append('evento_tema', eventoTema);
-            if (responsable) params.append('responsable', responsable);
             params.append('asistentes_unicos', asistentesUnicos ? '1' : '0');
             params.append('incluir_firma', incluirFirma ? '1' : '0');
 
@@ -114,7 +132,7 @@ export default function ExportsIndex({ points, categories, dynamicFields, curren
         params.append('tipo', reportType);
         params.append('formato', format);
 
-        if (selectedPoint) params.append('id_punto', selectedPoint);
+        if (activePoint) params.append('id_punto', activePoint);
         if (selectedCategory) params.append('id_categoria', selectedCategory);
         if (dateFrom) params.append('fecha_desde', dateFrom);
         if (dateTo) params.append('fecha_hasta', dateTo);
@@ -270,19 +288,35 @@ export default function ExportsIndex({ points, categories, dynamicFields, curren
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Sede PVD</label>
-                            <select
-                                value={selectedPoint}
-                                onChange={(e) => setSelectedPoint(e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 focus:border-alcaldia-green outline-none"
-                            >
-                                <option value="">Todas las Sedes PVD</option>
-                                {points.map((p) => (
-                                    <option key={p.id_punto} value={p.id_punto}>
-                                        {p.nombre_punto}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="block text-xs font-bold text-slate-700">Sede PVD</label>
+                                {!isAdmin && userPointId && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                                        <Lock className="w-2.5 h-2.5 text-slate-400" /> Sede Fija
+                                    </span>
+                                )}
+                            </div>
+                            {!isAdmin && userPointId ? (
+                                <div className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-800 flex items-center gap-2">
+                                    <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                    <span className="truncate">
+                                        {points.find((p) => Number(p.id_punto) === Number(userPointId))?.nombre_punto || 'Sede asignada'}
+                                    </span>
+                                </div>
+                            ) : (
+                                <select
+                                    value={selectedPoint}
+                                    onChange={(e) => setSelectedPoint(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 focus:border-alcaldia-green outline-none"
+                                >
+                                    <option value="">Todas las Sedes PVD</option>
+                                    {points.map((p) => (
+                                        <option key={p.id_punto} value={p.id_punto}>
+                                            {p.nombre_punto}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
 
                         <div>
@@ -347,18 +381,28 @@ export default function ExportsIndex({ points, categories, dynamicFields, curren
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                                        RESPONSABLE (Celda A9)
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={responsable}
-                                        onChange={(e) => setResponsable(e.target.value)}
-                                        placeholder="Ej: ADMIN / Nombre del Gestor"
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green outline-none bg-white"
-                                    />
-                                    <span className="text-[10px] text-slate-400 mt-0.5 block">
-                                        Nombre del funcionario o gestor responsable que firma el listado.
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="block text-xs font-bold text-slate-700">
+                                            RESPONSABLE OFICIAL (Celda A9)
+                                        </label>
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md border border-emerald-300/60">
+                                            <Lock className="w-2.5 h-2.5 text-emerald-700" />
+                                            Fijado por sesión
+                                        </span>
+                                    </div>
+                                    <div className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 bg-slate-100/90 text-xs font-bold text-slate-800 flex items-center justify-between gap-2 shadow-inner">
+                                        <div className="flex items-center gap-2 truncate">
+                                            <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                                                {currentUserName.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <span className="truncate">{currentUserName}</span>
+                                        </div>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+                                            {currentUserRole}
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-500 mt-1 block">
+                                        Asignado automáticamente con su nombre y tipo de usuario para garantizar validez institucional.
                                     </span>
                                 </div>
                             </div>

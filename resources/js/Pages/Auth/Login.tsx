@@ -188,14 +188,14 @@ export default function Login({ status }: { status?: string }) {
 
                             <button
                                 type="button"
-                                onClick={() => handleQuickSelect('gestor.chichimene@acacias.gov.co', 'GestorChichimene2026*')}
+                                onClick={() => handleQuickSelect('wilberavila.cps.tic@gmail.com', 'Andrey2026')}
                                 className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
                             >
                                 <div className="font-bold text-slate-900 flex items-center gap-1">
                                     <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                                    <span>Aula Chichimene</span>
+                                    <span>Wilber Avila</span>
                                 </div>
-                                <div className="text-[10px] text-slate-400 truncate">gestor.chichimene...</div>
+                                <div className="text-[10px] text-slate-400 truncate">wilberavila.cps.tic...</div>
                             </button>
 
                             <button

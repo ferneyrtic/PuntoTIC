@@ -47,6 +47,8 @@ export default function VisitCreate({
     const { auth } = usePage<any>().props;
     const user = auth?.user;
     const userPointId = user?.id_punto || points[0]?.id_punto || 1;
+    const currentPoint =
+        points.find((p) => Number(p.id_punto) === Number(userPointId)) || points[0];
 
     // Strict role permissions
     const canAulaDigital =
@@ -94,7 +96,7 @@ export default function VisitCreate({
         apellidos: '',
         nombre_completo: '',
         es_registro_rapido: initialMode === 'aula',
-        id_punto: userPointId || (initialMode === 'aula' ? 3 : 1),
+        id_punto: userPointId,
         id_categoria: categories[0]?.id_categoria || null,
         id_subcategoria: categories[0]?.subcategorias?.[0]?.id_subcategoria || null,
         servicio_texto:
@@ -351,7 +353,7 @@ export default function VisitCreate({
                                 es_registro_rapido: true,
                                 duracion_minutos: 60,
                                 servicio_texto: 'Acceso libre a computador y tareas escolares',
-                                id_punto: user?.es_aula_digital ? userPointId : 3,
+                                id_punto: userPointId,
                             }));
                         }}
                         className={`btn-tactile flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
@@ -372,7 +374,7 @@ export default function VisitCreate({
                                 es_registro_rapido: false,
                                 duracion_minutos: 30,
                                 servicio_texto: '',
-                                id_punto: userPointId || 1,
+                                id_punto: userPointId,
                             }));
                         }}
                         className={`btn-tactile flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
@@ -450,29 +452,15 @@ export default function VisitCreate({
                             Solo digite el <strong>nombre del estudiante</strong> para asignarle equipo.
                         </p>
 
-                        {/* Sede selector */}
+                        {/* Sede asignada Aula Digital */}
                         <div className="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
-                            <label className="text-xs font-bold text-slate-300">
+                            <span className="text-xs font-bold text-slate-300">
                                 Sede del Aula Digital:
-                            </label>
-                            <div className="flex gap-2">
-                                {points
-                                    .filter((p) => p.es_aula_digital || [3, 4].includes(p.id_punto))
-                                    .map((p) => (
-                                        <button
-                                            key={p.id_punto}
-                                            type="button"
-                                            onClick={() => setData('id_punto', p.id_punto)}
-                                            className={`btn-tactile px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                                                Number(data.id_punto) === Number(p.id_punto)
-                                                    ? 'bg-emerald-500 text-white shadow-soft shadow-emerald-500/30'
-                                                    : 'bg-white/10 text-slate-300 hover:bg-white/20'
-                                            }`}
-                                        >
-                                            {p.nombre_punto}
-                                        </button>
-                                    ))}
-                            </div>
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/15 text-white border border-white/20">
+                                <Building2 className="w-3.5 h-3.5 text-emerald-300" />
+                                {currentPoint?.nombre_punto || 'Sede asignada'}
+                            </span>
                         </div>
                     </div>
 
@@ -910,7 +898,7 @@ export default function VisitCreate({
                         </div>
                     </div>
 
-                    {/* Step 3: Location and Duration */}
+                    {/* Step 3: Tiempo de Permanencia */}
                     <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-soft">
                         <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                             <div className="flex items-center gap-2.5">
@@ -918,49 +906,34 @@ export default function VisitCreate({
                                     3
                                 </div>
                                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                                    Sede y Tiempo de Permanencia
+                                    Tiempo de Permanencia
                                 </h2>
+                            </div>
+                            <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 text-slate-600 text-xs font-medium border border-slate-200/80">
+                                <Building2 className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Sede: <strong className="text-slate-800">{currentPoint?.nombre_punto || 'Punto Vive Digital'}</strong></span>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                    Punto Vive Digital
-                                </label>
-                                <select
-                                    value={data.id_punto}
-                                    onChange={(e) => setData('id_punto', Number(e.target.value))}
-                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:border-emerald-600 outline-none"
-                                >
-                                    {points.map((p) => (
-                                        <option key={p.id_punto} value={p.id_punto}>
-                                            {p.nombre_punto} ({p.zona})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                    Duración Estimada
-                                </label>
-                                <div className="flex items-center gap-2">
-                                    {[15, 30, 60, 120].map((mins) => (
-                                        <button
-                                            key={mins}
-                                            type="button"
-                                            onClick={() => setData('duracion_minutos', mins)}
-                                            className={`btn-tactile flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border ${
-                                                data.duracion_minutos === mins
-                                                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-transparent shadow-soft-xs'
-                                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                            }`}
-                                        >
-                                            {mins} min
-                                        </button>
-                                    ))}
-                                </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-2">
+                                Duración Estimada de la Atención
+                            </label>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {[15, 30, 60, 120].map((mins) => (
+                                    <button
+                                        key={mins}
+                                        type="button"
+                                        onClick={() => setData('duracion_minutos', mins)}
+                                        className={`btn-tactile py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                                            data.duracion_minutos === mins
+                                                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-transparent shadow-soft-xs'
+                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {mins} min
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>

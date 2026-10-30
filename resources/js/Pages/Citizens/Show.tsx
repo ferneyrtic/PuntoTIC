@@ -55,7 +55,7 @@ export default function CitizenShow({ citizen, mlPredictions }: Props) {
 
                     <div className="flex items-center gap-2">
                         <Link
-                            href={route('ciudadanos.edit', citizen.id_form_pvd)}
+                            href={route('ciudadanos.edit', { ciudadano: citizen.id_form_pvd || citizen.id || 1 })}
                             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all"
                         >
                             <Edit3 className="w-3.5 h-3.5 text-slate-500" />

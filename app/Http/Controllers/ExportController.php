@@ -23,11 +23,21 @@ class ExportController extends Controller
         $categories = Category::where('activo', true)->get(['id_categoria', 'nombre']);
         $dynamicFields = DynamicField::where('activo', true)->get(['id_campo', 'modulo', 'nombre_campo']);
 
+        $user = auth()->user();
+        $isAdmin = $user ? $user->hasRole('Administrador') : false;
+        $currentUserRole = $user ? ($user->cargo ?: $user->rol_principal) : 'Gestor PVD';
+        $currentUserName = $user ? $user->name : 'ADMIN';
+        $responsableDefault = $user ? mb_strtoupper("{$user->name} ({$currentUserRole})", 'UTF-8') : 'ADMIN';
+
         return Inertia::render('Exports/Index', [
             'points' => $points,
             'categories' => $categories,
             'dynamicFields' => $dynamicFields,
-            'currentUserName' => auth()->user() ? auth()->user()->name : 'ADMIN',
+            'currentUserName' => $currentUserName,
+            'currentUserRole' => $currentUserRole,
+            'responsableDefault' => $responsableDefault,
+            'isAdmin' => $isAdmin,
+            'userPointId' => $user?->id_punto,
         ]);
     }
 
@@ -37,6 +47,11 @@ class ExportController extends Controller
         $formato = $request->get('formato', 'xlsx'); // xlsx o csv
         $columnas = $request->get('columnas'); // array de columnas seleccionadas
         $filtros = $request->only(['fecha_desde', 'fecha_hasta', 'id_punto', 'id_categoria']);
+
+        $user = $request->user();
+        if ($user && ! $user->hasRole('Administrador') && $user->id_punto) {
+            $filtros['id_punto'] = $user->id_punto;
+        }
 
         return match ($tipoReporte) {
             'asistencia', 'listado_asistencia', 'gtic_f_16' => $this->listadoAsistencia($request),
@@ -51,7 +66,16 @@ class ExportController extends Controller
     {
         $filtros = $request->only(['fecha_desde', 'fecha_hasta', 'id_punto', 'id_categoria']);
         $eventoTema = $request->get('evento_tema');
-        $responsable = $request->get('responsable');
+
+        $user = $request->user();
+        if ($user && ! $user->hasRole('Administrador') && $user->id_punto) {
+            $filtros['id_punto'] = $user->id_punto;
+        }
+
+        // Responsable institucional fijado automáticamente con nombre y tipo de usuario / rol
+        $userRole = $user ? ($user->cargo ?: $user->rol_principal) : 'Gestor PVD';
+        $responsable = $user ? mb_strtoupper("{$user->name} ({$userRole})", 'UTF-8') : 'ADMIN';
+
         $incluirFirma = filter_var($request->get('incluir_firma', true), FILTER_VALIDATE_BOOLEAN);
         $asistentesUnicos = filter_var($request->get('asistentes_unicos', true), FILTER_VALIDATE_BOOLEAN);
 

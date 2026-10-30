@@ -58,7 +58,7 @@ class VisitService
     {
         return DB::transaction(function () use ($data) {
             $citizenId = $data['id_form_pvd'] ?? null;
-            $pointId = $data['id_punto'] ?? Auth::user()?->id_punto ?? 1;
+            $pointId = Auth::user()?->id_punto ?: ($data['id_punto'] ?? 1);
             $point = \App\Models\Point::find($pointId);
             $isAulaDigital = $point?->es_aula_digital ?? in_array($pointId, [3, 4]);
 

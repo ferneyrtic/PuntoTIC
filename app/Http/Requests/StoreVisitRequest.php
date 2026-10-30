@@ -11,6 +11,20 @@ class StoreVisitRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $user = $this->user();
+        if ($user && $user->id_punto) {
+            $this->merge([
+                'id_punto' => $user->id_punto,
+            ]);
+        } elseif (! $this->has('id_punto') || empty($this->input('id_punto'))) {
+            $this->merge([
+                'id_punto' => 1,
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -20,7 +34,7 @@ class StoreVisitRequest extends FormRequest
             'apellidos' => ['nullable', 'string', 'max:150'],
             'nombre_completo' => ['nullable', 'string', 'max:255'],
             'es_registro_rapido' => ['nullable', 'boolean'],
-            'id_punto' => ['required', 'exists:puntos_vd,id_punto'],
+            'id_punto' => ['nullable', 'exists:puntos_vd,id_punto'],
             'id_categoria' => ['nullable', 'exists:categorias,id_categoria'],
             'id_subcategoria' => ['nullable', 'exists:sub_categorias,id_subcategoria'],
             'servicio_texto' => ['nullable', 'string', 'max:200'],
