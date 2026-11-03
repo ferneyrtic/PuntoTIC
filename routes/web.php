@@ -19,17 +19,23 @@ Route::get('/', function () {
 
 // Rutas autenticadas del sistema PVD
 Route::middleware(['auth'])->group(function () {
-    // Dashboard General con IA y métricas
+    // Dashboard General con métricas e IA
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Gestión de Ciudadanos (Directorio, Búsqueda, Creación y Edición 100% Completa)
+    // Gestión de Ciudadanos (Directorio, Búsqueda, Creación y Edición)
     Route::resource('ciudadanos', CitizenController::class);
-    Route::post('/api/ciudadanos/verificar', [CitizenController::class, 'verify'])->name('ciudadanos.verify');
-    Route::get('/api/ciudadanos/buscar-estudiantes', [CitizenController::class, 'searchStudents'])->name('ciudadanos.buscar-estudiantes');
+    Route::post('/api/ciudadanos/verificar', [CitizenController::class, 'verify'])
+        ->middleware('throttle:60,1')
+        ->name('ciudadanos.verify');
+    Route::get('/api/ciudadanos/buscar-estudiantes', [CitizenController::class, 'searchStudents'])
+        ->middleware('throttle:60,1')
+        ->name('ciudadanos.buscar-estudiantes');
 
     // Registro y Listado de Visitas
     Route::resource('visitas', VisitController::class);
-    Route::post('/api/visitas/clasificar-nlp', [VisitController::class, 'classifyNlp'])->name('visitas.classify-nlp');
+    Route::post('/api/visitas/clasificar-nlp', [VisitController::class, 'classifyNlp'])
+        ->middleware('throttle:30,1')
+        ->name('visitas.classify-nlp');
 
     // Préstamos de Salas
     Route::resource('prestamos', RoomLoanController::class);
@@ -37,24 +43,35 @@ Route::middleware(['auth'])->group(function () {
     // Registro de Impresiones
     Route::resource('impresiones', PrintRecordController::class);
 
-    // Exportaciones Avanzadas (Excel / CSV con selección de columnas)
+    // Exportaciones Avanzadas (Protegidas con rate limiting contra DoS)
     Route::get('/exportar', [ExportController::class, 'index'])->name('exportar.index');
-    Route::get('/exportar/descargar', [ExportController::class, 'download'])->name('exportar.download');
-    Route::get('/exportar/listado-asistencia', [ExportController::class, 'listadoAsistencia'])->name('exportar.listado-asistencia');
+    Route::get('/exportar/descargar', [ExportController::class, 'download'])
+        ->middleware('throttle:20,1')
+        ->name('exportar.download');
+    Route::get('/exportar/listado-asistencia', [ExportController::class, 'listadoAsistencia'])
+        ->middleware('throttle:20,1')
+        ->name('exportar.listado-asistencia');
 
     // Gestión de Categorías y Subcategorías
-    Route::resource('categorias', CategoryController::class)->except(['create', 'show', 'edit']);
-    Route::post('/categorias/{categoria}/subcategorias', [CategoryController::class, 'storeSubcategory'])->name('categorias.subcategorias.store');
-    Route::delete('/subcategorias/{subcategoria}', [CategoryController::class, 'deleteSubcategory'])->name('categorias.subcategorias.destroy');
+    Route::get('categorias', [CategoryController::class, 'index'])->name('categorias.index');
+    Route::middleware(['role:Administrador|Coordinador PVD'])->group(function () {
+        Route::post('categorias', [CategoryController::class, 'store'])->name('categorias.store');
+        Route::put('categorias/{categoria}', [CategoryController::class, 'update'])->name('categorias.update');
+        Route::delete('categorias/{categoria}', [CategoryController::class, 'destroy'])->name('categorias.destroy');
+        Route::post('/categorias/{categoria}/subcategorias', [CategoryController::class, 'storeSubcategory'])->name('categorias.subcategorias.store');
+        Route::delete('/subcategorias/{subcategoria}', [CategoryController::class, 'deleteSubcategory'])->name('categorias.subcategorias.destroy');
 
-    // Campos Dinámicos (Columnas Personalizables sin tocar código)
-    Route::resource('campos-dinamicos', DynamicFieldController::class)->only(['index', 'store', 'destroy']);
+        // Campos Dinámicos (Solo Administrador y Coordinador PVD)
+        Route::resource('campos-dinamicos', DynamicFieldController::class)->only(['index', 'store', 'destroy']);
+    });
 
-    // Configuración y Auditoría
-    Route::get('/configuracion', [SettingController::class, 'index'])->name('configuracion.index');
-    Route::post('/configuracion', [SettingController::class, 'update'])->name('configuracion.update');
+    // Configuración y Auditoría del Sistema (Blindada: Exclusivo para Administrador)
+    Route::middleware(['role:Administrador'])->group(function () {
+        Route::get('/configuracion', [SettingController::class, 'index'])->name('configuracion.index');
+        Route::post('/configuracion', [SettingController::class, 'update'])->name('configuracion.update');
+    });
 
-    // Perfil de usuario
+    // Perfil de usuario autenticado
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

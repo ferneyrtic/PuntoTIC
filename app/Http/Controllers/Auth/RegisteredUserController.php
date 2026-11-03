@@ -19,8 +19,13 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): Response
+    public function create(): Response|RedirectResponse
     {
+        if (! config('auth.allow_registration', false)) {
+            return redirect()->route('login')
+                ->with('status', 'El registro público está deshabilitado por políticas de seguridad institucional.');
+        }
+
         return Inertia::render('Auth/Register');
     }
 
@@ -31,6 +36,10 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if (! config('auth.allow_registration', false)) {
+            abort(403, 'El registro público de usuarios se encuentra deshabilitado.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,

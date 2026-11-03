@@ -31,4 +31,10 @@ boost.json
 *.sql
 *.sql.gz
 *.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
 *.sqlite.bak*
+*.db
+*.dump
+backup*

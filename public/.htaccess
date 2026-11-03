@@ -5,6 +5,12 @@
 
     RewriteEngine On
 
+    # Bloquear acceso directo a archivos o carpetas ocultas (ej. .env, .git)
+    RewriteRule (^\.|/\.) - [F]
+
+    # Bloquear acceso directo a extensiones de base de datos o backups
+    RewriteRule \.(sql|sqlite|sqlite3|db|log|bak|dump|key)$ - [F]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
