@@ -1,18 +1,26 @@
 import React, { useState } from 'react';
 import { Head, useForm } from '@inertiajs/react';
-import { Lock, Mail, ArrowRight, ShieldCheck, CheckCircle2, Building2, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, ArrowRight, ShieldCheck, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 export default function Login({ status }: { status?: string }) {
     const [showPassword, setShowPassword] = useState(false);
     const { data, setData, post, processing, errors } = useForm({
-        email: '',
-        password: '',
-        remember: false,
+        email: 'admin@acacias.gov.co',
+        password: 'Acacias2026*',
+        remember: true,
     });
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         post(route('login'));
+    };
+
+    const handleQuickSelect = (email: string, pass: string) => {
+        setData((prev) => ({
+            ...prev,
+            email,
+            password: pass,
+        }));
     };
 
     return (
@@ -123,11 +131,84 @@ export default function Login({ status }: { status?: string }) {
                         </button>
                     </form>
 
-                    {/* Institutional Security Notice */}
+                    {/* Quick Access Credential Pills for local testing */}
                     <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500 font-medium">
+                        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center justify-center gap-1.5">
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Acceso restringido y monitoreado · Alcaldía de Acacías</span>
+                            <span>Perfiles Oficiales de Acceso</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-left">
+                            <button
+                                type="button"
+                                onClick={() => handleQuickSelect('admin@acacias.gov.co', 'Acacias2026*')}
+                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                            >
+                                <div className="font-bold text-slate-900 flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span>Admin TIC</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 truncate">admin@acacias...</div>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleQuickSelect('gestor_plus@acacias.gov.co', 'Jd1122129218*')}
+                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                            >
+                                <div className="font-bold text-slate-900 flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                                    <span>Gestor PLUS</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 truncate">gestor_plus@acacias...</div>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleQuickSelect('gestor.tradicional@acacias.gov.co', 'GestorTradicional2026*')}
+                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                            >
+                                <div className="font-bold text-slate-900 flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                                    <span>Gestor Tradicional</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 truncate">gestor.tradicional...</div>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleQuickSelect('gestor.dinamarca@acacias.gov.co', 'GestorDinamarca2026*')}
+                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                            >
+                                <div className="font-bold text-slate-900 flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    <span>Aula Dinamarca</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 truncate">gestor.dinamarca...</div>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleQuickSelect('wilberavila.cps.tic@gmail.com', 'Andrey2026')}
+                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                            >
+                                <div className="font-bold text-slate-900 flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                                    <span>Wilber Avila</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 truncate">wilberavila.cps.tic...</div>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleQuickSelect('davidmesa.cps.tic@gmail.com', 'david123')}
+                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                            >
+                                <div className="font-bold text-slate-900 flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                                    <span>David Mesa</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 truncate">davidmesa.cps.tic...</div>
+                            </button>
                         </div>
                     </div>
                 </div>
