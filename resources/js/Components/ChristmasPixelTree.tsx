@@ -1,15 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Sparkles } from 'lucide-react';
 
 interface Props {
     enabled?: boolean;
+    isCitizen?: boolean;
+    userName?: string;
 }
 
-export default function ChristmasPixelTree({ enabled = true }: Props) {
+export default function ChristmasPixelTree({ enabled = true, isCitizen = false, userName }: Props) {
     const [minimized, setMinimized] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
 
+    // Auto popup on initial entry to the platform (stored in sessionStorage so it only shows once upon entering, not on tab switches)
+    useEffect(() => {
+        if (!enabled) return;
+        try {
+            const hasAutoShown = sessionStorage.getItem('pvd_xmas_saludo_mostrado');
+            if (!hasAutoShown) {
+                sessionStorage.setItem('pvd_xmas_saludo_mostrado', 'true');
+                setShowTooltip(true);
+                const timer = setTimeout(() => {
+                    setShowTooltip(false);
+                }, 6500);
+                return () => clearTimeout(timer);
+            }
+        } catch {
+            // sessionStorage safety
+        }
+    }, [enabled]);
+
     if (!enabled) return null;
+
+    const firstName = userName ? userName.trim().split(' ')[0] : '';
+    const festiveMessage = isCitizen
+        ? firstName
+            ? `🎄 ¡Hola, ${firstName}! La Alcaldía de Acacías les desea una Feliz Navidad y un Próspero Año Nuevo a toda la comunidad.`
+            : '🎄 ¡La Alcaldía de Acacías les desea una Feliz Navidad y un Próspero Año Nuevo a toda la comunidad!'
+        : firstName
+            ? `🎅 ¡Felices Fiestas, ${firstName}! Éxitos y gratitud en este cierre de año para todo el equipo TIC Acacías.`
+            : '🎅 ¡Felices Fiestas y exitoso cierre de año para todo el equipo TIC Acacías!';
 
     if (minimized) {
         return (
@@ -33,23 +62,53 @@ export default function ChristmasPixelTree({ enabled = true }: Props) {
                 maxHeight: 'calc(100vh - 100px)',
             }}
         >
-            {/* Tooltip Balloon on Hover */}
+            {/* Tooltip Balloon on Hover or on Entry Auto-Greeting */}
             {showTooltip && (
-                <div className="mb-2 px-3 py-1.5 bg-slate-900 text-white text-[11px] font-bold rounded-xl shadow-2xl border border-slate-700/80 animate-fade-in flex items-center gap-1.5 whitespace-nowrap">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span>¡Felices Fiestas en la Red de PVD Acacías!</span>
+                <div
+                    className="mb-2 max-w-[280px] sm:max-w-xs p-3 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white rounded-2xl shadow-2xl border border-emerald-500/40 animate-fade-in flex flex-col gap-1.5 relative pointer-events-auto"
+                    role="alert"
+                >
+                    <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-1 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+                        <span className="flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
+                            <span>Alcaldía de Acacías</span>
+                        </span>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowTooltip(false);
+                            }}
+                            className="p-0.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                            title="Cerrar saludo"
+                        >
+                            <X className="w-3 h-3" />
+                        </button>
+                    </div>
+
+                    <p className="text-[11px] leading-snug text-slate-100 font-medium">
+                        {festiveMessage}
+                    </p>
+
+                    {/* Pointer tip pointing down towards the tree */}
+                    <div className="absolute -bottom-1.5 right-8 w-3 h-3 bg-emerald-950 border-r border-b border-emerald-500/40 rotate-45 transform"></div>
                 </div>
             )}
 
             <div
-                className="relative bg-white/95 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 shadow-xl hover:shadow-2xl transition-all duration-300 group hover:-translate-y-1"
+                className="relative bg-white/95 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 shadow-xl hover:shadow-2xl transition-all duration-300 group hover:-translate-y-1 cursor-pointer"
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
+                onClick={() => setShowTooltip((prev) => !prev)}
+                title="Haz clic para ver el saludo navideño"
             >
                 {/* Minimize Button */}
                 <button
                     type="button"
-                    onClick={() => setMinimized(true)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setMinimized(true);
+                    }}
                     className="absolute top-2 right-2 w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors text-[10px]"
                     title="Minimizar adorno"
                     aria-label="Minimizar árbol navideño"
@@ -93,7 +152,7 @@ export default function ChristmasPixelTree({ enabled = true }: Props) {
                     <rect x="6" y="15" width="16" height="1" fill="#166534" />
                     {/* Tier 2 snow tips & ornaments */}
                     <rect x="6" y="15" width="2" height="1" fill="#BAE6FD" />
-                    <rect x="20" y="15" width="2" height="1" fill="#BAE6FD" />
+                    <rect x="20" y="15" width="2" height="2" fill="#BAE6FD" />
                     <rect x="10" y="13" width="1" height="1" fill="#F59E0B" />
                     <rect x="16" y="12" width="1" height="1" fill="#06B6D4" />
                     <rect x="13" y="14" width="2" height="1" fill="#EC4899" />

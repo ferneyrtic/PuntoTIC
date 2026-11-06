@@ -413,9 +413,15 @@ export default function PortalIndex({
                 <div className="relative overflow-hidden bg-gradient-to-br from-[#0b132b] via-[#1c2541] to-[#0f172a] text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-800">
                     <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                         <div className="space-y-2 max-w-xl">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-                                <Sparkles className="w-3.5 h-3.5" />
-                                <span>Alcaldía Municipal de Acacías · Secretaría TIC</span>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                                    <Sparkles className="w-3.5 h-3.5" />
+                                    <span>Alcaldía Municipal de Acacías · Secretaría TIC</span>
+                                </div>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-red-500/20 via-rose-500/20 to-emerald-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold shadow-xs">
+                                    <span className="text-sm">🎄</span>
+                                    <span>¡Feliz Navidad y Próspero Año Nuevo!</span>
+                                </div>
                             </div>
                             <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
                                 ¡Hola, {user?.name || 'Ciudadano'}!
