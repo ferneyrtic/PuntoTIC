@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Point;
 use App\Models\RoomLoan;
 use App\Models\Visit;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -66,6 +67,36 @@ class PortalController extends Controller
         $puntos = Point::where('activo', true)
             ->get(['id_punto', 'nombre_punto', 'direccion', 'barrio_vereda', 'zona', 'telefono']);
 
+        // Calendario mensual interactivo de ocupación y disponibilidad para el ciudadano
+        $selectedMonth = $request->get('mes', now()->format('Y-m'));
+        try {
+            $monthCarbon = Carbon::createFromFormat('Y-m', $selectedMonth);
+        } catch (\Exception $e) {
+            $monthCarbon = now();
+            $selectedMonth = now()->format('Y-m');
+        }
+
+        $monthStart = $monthCarbon->copy()->startOfMonth()->subDays(7)->toDateString();
+        $monthEnd = $monthCarbon->copy()->endOfMonth()->addDays(7)->toDateString();
+
+        $selectedPunto = $request->get('id_punto');
+
+        $calendarLoans = RoomLoan::with('punto:id_punto,nombre_punto')
+            ->whereBetween('fecha_prestamo', [$monthStart, $monthEnd])
+            ->whereIn('estado', ['Pendiente', 'Reservado', 'En curso'])
+            ->when($selectedPunto, fn ($q, $p) => $q->where('id_punto', $p))
+            ->get([
+                'id_prestamo',
+                'id_punto',
+                'id_form_pvd',
+                'tipo_actividad',
+                'fecha_prestamo',
+                'hora_inicio',
+                'hora_fin',
+                'estado',
+                'num_asistentes',
+            ]);
+
         return Inertia::render('Portal/Index', [
             'ciudadano' => $user->ciudadano,
             'stats' => [
@@ -77,6 +108,9 @@ class PortalController extends Controller
             'solicitudes' => $solicitudes,
             'visitas' => $visitas,
             'puntos' => $puntos,
+            'calendarLoans' => $calendarLoans,
+            'selectedMonth' => $selectedMonth,
+            'selectedPunto' => $selectedPunto ? (int) $selectedPunto : null,
             'soporte' => [
                 'telefono' => '(608) 656-9999',
                 'whatsapp' => '+57 320 123 4567',
