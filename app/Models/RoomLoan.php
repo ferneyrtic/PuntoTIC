@@ -12,7 +12,37 @@ class RoomLoan extends Model
     use HasFactory;
 
     protected $table = 'prestamo_sala';
-    protected $primaryKey = 'id_prestamo';
+    protected $primaryKey = 'id';
+
+    protected static function booted(): void
+    {
+        static::saving(function ($loan) {
+            if (empty($loan->nombre)) {
+                $loan->nombre = $loan->nombre_responsable_texto ?: 'Ciudadano';
+            }
+            if (empty($loan->nombre_responsable_texto)) {
+                $loan->nombre_responsable_texto = $loan->nombre;
+            }
+            if (empty($loan->telefono)) {
+                $loan->telefono = '3000000000';
+            }
+            if (empty($loan->id_puntos)) {
+                $loan->id_puntos = $loan->id_punto ?: 1;
+            }
+            if (empty($loan->id_punto)) {
+                $loan->id_punto = $loan->id_puntos;
+            }
+            if (empty($loan->tipo_prestamo)) {
+                $loan->tipo_prestamo = $loan->tipo_actividad ?: 'Reunión comunitaria';
+            }
+            if (empty($loan->tipo_actividad)) {
+                $loan->tipo_actividad = $loan->tipo_prestamo;
+            }
+            if (empty($loan->id_gestores) && !empty($loan->id_gestor)) {
+                $loan->id_gestores = $loan->id_gestor;
+            }
+        });
+    }
 
     protected $fillable = [
         'id_form_pvd',
