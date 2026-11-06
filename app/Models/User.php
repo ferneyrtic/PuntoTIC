@@ -17,6 +17,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'documento',
+        'id_form_pvd',
         'id_punto',
         'telefono',
         'cargo',
@@ -42,10 +44,16 @@ class User extends Authenticatable
         'es_aula_digital',
         'rol_principal',
         'es_gestor_pvd',
+        'es_usuario_ciudadano',
         'puede_acceder_aula_digital',
         'puede_acceder_pvd_general',
         'roles_nombres',
     ];
+
+    public function getEsUsuarioCiudadanoAttribute(): bool
+    {
+        return $this->hasRole(['Usuario', 'Ciudadano']);
+    }
 
     public function getIsAdminAttribute(): bool
     {
@@ -95,6 +103,46 @@ class User extends Authenticatable
     public function punto(): BelongsTo
     {
         return $this->belongsTo(Point::class, 'id_punto', 'id_punto');
+    }
+
+    public function ciudadano(): BelongsTo
+    {
+        return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id_form_pvd');
+    }
+
+    /**
+     * Vincula la cuenta de usuario con la ficha histórica o crea una si no existe.
+     */
+    public function vincularConCiudadano(?string $documento = null): ?Citizen
+    {
+        $doc = $documento ?? $this->documento;
+        if (! $doc) {
+            return null;
+        }
+
+        $citizen = Citizen::where('documento', $doc)->first();
+
+        if (! $citizen) {
+            $parts = explode(' ', trim($this->name));
+            $nombres = $parts[0] ?? $this->name;
+            $apellidos = isset($parts[1]) ? implode(' ', array_slice($parts, 1)) : 'Ciudadano';
+
+            $citizen = Citizen::create([
+                'documento' => $doc,
+                'nombres' => $nombres,
+                'apellidos' => $apellidos,
+                'correo' => $this->email,
+                'telefono' => $this->telefono,
+                'activo' => true,
+                'id_punto' => $this->id_punto ?? 1,
+            ]);
+        }
+
+        $this->id_form_pvd = $citizen->id_form_pvd;
+        $this->documento = $doc;
+        $this->save();
+
+        return $citizen;
     }
 
     public function visitasRegistradas(): HasMany

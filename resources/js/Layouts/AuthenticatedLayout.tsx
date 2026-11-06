@@ -22,6 +22,8 @@ import {
     Download,
     History,
     Sparkles,
+    Home,
+    User,
 } from 'lucide-react';
 import PwaStatusBanner from '@/Components/PwaStatusBanner';
 import { promptPwaInstall, isPwaStandalone } from '@/services/pwaService';
@@ -114,89 +116,114 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
         year: 'numeric',
     }).format(new Date());
 
-    const navSections = [
-        {
-            title: 'Operación Principal',
-            items: [
-                {
-                    name: 'Panel de Control',
-                    href: route('dashboard'),
-                    icon: LayoutDashboard,
-                    active: currentUrl === '/dashboard' || currentUrl === '/',
-                },
-                {
-                    name: 'Registrar Visita',
-                    href: route('visitas.create'),
-                    icon: UserPlus,
-                    active: currentUrl === '/visitas/create',
-                },
-                {
-                    name: 'Historial de Visitas',
-                    href: route('visitas.index'),
-                    icon: CalendarCheck,
-                    active: currentUrl === '/visitas' || (currentUrl.startsWith('/visitas') && currentUrl !== '/visitas/create'),
-                },
-                {
-                    name: 'Directorio Ciudadano',
-                    href: route('ciudadanos.index'),
-                    icon: Users,
-                    active: currentUrl.startsWith('/ciudadanos'),
-                },
-            ],
-        },
-        {
-            title: 'Servicios en Sala',
-            items: [
-                {
-                    name: 'Préstamo de Salas',
-                    href: route('prestamos.index'),
-                    icon: DoorOpen,
-                    active: currentUrl.startsWith('/prestamos'),
-                },
-                {
-                    name: 'Impresiones y Copias',
-                    href: route('impresiones.index'),
-                    icon: Printer,
-                    active: currentUrl.startsWith('/impresiones'),
-                },
-            ],
-        },
-        {
-            title: 'Administración y Datos',
-            items: [
-                {
-                    name: 'Exportar Reportes',
-                    href: route('exportar.index'),
-                    icon: FileSpreadsheet,
-                    active: currentUrl.startsWith('/exportar'),
-                },
-                {
-                    name: 'Registro de Actividad',
-                    href: route('auditoria.index'),
-                    icon: History,
-                    active: currentUrl.startsWith('/auditoria'),
-                },
-                {
-                    name: 'Categorías y Servicios',
-                    href: route('categorias.index'),
-                    icon: Layers,
-                    active: currentUrl.startsWith('/categorias'),
-                },
-                {
-                    name: 'Campos Dinámicos',
-                    href: route('campos-dinamicos.index'),
-                    icon: SlidersHorizontal,
-                    active: currentUrl.startsWith('/campos-dinamicos'),
-                },
-                {
-                    name: 'Configuración del Sistema',
-                    href: route('configuracion.index'),
-                    icon: Settings,
-                    active: currentUrl.startsWith('/configuracion'),
-                },
-            ],
-        },
-    ];
+    const isCitizen =
+        user?.es_usuario_ciudadano ||
+        user?.roles_nombres?.includes('Usuario') ||
+        user?.roles_nombres?.includes('Ciudadano');
+
+    const navSections = isCitizen
+        ? [
+              {
+                  title: 'Portal Ciudadano',
+                  items: [
+                      {
+                          name: 'Portal de Bienvenida',
+                          href: route('portal.index'),
+                          icon: Home,
+                          active: currentUrl === '/portal',
+                      },
+                      {
+                          name: 'Mi Perfil Ciudadano',
+                          href: route('profile.edit'),
+                          icon: User,
+                          active: currentUrl === '/profile',
+                      },
+                  ],
+              },
+          ]
+        : [
+              {
+                  title: 'Operación Principal',
+                  items: [
+                      {
+                          name: 'Panel de Control',
+                          href: route('dashboard'),
+                          icon: LayoutDashboard,
+                          active: currentUrl === '/dashboard' || currentUrl === '/',
+                      },
+                      {
+                          name: 'Registrar Visita',
+                          href: route('visitas.create'),
+                          icon: UserPlus,
+                          active: currentUrl === '/visitas/create',
+                      },
+                      {
+                          name: 'Historial de Visitas',
+                          href: route('visitas.index'),
+                          icon: CalendarCheck,
+                          active: currentUrl === '/visitas' || (currentUrl.startsWith('/visitas') && currentUrl !== '/visitas/create'),
+                      },
+                      {
+                          name: 'Directorio Ciudadano',
+                          href: route('ciudadanos.index'),
+                          icon: Users,
+                          active: currentUrl.startsWith('/ciudadanos'),
+                      },
+                  ],
+              },
+              {
+                  title: 'Servicios en Sala',
+                  items: [
+                      {
+                          name: 'Préstamo de Salas',
+                          href: route('prestamos.index'),
+                          icon: DoorOpen,
+                          active: currentUrl.startsWith('/prestamos'),
+                      },
+                      {
+                          name: 'Impresiones y Copias',
+                          href: route('impresiones.index'),
+                          icon: Printer,
+                          active: currentUrl.startsWith('/impresiones'),
+                      },
+                  ],
+              },
+              {
+                  title: 'Administración y Datos',
+                  items: [
+                      {
+                          name: 'Exportar Reportes',
+                          href: route('exportar.index'),
+                          icon: FileSpreadsheet,
+                          active: currentUrl.startsWith('/exportar'),
+                      },
+                      {
+                          name: 'Registro de Actividad',
+                          href: route('auditoria.index'),
+                          icon: History,
+                          active: currentUrl.startsWith('/auditoria'),
+                      },
+                      {
+                          name: 'Categorías y Servicios',
+                          href: route('categorias.index'),
+                          icon: Layers,
+                          active: currentUrl.startsWith('/categorias'),
+                      },
+                      {
+                          name: 'Campos Dinámicos',
+                          href: route('campos-dinamicos.index'),
+                          icon: SlidersHorizontal,
+                          active: currentUrl.startsWith('/campos-dinamicos'),
+                      },
+                      {
+                          name: 'Configuración del Sistema',
+                          href: route('configuracion.index'),
+                          icon: Settings,
+                          active: currentUrl.startsWith('/configuracion'),
+                      },
+                  ],
+              },
+          ];
 
     const currentPointName =
         points?.find((p: any) => p.id_punto === (selectedPointId || user?.id_punto))?.nombre_punto ||
@@ -255,13 +282,15 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     >
                         🎄
                     </button>
-                    <Link
-                        href={route('visitas.create')}
-                        className="btn-tactile p-2 rounded-xl bg-emerald-600 text-white shadow-sm"
-                        title="Registrar Visita"
-                    >
-                        <UserPlus className="w-4 h-4" />
-                    </Link>
+                    {!isCitizen && (
+                        <Link
+                            href={route('visitas.create')}
+                            className="btn-tactile p-2 rounded-xl bg-emerald-600 text-white shadow-sm"
+                            title="Registrar Visita"
+                        >
+                            <UserPlus className="w-4 h-4" />
+                        </Link>
+                    )}
                 </div>
             </header>
 
@@ -464,15 +493,17 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                             <span className="capitalize">{currentDateFormatted}</span>
                         </div>
 
-                        {/* Direct Action */}
-                        <Link
-                            href={route('visitas.create')}
-                            className="btn-tactile inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all"
-                        >
-                            <UserPlus className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Registrar Visita</span>
-                            <span className="sm:hidden">+ Visita</span>
-                        </Link>
+                        {/* Direct Action for Staff */}
+                        {!isCitizen && (
+                            <Link
+                                href={route('visitas.create')}
+                                className="btn-tactile inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all"
+                            >
+                                <UserPlus className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Registrar Visita</span>
+                                <span className="sm:hidden">+ Visita</span>
+                            </Link>
+                        )}
                     </div>
                 </header>
 
@@ -527,57 +558,96 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
 
             {/* Mobile Bottom Thumb Navigation Bar */}
             <div className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 z-30 px-3 py-2 flex items-center justify-around shadow-xl">
-                <Link
-                    href={route('dashboard')}
-                    className={`btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
-                        currentUrl === '/dashboard' || currentUrl === '/'
-                            ? 'text-emerald-700'
-                            : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                >
-                    <LayoutDashboard className="w-5 h-5" />
-                    <span>Panel</span>
-                </Link>
+                {isCitizen ? (
+                    <>
+                        <Link
+                            href={route('portal.index')}
+                            className={`btn-tactile flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-[10px] font-bold ${
+                                currentUrl === '/portal'
+                                    ? 'text-emerald-700 font-black'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                        >
+                            <Home className="w-5 h-5" />
+                            <span>Portal</span>
+                        </Link>
 
-                <Link
-                    href={route('visitas.index')}
-                    className={`btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
-                        currentUrl === '/visitas'
-                            ? 'text-emerald-700'
-                            : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                >
-                    <CalendarCheck className="w-5 h-5" />
-                    <span>Visitas</span>
-                </Link>
+                        <button
+                            type="button"
+                            onClick={() => setSidebarOpen(true)}
+                            className="btn-tactile flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-[10px] font-bold text-slate-500 hover:text-slate-800"
+                        >
+                            <Menu className="w-5 h-5" />
+                            <span>Menú</span>
+                        </button>
 
-                <Link
-                    href={route('visitas.create')}
-                    className="btn-tactile -mt-5 flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-700/30 ring-4 ring-white"
-                    title="Registrar Visita"
-                >
-                    <UserPlus className="w-5 h-5" />
-                </Link>
+                        <Link
+                            href={route('profile.edit')}
+                            className={`btn-tactile flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-[10px] font-bold ${
+                                currentUrl === '/profile'
+                                    ? 'text-emerald-700 font-black'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                        >
+                            <User className="w-5 h-5" />
+                            <span>Perfil</span>
+                        </Link>
+                    </>
+                ) : (
+                    <>
+                        <Link
+                            href={route('dashboard')}
+                            className={`btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
+                                currentUrl === '/dashboard' || currentUrl === '/'
+                                    ? 'text-emerald-700'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                        >
+                            <LayoutDashboard className="w-5 h-5" />
+                            <span>Panel</span>
+                        </Link>
 
-                <Link
-                    href={route('ciudadanos.index')}
-                    className={`btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
-                        currentUrl.startsWith('/ciudadanos')
-                            ? 'text-emerald-700'
-                            : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                >
-                    <Users className="w-5 h-5" />
-                    <span>Ciudadanos</span>
-                </Link>
+                        <Link
+                            href={route('visitas.index')}
+                            className={`btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
+                                currentUrl === '/visitas'
+                                    ? 'text-emerald-700'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                        >
+                            <CalendarCheck className="w-5 h-5" />
+                            <span>Visitas</span>
+                        </Link>
 
-                <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold text-slate-500 hover:text-slate-800"
-                >
-                    <Menu className="w-5 h-5" />
-                    <span>Más</span>
-                </button>
+                        <Link
+                            href={route('visitas.create')}
+                            className="btn-tactile -mt-5 flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-700/30 ring-4 ring-white"
+                            title="Registrar Visita"
+                        >
+                            <UserPlus className="w-5 h-5" />
+                        </Link>
+
+                        <Link
+                            href={route('ciudadanos.index')}
+                            className={`btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
+                                currentUrl.startsWith('/ciudadanos')
+                                    ? 'text-emerald-700'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                        >
+                            <Users className="w-5 h-5" />
+                            <span>Ciudadanos</span>
+                        </Link>
+
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold text-slate-500 hover:text-slate-800"
+                        >
+                            <Menu className="w-5 h-5" />
+                            <span>Más</span>
+                        </button>
+                    </>
+                )}
             </div>
 
             {/* Christmas Snow Particle Canvas */}

@@ -70,6 +70,7 @@ class RoomLoanController extends Controller
             'filters' => $filters,
             'points' => $points,
             'tiposActividad' => $tiposActividad,
+            'pendingCount' => RoomLoan::where('estado', 'Pendiente')->count(),
         ]);
     }
 
@@ -85,7 +86,7 @@ class RoomLoanController extends Controller
             'hora_inicio' => ['nullable', 'string'],
             'hora_fin' => ['nullable', 'string'],
             'observaciones' => ['nullable', 'string'],
-            'estado' => ['required', 'in:Reservado,En curso,Completado,Cancelado'],
+            'estado' => ['required', 'in:Pendiente,Reservado,En curso,Completado,Cancelado'],
         ]);
 
         $validated['id_gestor'] = Auth::id();
@@ -110,14 +111,19 @@ class RoomLoanController extends Controller
             ->with('success', 'Préstamo de sala registrado con éxito.');
     }
 
-    public function update(Request $request, RoomLoan $loan): RedirectResponse
+    public function update(Request $request, RoomLoan $prestamo): RedirectResponse
     {
+        $loan = $prestamo;
+
         $validated = $request->validate([
-            'estado' => ['required', 'in:Reservado,En curso,Completado,Cancelado'],
+            'estado' => ['required', 'in:Pendiente,Reservado,En curso,Completado,Cancelado'],
             'observaciones' => ['nullable', 'string'],
         ]);
 
         $oldData = ['estado' => $loan->estado, 'observaciones' => $loan->observaciones];
+        if (empty($loan->id_gestor)) {
+            $loan->id_gestor = Auth::id();
+        }
         $loan->update($validated);
 
         AuditLog::registrar(

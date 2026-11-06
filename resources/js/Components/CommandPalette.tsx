@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
     Search,
     LayoutDashboard,
@@ -25,6 +25,18 @@ interface Props {
 }
 
 export default function CommandPalette({ isOpen, onClose }: Props) {
+    const { auth } = usePage<any>().props;
+    const currentUser = auth?.user;
+    const userRole = currentUser?.role || '';
+    const userRoles: string[] = currentUser?.roles?.map((r: any) => typeof r === 'string' ? r : r.name) || [];
+    const isCitizen = Boolean(
+        currentUser?.es_usuario_ciudadano ||
+        userRole === 'Usuario' ||
+        userRole === 'Ciudadano' ||
+        userRoles.includes('Usuario') ||
+        userRoles.includes('Ciudadano')
+    );
+
     const [query, setQuery] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [citizens, setCitizens] = useState<Array<any>>([]);
@@ -116,8 +128,38 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
         },
     ];
 
+    const citizenCommands = [
+        {
+            id: 'portal-index',
+            name: 'Portal Ciudadano (Inicio)',
+            description: 'Página principal, tus préstamos solicitados y visitas a sedes PVD',
+            icon: LayoutDashboard,
+            url: route('portal.index'),
+            category: 'Mi Portal',
+        },
+        {
+            id: 'portal-solicitar',
+            name: 'Solicitar Espacio o Aula en PVD',
+            description: 'Apartar sala para cursos, cineclub, JAC, eventos o reuniones comunitarias',
+            icon: DoorOpen,
+            url: route('portal.index'),
+            category: 'Servicios',
+            badge: 'Disponible',
+        },
+        {
+            id: 'profile-edit',
+            name: 'Mi Perfil de Usuario',
+            description: 'Información de tu cuenta ciudadana y cambio de contraseña',
+            icon: User,
+            url: route('profile.edit'),
+            category: 'Cuenta',
+        },
+    ];
+
+    const activeCommands = isCitizen ? citizenCommands : defaultCommands;
+
     // Filtered navigation commands
-    const filteredCommands = defaultCommands.filter((cmd) => {
+    const filteredCommands = activeCommands.filter((cmd) => {
         if (!query.trim()) return true;
         const q = query.toLowerCase();
         return (
@@ -127,8 +169,14 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
         );
     });
 
-    // Debounced search for citizens
+    // Debounced search for citizens (only for staff, disabled for citizens)
     useEffect(() => {
+        if (isCitizen) {
+            setCitizens([]);
+            setSearchingCitizens(false);
+            return;
+        }
+
         const trimmed = query.trim();
         if (trimmed.length < 2) {
             setCitizens([]);
@@ -151,7 +199,7 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
         }, 220);
 
         return () => clearTimeout(timer);
-    }, [query]);
+    }, [query, isCitizen]);
 
     // Focus input on open
     useEffect(() => {

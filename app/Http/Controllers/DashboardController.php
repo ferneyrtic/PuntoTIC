@@ -20,8 +20,12 @@ class DashboardController extends Controller
         protected MLService $mlService
     ) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
+        if ($request->user()?->hasRole(['Usuario', 'Ciudadano'])) {
+            return redirect()->route('portal.index');
+        }
+
         $rawPoint = $request->get('id_punto');
         $rawZona = $request->get('zona');
         $periodo = $request->get('periodo', 'mes');

@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Citizen;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -32,6 +34,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'gestionar_usuarios',
             'ver_auditoria',
             'configurar_sistema',
+            'ver_portal_ciudadano',
+            'solicitar_prestamos',
         ];
 
         foreach ($permissions as $permission) {
@@ -104,6 +108,13 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $legacyGestor = Role::firstOrCreate(['name' => 'Gestor', 'guard_name' => 'web']);
         $legacyGestor->syncPermissions($gestorPvdRole->permissions);
+
+        // 6. Rol Usuario / Ciudadano (Usuarios externos para autoservicio y reservas)
+        $usuarioRole = Role::firstOrCreate(['name' => 'Usuario', 'guard_name' => 'web']);
+        $usuarioRole->syncPermissions(['ver_portal_ciudadano', 'solicitar_prestamos']);
+
+        $ciudadanoRole = Role::firstOrCreate(['name' => 'Ciudadano', 'guard_name' => 'web']);
+        $ciudadanoRole->syncPermissions(['ver_portal_ciudadano', 'solicitar_prestamos']);
 
         // =====================================================================
         // CUENTAS OFICIALES PARA PRUEBAS Y OPERACIÓN
@@ -238,5 +249,47 @@ class RolesAndPermissionsSeeder extends Seeder
             ]
         );
         $wilberAvila->syncRoles(['Gestor Aula Digital', 'Gestor']);
+
+        // 11. Usuario Ciudadano de Prueba (Rol Usuario con ficha vinculada en form_pvd)
+        $testDoc = '1121000999';
+        $tipoId = DB::table('tipo_id')->value('id_tipo');
+        $puntoId = DB::table('puntos_vd')->value('id_punto') ?? 1;
+
+        $testCitizen = Citizen::firstOrCreate(
+            ['documento' => $testDoc],
+            [
+                'id_tipo' => $tipoId,
+                'nombres' => 'Leonardo',
+                'apellidos' => 'Usuario Ciudadano',
+                'fecha_nac' => '1995-08-20',
+                'edad' => 31,
+                'genero' => 'Masculino',
+                'correo' => 'usuario.prueba@acacias.gov.co',
+                'telefono' => '3201234567',
+                'direccion' => 'Calle 14 # 20-30',
+                'barrio' => 'Centro',
+                'zona' => 'Urbana',
+                'estrato' => 2,
+                'nivel_educativo' => 'Profesional / Universitario',
+                'ocupacion' => 'Comerciante / Emprendedor',
+                'activo' => true,
+                'id_punto' => $puntoId,
+            ]
+        );
+
+        $usuarioPrueba = User::updateOrCreate(
+            ['email' => 'usuario.prueba@acacias.gov.co'],
+            [
+                'name' => 'Leonardo Usuario Ciudadano',
+                'documento' => $testDoc,
+                'id_form_pvd' => $testCitizen->id_form_pvd,
+                'password' => Hash::make('Acacias2026*'),
+                'id_punto' => $puntoId,
+                'telefono' => '3201234567',
+                'cargo' => 'Usuario Ciudadano',
+                'activo' => true,
+            ]
+        );
+        $usuarioPrueba->syncRoles(['Usuario']);
     }
 }

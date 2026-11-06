@@ -20,7 +20,7 @@ return new class extends Migration
             $table->time('hora_inicio')->nullable();
             $table->time('hora_fin')->nullable();
             $table->text('observaciones')->nullable();
-            $table->enum('estado', ['Reservado', 'En curso', 'Completado', 'Cancelado'])->default('Completado');
+            $table->enum('estado', ['Pendiente', 'Reservado', 'En curso', 'Completado', 'Cancelado'])->default('Completado');
             $table->timestamps();
 
             $table->foreign('id_form_pvd')->references('id_form_pvd')->on('form_pvd')->nullOnDelete();

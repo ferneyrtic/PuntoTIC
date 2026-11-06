@@ -140,6 +140,21 @@ export default function Login({ status }: { status?: string }) {
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-left">
                             <button
                                 type="button"
+                                onClick={() => handleQuickSelect('usuario.prueba@acacias.gov.co', 'Acacias2026*')}
+                                className="btn-tactile p-2 rounded-xl bg-indigo-50/90 hover:bg-indigo-100 border border-indigo-200 transition-all text-[11px] text-indigo-900 font-medium sm:col-span-3 text-left"
+                            >
+                                <div className="font-bold text-indigo-950 flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
+                                        <span>👤 Ciudadano / Usuario (Prueba Portal)</span>
+                                    </div>
+                                    <span className="text-[9px] bg-indigo-200 text-indigo-900 font-black px-1.5 py-0.5 rounded uppercase">Nuevo Rol</span>
+                                </div>
+                                <div className="text-[10px] text-indigo-600 font-mono mt-0.5">usuario.prueba@acacias.gov.co · Acacias2026*</div>
+                            </button>
+
+                            <button
+                                type="button"
                                 onClick={() => handleQuickSelect('admin@acacias.gov.co', 'Acacias2026*')}
                                 className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
                             >
