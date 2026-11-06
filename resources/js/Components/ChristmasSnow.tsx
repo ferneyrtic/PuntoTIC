@@ -4,7 +4,7 @@ interface Props {
     enabled?: boolean;
 }
 
-export default function ChristmasSnow({ enabled = true }: Props) {
+export default function ChristmasSnow({ enabled = false }: Props) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
@@ -12,115 +12,104 @@ export default function ChristmasSnow({ enabled = true }: Props) {
 
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: true });
         if (!ctx) return;
 
         let animationFrameId: number;
         let width = (canvas.width = window.innerWidth);
         let height = (canvas.height = window.innerHeight);
 
+        let resizeTimer: any;
         const handleResize = () => {
-            if (!canvas) return;
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (!canvas) return;
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }, 100);
         };
 
         window.addEventListener('resize', handleResize);
 
-        // Frosty icy-blue palette specifically chosen to be vivid against white backgrounds
+        // Paleta fría invernal nítida sin sombras computadas
         const blueFlakeColors = [
-            'rgba(14, 165, 233, 0.75)',  // Vivid Sky Blue
-            'rgba(2, 132, 199, 0.70)',   // Deep Winter Azure
-            'rgba(56, 189, 248, 0.85)',  // Frost Cyan
-            'rgba(99, 102, 241, 0.65)',  // Indigo Frost
-            'rgba(37, 99, 235, 0.60)',   // Royal Snow Blue
+            'rgba(14, 165, 233, 0.70)', // Sky Blue
+            'rgba(2, 132, 199, 0.65)',  // Deep Azure
+            'rgba(56, 189, 248, 0.75)', // Frost Cyan
+            'rgba(99, 102, 241, 0.55)', // Indigo Frost
         ];
 
-        const flakeCount = Math.min(55, Math.floor(window.innerWidth / 30));
+        // Cantidad reducida y elegante de copitos: máximo 26 copitos
+        const flakeCount = Math.min(26, Math.max(14, Math.floor(window.innerWidth / 55)));
 
         interface Flake {
             x: number;
             y: number;
-            size: number;
+            radius: number;
             speed: number;
             wind: number;
-            swaySpeed: number;
             swayOffset: number;
-            isCrystal: boolean;
-            rotation: number;
-            rotationSpeed: number;
-            color: string;
-            char: string;
+            colorIndex: number;
+            isDiamond: boolean;
         }
 
         const flakes: Flake[] = [];
-        const chars = ['❄', '❅', '✻', '•'];
-
         for (let i = 0; i < flakeCount; i++) {
-            const isCrystal = Math.random() > 0.45; // 55% crystal snowflakes, 45% soft icy dots
             flakes.push({
                 x: Math.random() * width,
                 y: Math.random() * height,
-                size: isCrystal ? Math.random() * 8 + 10 : Math.random() * 2.8 + 1.8,
-                speed: Math.random() * 1.1 + 0.6,
-                wind: Math.random() * 0.4 - 0.2,
-                swaySpeed: Math.random() * 0.02 + 0.01,
+                radius: Math.random() * 2.2 + 1.2,
+                speed: Math.random() * 0.7 + 0.35,
+                wind: Math.random() * 0.25 - 0.12,
                 swayOffset: Math.random() * Math.PI * 2,
-                isCrystal,
-                rotation: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 0.03,
-                color: blueFlakeColors[Math.floor(Math.random() * blueFlakeColors.length)],
-                char: chars[Math.floor(Math.random() * (chars.length - 1))],
+                colorIndex: Math.floor(Math.random() * blueFlakeColors.length),
+                isDiamond: Math.random() > 0.65,
             });
         }
 
         let angle = 0;
+
+        // Render loop ultraligero: CERO shadowBlur, CERO fillText, CERO save/restore
         const render = () => {
             ctx.clearRect(0, 0, width, height);
             angle += 0.01;
 
-            flakes.forEach((flake) => {
-                // Update position
+            // Actualizar posiciones de las partículas
+            for (let i = 0; i < flakes.length; i++) {
+                const flake = flakes[i];
                 flake.y += flake.speed;
-                flake.x += Math.sin(angle + flake.swayOffset) * 0.7 + flake.wind;
-                flake.rotation += flake.rotationSpeed;
+                flake.x += Math.sin(angle + flake.swayOffset) * 0.45 + flake.wind;
 
-                // Wrap around screen boundaries
-                if (flake.y > height + 20) {
-                    flake.y = -20;
+                if (flake.y > height + 10) {
+                    flake.y = -10;
                     flake.x = Math.random() * width;
                 }
-                if (flake.x > width + 20) {
+                if (flake.x > width + 10) {
                     flake.x = -10;
-                } else if (flake.x < -20) {
+                } else if (flake.x < -10) {
                     flake.x = width + 10;
                 }
+            }
 
-                ctx.save();
-                ctx.translate(flake.x, flake.y);
-
-                if (flake.isCrystal) {
-                    // Draw decorative rotating snowflake character in blue
-                    ctx.rotate(flake.rotation);
-                    ctx.font = `${Math.floor(flake.size)}px "Segoe UI Symbol", "Apple Color Emoji", sans-serif`;
-                    ctx.fillStyle = flake.color;
-                    ctx.shadowColor = 'rgba(56, 189, 248, 0.45)';
-                    ctx.shadowBlur = 6;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(flake.char, 0, 0);
-                } else {
-                    // Draw soft glowing icy blue dot
-                    ctx.beginPath();
-                    ctx.arc(0, 0, flake.size, 0, Math.PI * 2);
-                    ctx.fillStyle = flake.color;
-                    ctx.shadowColor = 'rgba(14, 165, 233, 0.5)';
-                    ctx.shadowBlur = 5;
-                    ctx.fill();
+            // Agrupar dibujo por color para minimizar llamadas al contexto
+            for (let c = 0; c < blueFlakeColors.length; c++) {
+                ctx.fillStyle = blueFlakeColors[c];
+                ctx.beginPath();
+                for (let i = 0; i < flakes.length; i++) {
+                    const flake = flakes[i];
+                    if (flake.colorIndex === c) {
+                        if (flake.isDiamond) {
+                            // Pequeño copo en forma de diamante / rombo pixel
+                            ctx.rect(flake.x - flake.radius, flake.y - flake.radius, flake.radius * 2, flake.radius * 2);
+                        } else {
+                            // Copo circular suave
+                            ctx.moveTo(flake.x + flake.radius, flake.y);
+                            ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+                        }
+                    }
                 }
-
-                ctx.restore();
-            });
+                ctx.fill();
+            }
 
             animationFrameId = requestAnimationFrame(render);
         };
@@ -129,6 +118,7 @@ export default function ChristmasSnow({ enabled = true }: Props) {
 
         return () => {
             window.removeEventListener('resize', handleResize);
+            clearTimeout(resizeTimer);
             cancelAnimationFrame(animationFrameId);
         };
     }, [enabled]);
@@ -138,8 +128,8 @@ export default function ChristmasSnow({ enabled = true }: Props) {
     return (
         <canvas
             ref={canvasRef}
-            className="fixed inset-0 pointer-events-none z-30 transition-opacity duration-500"
-            style={{ width: '100vw', height: '100vh' }}
+            className="fixed inset-0 pointer-events-none z-30"
+            style={{ width: '100vw', height: '100vh', willChange: 'transform' }}
             aria-hidden="true"
         />
     );

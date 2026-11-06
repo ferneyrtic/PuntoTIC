@@ -47,7 +47,7 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
         {
             id: 'dashboard',
             name: 'Panel de Control',
-            description: 'Métricas institucionales, metas mensuales y analítica en vivo',
+            description: 'Métricas institucionales y analítica en vivo',
             icon: LayoutDashboard,
             url: route('dashboard'),
             category: 'Navegación',
