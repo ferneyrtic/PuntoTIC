@@ -29,6 +29,18 @@ class PrintRecord extends Model
         'created_at' => 'datetime',
     ];
 
+    protected $appends = ['id_impresion'];
+
+    public function getIdImpresionAttribute()
+    {
+        return $this->attributes['id_impresion'] ?? $this->attributes['id'] ?? null;
+    }
+
+    public function getNumeroHojasAttribute()
+    {
+        return $this->attributes['numero_hojas'] ?? $this->attributes['num_imp'] ?? 1;
+    }
+
     public function ciudadano(): BelongsTo
     {
         return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id_form_pvd');

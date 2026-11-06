@@ -16,20 +16,43 @@ class Setting extends Model
         'valor',
         'descripcion',
         'tipo',
+        'key',
+        'value',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function ($setting) {
+            if (!empty($setting->clave) && empty($setting->key)) {
+                $setting->key = $setting->clave;
+            } elseif (!empty($setting->key) && empty($setting->clave)) {
+                $setting->clave = $setting->key;
+            }
+            if ($setting->valor !== null && $setting->value === null) {
+                $setting->value = (string) $setting->valor;
+            } elseif ($setting->value !== null && $setting->valor === null) {
+                $setting->valor = (string) $setting->value;
+            }
+        });
+    }
 
     public static function get(string $key, $default = null)
     {
-        $setting = static::where('clave', $key)->first();
+        $setting = static::where('clave', $key)
+            ->orWhere('key', $key)
+            ->first();
         if (! $setting) {
             return $default;
         }
 
-        return match ($setting->tipo) {
-            'boolean' => filter_var($setting->valor, FILTER_VALIDATE_BOOLEAN),
-            'integer' => (int) $setting->valor,
-            'json' => json_decode($setting->valor, true),
-            default => $setting->valor,
+        $val = $setting->valor ?? $setting->value;
+        $tipo = $setting->tipo ?? 'string';
+
+        return match ($tipo) {
+            'boolean' => filter_var($val, FILTER_VALIDATE_BOOLEAN),
+            'integer' => (int) $val,
+            'json' => json_decode($val, true),
+            default => $val,
         };
     }
 
@@ -41,7 +64,9 @@ class Setting extends Model
         static::updateOrCreate(
             ['clave' => $key],
             [
+                'key' => $key,
                 'valor' => $storedValue,
+                'value' => $storedValue,
                 'tipo' => $tipo,
                 'descripcion' => $description,
             ]

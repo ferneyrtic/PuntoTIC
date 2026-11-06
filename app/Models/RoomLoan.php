@@ -33,6 +33,28 @@ class RoomLoan extends Model
         'num_asistentes' => 'integer',
     ];
 
+    protected $appends = ['id_prestamo'];
+
+    public function getIdPrestamoAttribute()
+    {
+        return $this->attributes['id_prestamo'] ?? $this->attributes['id'] ?? null;
+    }
+
+    public function getNombreResponsableTextoAttribute()
+    {
+        return $this->attributes['nombre_responsable_texto'] ?? $this->attributes['nombre'] ?? '';
+    }
+
+    public function getIdPuntoAttribute()
+    {
+        return $this->attributes['id_punto'] ?? $this->attributes['id_puntos'] ?? null;
+    }
+
+    public function getIdGestorAttribute()
+    {
+        return $this->attributes['id_gestor'] ?? $this->attributes['id_gestores'] ?? null;
+    }
+
     public function ciudadano(): BelongsTo
     {
         return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id_form_pvd');

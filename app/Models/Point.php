@@ -28,6 +28,13 @@ class Point extends Model
         'activo' => 'boolean',
     ];
 
+    public function getActivoAttribute()
+    {
+        return isset($this->attributes['activo'])
+            ? (bool) $this->attributes['activo']
+            : (($this->attributes['estado'] ?? '') === 'Activo' || !isset($this->attributes['estado']));
+    }
+
     protected $appends = [
         'es_aula_digital',
     ];
