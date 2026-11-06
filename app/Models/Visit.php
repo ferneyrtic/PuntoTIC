@@ -78,7 +78,7 @@ class Visit extends Model
 
     public function ciudadano(): BelongsTo
     {
-        return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id_form_pvd');
+        return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id');
     }
 
     public function punto(): BelongsTo

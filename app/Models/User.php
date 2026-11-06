@@ -143,7 +143,7 @@ class User extends Authenticatable
 
     public function ciudadano(): BelongsTo
     {
-        return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id_form_pvd');
+        return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id');
     }
 
     /**
