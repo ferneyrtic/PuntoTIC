@@ -1,6 +1,6 @@
 /* PuntoTIC Acacías - Service Worker PWA */
 const BASE_PATH = self.location.pathname.replace(/\/sw\.js$/, '');
-const CACHE_NAME = 'puntotic-pwa-v1.0.2';
+const CACHE_NAME = 'puntotic-pwa-v2.0.0';
 const OFFLINE_URL = `${BASE_PATH}/offline.html`;
 
 const PRECACHE_ASSETS = [
@@ -14,24 +14,26 @@ const PRECACHE_ASSETS = [
     `${BASE_PATH}/images/icons/apple-touch-icon.png`,
 ];
 
-// Install Event - Pre-cache core shell assets
+// Install Event - Pre-cache core shell assets and immediately take over
 self.addEventListener('install', (event) => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(PRECACHE_ASSETS).catch((err) => {
                 console.warn('[PWA SW] Pre-caching warning:', err);
             });
-        }).then(() => self.skipWaiting())
+        })
     );
 });
 
-// Activate Event - Clean old caches & claim clients
+// Activate Event - Purge all older caches immediately and claim clients
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((name) => {
                     if (name !== CACHE_NAME) {
+                        console.log('[PWA SW] Eliminando caché obsoleta:', name);
                         return caches.delete(name);
                     }
                 })
@@ -55,24 +57,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // 1. Navigation Requests (HTML Pages / Inertia initial loads)
+    // 1. Navigation Requests (HTML Pages / Inertia initial loads) -> Network First, never stale HTML
     if (request.mode === 'navigate') {
         event.respondWith(
             fetch(request)
-                .then((networkResponse) => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        const copy = networkResponse.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-                    }
-                    return networkResponse;
-                })
                 .catch(async () => {
-                    // Try to match cached navigation page first
-                    const cachedResponse = await caches.match(request);
-                    if (cachedResponse) {
-                        return cachedResponse;
-                    }
-                    // Fallback to offline page
                     const offlinePage = await caches.match(OFFLINE_URL);
                     return offlinePage || new Response('Sin conexión', { status: 503, statusText: 'Offline' });
                 })
@@ -80,10 +69,16 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Never cache service worker itself or webmanifest
+    if (url.pathname.endsWith('/sw.js') || url.pathname.endsWith('/manifest.webmanifest')) {
+        event.respondWith(fetch(request));
+        return;
+    }
+
     // 2. Static Assets (Vite build assets, images, fonts, styles)
     const isStaticAsset =
-        url.pathname.startsWith('/build/') ||
-        url.pathname.startsWith('/images/') ||
+        url.pathname.includes('/build/') ||
+        url.pathname.includes('/images/') ||
         url.pathname.endsWith('.js') ||
         url.pathname.endsWith('.css') ||
         url.pathname.endsWith('.woff2') ||
@@ -94,17 +89,16 @@ self.addEventListener('fetch', (event) => {
     if (isStaticAsset) {
         event.respondWith(
             caches.match(request).then((cachedResponse) => {
-                const fetchPromise = fetch(request)
-                    .then((networkResponse) => {
-                        if (networkResponse && networkResponse.status === 200) {
-                            const copy = networkResponse.clone();
-                            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-                        }
-                        return networkResponse;
-                    })
-                    .catch(() => cachedResponse);
-
-                return cachedResponse || fetchPromise;
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+                return fetch(request).then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200) {
+                        const copy = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+                    }
+                    return networkResponse;
+                });
             })
         );
         return;
@@ -114,45 +108,25 @@ self.addEventListener('fetch', (event) => {
     const isInertia = request.headers.get('X-Inertia') === 'true';
     if (isInertia || url.pathname.startsWith('/api/')) {
         event.respondWith(
-            fetch(request)
-                .then((networkResponse) => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        const copy = networkResponse.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            fetch(request).catch(() => {
+                return new Response(
+                    JSON.stringify({
+                        error: 'offline',
+                        message: 'Operación fuera de línea detectada. Conéctese a internet para consultar datos en tiempo real.',
+                    }),
+                    {
+                        status: 503,
+                        headers: { 'Content-Type': 'application/json' },
                     }
-                    return networkResponse;
-                })
-                .catch(async () => {
-                    const cachedResponse = await caches.match(request);
-                    if (cachedResponse) {
-                        return cachedResponse;
-                    }
-                    return new Response(
-                        JSON.stringify({
-                            error: 'offline',
-                            message: 'Operación fuera de línea detectada. Conéctese a internet para consultar datos en tiempo real.',
-                        }),
-                        {
-                            status: 503,
-                            headers: { 'Content-Type': 'application/json' },
-                        }
-                    );
-                })
+                );
+            })
         );
         return;
     }
 
-    // Default: Network with Cache Fallback
+    // Default: Network with fallback to cache
     event.respondWith(
-        fetch(request)
-            .then((networkResponse) => {
-                if (networkResponse && networkResponse.status === 200) {
-                    const copy = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-                }
-                return networkResponse;
-            })
-            .catch(() => caches.match(request))
+        fetch(request).catch(() => caches.match(request))
     );
 });
 

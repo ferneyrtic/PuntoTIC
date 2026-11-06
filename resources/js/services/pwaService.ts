@@ -67,6 +67,9 @@ export function registerPwaServiceWorker(): void {
             navigator.serviceWorker
                 .register(swPath)
                 .then((registration) => {
+                    // Forzar comprobación de versión fresca en el servidor
+                    registration.update();
+
                     // Chequear si hay actualización en espera
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
@@ -74,6 +77,7 @@ export function registerPwaServiceWorker(): void {
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                     window.dispatchEvent(new CustomEvent('pwa-update-available'));
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
                                 }
                             });
                         }
