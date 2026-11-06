@@ -27,9 +27,10 @@ class DashboardController extends Controller
 
         $pointId = null;
         $zona = null;
+        $user = $request->user();
 
         // Interpretación de selectores combinados
-        if ($rawPoint === 'all' || $rawPoint === '' || $rawPoint === 'null') {
+        if ($rawPoint === 'all' || $rawPoint === 'null') {
             $pointId = null;
             $zona = null;
         } elseif ($rawPoint === 'zona_rural' || $rawZona === 'Rural') {
@@ -40,6 +41,10 @@ class DashboardController extends Controller
             $zona = 'Urbana';
         } elseif (is_numeric($rawPoint)) {
             $pointId = (int) $rawPoint;
+            $zona = null;
+        } elseif ($rawPoint === null && $rawZona === null && $user && ! $user->hasRole('Administrador') && $user->id_punto) {
+            // Gestores y Coordinadores inician por defecto con la vista de su propia sede
+            $pointId = (int) $user->id_punto;
             $zona = null;
         }
 

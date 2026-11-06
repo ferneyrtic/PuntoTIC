@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import { Lock, Mail, ArrowRight, ShieldCheck, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { asset } from '@/utils/asset';
 
 export default function Login({ status }: { status?: string }) {
     const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +37,7 @@ export default function Login({ status }: { status?: string }) {
                 <div className="flex justify-center mb-5 animate-fade-in-down">
                     <div className="glass-card bg-white/95 p-3 px-6 rounded-2xl shadow-soft-xl border border-white/40 inline-flex items-center justify-center transition-transform hover:scale-105 duration-300">
                         <img
-                            src="/images/logo_alcaldia.png"
+                            src={asset('images/logo_alcaldia.png')}
                             alt="Alcaldía de Acacías"
                             className="h-14 sm:h-16 w-auto object-contain"
                         />
@@ -135,13 +136,27 @@ export default function Login({ status }: { status?: string }) {
                     <div className="mt-6 pt-5 border-t border-slate-100 text-center">
                         <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center justify-center gap-1.5">
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Perfiles Oficiales de Acceso</span>
+                            <span>Perfiles Oficiales de Prueba (Clic para autocompletar)</span>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-left">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-left">
+                            <button
+                                type="button"
+                                onClick={() => handleQuickSelect('coordinador.general@acacias.gov.co', 'CoordGeneral2026*')}
+                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                                title="Supervisión global de todas las sedes y descarga de reportes generales"
+                            >
+                                <div className="font-bold text-slate-900 flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                                    <span>Coord. General</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 truncate">coordinador.general...</div>
+                            </button>
+
                             <button
                                 type="button"
                                 onClick={() => handleQuickSelect('admin@acacias.gov.co', 'Acacias2026*')}
                                 className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                                title="Acceso total a todas las sedes, configuración y auditoría"
                             >
                                 <div className="font-bold text-slate-900 flex items-center gap-1">
                                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -152,20 +167,22 @@ export default function Login({ status }: { status?: string }) {
 
                             <button
                                 type="button"
-                                onClick={() => handleQuickSelect('gestor_plus@acacias.gov.co', 'Jd1122129218*')}
+                                onClick={() => handleQuickSelect('gestor.plus@acacias.gov.co', 'GestorPlus2026*')}
                                 className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                                title="Punto Vive Digital PLUS (Urbano)"
                             >
                                 <div className="font-bold text-slate-900 flex items-center gap-1">
                                     <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
                                     <span>Gestor PLUS</span>
                                 </div>
-                                <div className="text-[10px] text-slate-400 truncate">gestor_plus@acacias...</div>
+                                <div className="text-[10px] text-slate-400 truncate">gestor.plus@acacias...</div>
                             </button>
 
                             <button
                                 type="button"
                                 onClick={() => handleQuickSelect('gestor.tradicional@acacias.gov.co', 'GestorTradicional2026*')}
                                 className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                                title="Punto Vive Digital Tradicional (Urbano)"
                             >
                                 <div className="font-bold text-slate-900 flex items-center gap-1">
                                     <span className="w-2 h-2 rounded-full bg-amber-500"></span>
@@ -178,6 +195,7 @@ export default function Login({ status }: { status?: string }) {
                                 type="button"
                                 onClick={() => handleQuickSelect('gestor.dinamarca@acacias.gov.co', 'GestorDinamarca2026*')}
                                 className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                                title="Aula Digital Rural Dinamarca (Modo Niños/Escolar)"
                             >
                                 <div className="font-bold text-slate-900 flex items-center gap-1">
                                     <span className="w-2 h-2 rounded-full bg-blue-500"></span>
@@ -188,26 +206,28 @@ export default function Login({ status }: { status?: string }) {
 
                             <button
                                 type="button"
-                                onClick={() => handleQuickSelect('wilberavila.cps.tic@gmail.com', 'Andrey2026')}
+                                onClick={() => handleQuickSelect('gestor.chichimene@acacias.gov.co', 'GestorChichimene2026*')}
                                 className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                                title="Aula Digital Rural Chichimene (Modo Niños/Escolar)"
                             >
                                 <div className="font-bold text-slate-900 flex items-center gap-1">
                                     <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                                    <span>Wilber Avila</span>
+                                    <span>Aula Chichimene</span>
                                 </div>
-                                <div className="text-[10px] text-slate-400 truncate">wilberavila.cps.tic...</div>
+                                <div className="text-[10px] text-slate-400 truncate">gestor.chichimene...</div>
                             </button>
 
                             <button
                                 type="button"
-                                onClick={() => handleQuickSelect('davidmesa.cps.tic@gmail.com', 'david123')}
+                                onClick={() => handleQuickSelect('coordinador.plus@acacias.gov.co', 'PvdPlus2026*')}
                                 className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                                title="Coordinador de Sedes"
                             >
                                 <div className="font-bold text-slate-900 flex items-center gap-1">
                                     <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                                    <span>David Mesa</span>
+                                    <span>Coordinador</span>
                                 </div>
-                                <div className="text-[10px] text-slate-400 truncate">davidmesa.cps.tic...</div>
+                                <div className="text-[10px] text-slate-400 truncate">coordinador.plus...</div>
                             </button>
                         </div>
                     </div>

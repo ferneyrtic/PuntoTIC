@@ -32,8 +32,11 @@ class CitizenService
      */
     public function findByDocument(string $document): ?Citizen
     {
+        $term = trim($document);
         return Citizen::with(['tipoDocumento', 'punto', 'visitas.categoria', 'visitas.subcategoria'])
-            ->where('documento', trim($document))
+            ->where(function ($q) use ($term) {
+                $q->where('documento', $term)->orWhere('id', $term);
+            })
             ->first();
     }
 

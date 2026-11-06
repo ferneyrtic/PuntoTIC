@@ -42,6 +42,7 @@ class VisitService
             $term = trim($filters['search']);
             $query->whereHas('ciudadano', function ($q) use ($term) {
                 $q->where('documento', 'like', "%{$term}%")
+                  ->orWhere('id', 'like', "%{$term}%")
                   ->orWhere('nombres', 'like', "%{$term}%")
                   ->orWhere('apellidos', 'like', "%{$term}%");
             });

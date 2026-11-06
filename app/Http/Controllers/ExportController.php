@@ -25,6 +25,7 @@ class ExportController extends Controller
 
         $user = auth()->user();
         $isAdmin = $user ? $user->hasRole('Administrador') : false;
+        $canExportAllPoints = $user ? ($isAdmin || $user->puede_exportar_todas_sedes) : false;
         $currentUserRole = $user ? ($user->cargo ?: $user->rol_principal) : 'Gestor PVD';
         $currentUserName = $user ? $user->name : 'ADMIN';
         $responsableDefault = $user ? mb_strtoupper("{$user->name} ({$currentUserRole})", 'UTF-8') : 'ADMIN';
@@ -37,6 +38,7 @@ class ExportController extends Controller
             'currentUserRole' => $currentUserRole,
             'responsableDefault' => $responsableDefault,
             'isAdmin' => $isAdmin,
+            'canExportAllPoints' => $canExportAllPoints,
             'userPointId' => $user?->id_punto,
         ]);
     }
@@ -49,7 +51,8 @@ class ExportController extends Controller
         $filtros = $request->only(['fecha_desde', 'fecha_hasta', 'id_punto', 'id_categoria']);
 
         $user = $request->user();
-        if ($user && ! $user->hasRole('Administrador') && $user->id_punto) {
+        $canExportAll = $user && ($user->hasRole('Administrador') || $user->puede_exportar_todas_sedes);
+        if (! $canExportAll && $user?->id_punto) {
             $filtros['id_punto'] = $user->id_punto;
         }
 
@@ -68,7 +71,8 @@ class ExportController extends Controller
         $eventoTema = $request->get('evento_tema');
 
         $user = $request->user();
-        if ($user && ! $user->hasRole('Administrador') && $user->id_punto) {
+        $canExportAll = $user && ($user->hasRole('Administrador') || $user->puede_exportar_todas_sedes);
+        if (! $canExportAll && $user?->id_punto) {
             $filtros['id_punto'] = $user->id_punto;
         }
 

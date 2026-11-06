@@ -9,13 +9,28 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('id_punto')->nullable()->after('password');
-            $table->string('telefono', 50)->nullable()->after('id_punto');
-            $table->string('cargo', 100)->default('Gestor')->after('telefono');
-            $table->boolean('activo')->default(true)->after('cargo');
-
-            $table->foreign('id_punto')->references('id_punto')->on('puntos_vd')->nullOnDelete();
+            if (! Schema::hasColumn('users', 'name')) {
+                $table->string('name')->nullable()->after('id');
+            }
+            if (! Schema::hasColumn('users', 'id_punto')) {
+                $table->unsignedBigInteger('id_punto')->nullable()->after('password');
+            }
+            if (! Schema::hasColumn('users', 'telefono')) {
+                $table->string('telefono', 50)->nullable()->after('id_punto');
+            }
+            if (! Schema::hasColumn('users', 'cargo')) {
+                $table->string('cargo', 100)->default('Gestor')->after('telefono');
+            }
+            if (! Schema::hasColumn('users', 'activo')) {
+                $table->boolean('activo')->default(true)->after('cargo');
+            }
         });
+
+        if (Schema::hasColumn('users', 'names') && Schema::hasColumn('users', 'name')) {
+            \Illuminate\Support\Facades\DB::table('users')->whereNull('name')->update([
+                'name' => \Illuminate\Support\Facades\DB::raw('names')
+            ]);
+        }
     }
 
     public function down(): void

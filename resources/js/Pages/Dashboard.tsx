@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { RevealOnScroll } from '@/Components/ui/Skeleton';
 import {
     Users,
     Printer,
@@ -245,14 +246,14 @@ export default function Dashboard({
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-2">
                     <div>
                         <div className="flex flex-wrap items-center gap-2.5">
-                            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                                 Centro de Mando & Analítica
                             </h1>
-                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs">
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-2xs">
                                 Alcaldía de Acacías
                             </span>
                         </div>
-                        <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">
                             Panel integral de monitoreo operativo, estadísticas por dependencia y gestión territorial
                         </p>
                     </div>
@@ -265,7 +266,7 @@ export default function Dashboard({
                             <select
                                 value={currentScopeValue}
                                 onChange={handleScopeChange}
-                                className="w-full pl-9 pr-8 py-2 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-800 shadow-xs hover:border-emerald-500 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all cursor-pointer"
+                                className="w-full pl-9 pr-8 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 shadow-xs hover:border-emerald-500 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all cursor-pointer"
                             >
                                 <option value="all">Consolidado Municipal (Toda la Red)</option>
                                 <optgroup label="Agrupaciones por Zona">
@@ -285,10 +286,10 @@ export default function Dashboard({
                         {/* Botón de Exportar Reporte Ejecutivo */}
                         <Link
                             href={route('exportar.index')}
-                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
+                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
                             title="Exportar informe ejecutivo con filtros"
                         >
-                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 dark:text-white" />
                             <span>Exportar Informe</span>
                         </Link>
                     </div>
@@ -298,19 +299,19 @@ export default function Dashboard({
             <Head title="Centro de Mando & Analítica · PuntoTIC" />
 
             {/* Barra de Ámbito y Período Activo */}
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-xs mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-colors duration-200">
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         Ámbito actual:
                     </span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                         {scope.nombre}
                     </span>
                     {scope.tipo !== 'consolidado' && (
                         <button
                             onClick={handleResetToAll}
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-1 rounded-lg transition-colors"
                             title="Restablecer a toda la red"
                         >
                             <RotateCcw className="w-3 h-3" />
@@ -320,7 +321,7 @@ export default function Dashboard({
                 </div>
 
                 {/* Filtro de Período Temporal */}
-                <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl self-start md:self-auto overflow-x-auto max-w-full">
+                <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-slate-800 p-1 rounded-xl self-start md:self-auto overflow-x-auto max-w-full">
                     {[
                         { key: 'hoy', label: 'Hoy' },
                         { key: 'semana', label: '7 Días' },
@@ -333,8 +334,8 @@ export default function Dashboard({
                             onClick={() => handlePeriodChange(p.key)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                                 periodo.key === p.key
-                                    ? 'bg-white text-slate-900 shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
+                                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
                             {p.label}
@@ -346,7 +347,8 @@ export default function Dashboard({
             {/* Tarjetas Principales de KPIs (Grid Bento) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {/* KPI 1: Atenciones del Período */}
-                <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-[#0F1E36] text-white p-5 sm:p-6 rounded-3xl border border-slate-800 shadow-md flex flex-col justify-between">
+                <RevealOnScroll delay={0}>
+                <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-[#0F1E36] text-white p-5 sm:p-6 rounded-3xl border border-slate-800 shadow-md flex flex-col justify-between hover:shadow-xl hover:shadow-slate-900/20 hover:scale-[1.015] transition-all duration-200 cursor-default">
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-[11px] font-bold uppercase tracking-widest text-slate-300 flex items-center gap-1.5">
@@ -379,112 +381,119 @@ export default function Dashboard({
                         </span>
                     </div>
                 </div>
+                </RevealOnScroll>
 
                 {/* KPI 2: Ciudadanos Únicos */}
-                <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                <RevealOnScroll delay={80}>
+                <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md hover:scale-[1.015] transition-all duration-200 cursor-default">
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                 Ciudadanos Beneficiados
                             </span>
-                            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center">
                                 <Users className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight tabular-nums mt-1">
+                        <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums mt-1">
                             {kpis.ciudadanos_unicos.toLocaleString()}
                         </div>
-                        <p className="text-xs text-slate-500 font-medium mt-1">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
                             Usuarios únicos atendidos en este período
                         </p>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-100 mt-4 flex items-center justify-between text-xs">
-                        <span className="text-slate-400">
-                            Padrón total: <strong className="text-slate-800">{kpis.total_ciudadanos.toLocaleString()}</strong>
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
+                        <span className="text-slate-400 dark:text-slate-500">
+                            Padrón total: <strong className="text-slate-800 dark:text-slate-200">{kpis.total_ciudadanos.toLocaleString()}</strong>
                         </span>
                         <Link
                             href={route('ciudadanos.index')}
-                            className="font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5"
+                            className="font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-0.5"
                         >
                             <span>Ver</span>
                             <ArrowRight className="w-3 h-3" />
                         </Link>
                     </div>
                 </div>
+                </RevealOnScroll>
 
                 {/* KPI 3: Impresiones y Digitalización */}
-                <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                <RevealOnScroll delay={160}>
+                <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md hover:scale-[1.015] transition-all duration-200 cursor-default">
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                 Hojas de Impresión / Copias
                             </span>
-                            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center">
                                 <Printer className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight tabular-nums mt-1">
+                        <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums mt-1">
                             {kpis.impresiones_hojas.toLocaleString()}
                         </div>
-                        <p className="text-xs text-slate-500 font-medium mt-1">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
                             Hojas procesadas y consumibles controlados
                         </p>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-100 mt-4 flex items-center justify-between text-xs">
-                        <span className="text-slate-400">
-                            Hoy: <strong className="text-slate-800">{kpis.impresiones_hoy_hojas} hojas</strong>
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
+                        <span className="text-slate-400 dark:text-slate-500">
+                            Hoy: <strong className="text-slate-800 dark:text-slate-200">{kpis.impresiones_hoy_hojas} hojas</strong>
                         </span>
                         <Link
                             href={route('impresiones.index')}
-                            className="font-bold text-amber-700 hover:text-amber-800 flex items-center gap-0.5"
+                            className="font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 flex items-center gap-0.5"
                         >
                             <span>Detalle</span>
                             <ArrowRight className="w-3 h-3" />
                         </Link>
                     </div>
                 </div>
+                </RevealOnScroll>
 
                 {/* KPI 4: Préstamos de Salas y Asistentes */}
-                <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                <RevealOnScroll delay={240}>
+                <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md hover:scale-[1.015] transition-all duration-200 cursor-default">
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                 Salas & Espacios Comunitarios
                             </span>
-                            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
                                 <DoorOpen className="w-4 h-4" />
                             </div>
                         </div>
                         <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight tabular-nums">
+                            <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
                                 {kpis.prestamos_salas}
                             </span>
-                            <span className="text-xs font-bold text-slate-500">eventos</span>
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">eventos</span>
                         </div>
-                        <p className="text-xs text-slate-500 font-medium mt-1">
-                            <strong className="text-emerald-700 font-bold">{kpis.asistentes_salas.toLocaleString()}</strong> asistentes congregados
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                            <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{kpis.asistentes_salas.toLocaleString()}</strong> asistentes congregados
                         </p>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-100 mt-4 flex items-center justify-between text-xs">
-                        <span className="text-slate-400">
-                            Hoy: <strong className="text-slate-800">{kpis.prestamos_hoy} en curso</strong>
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
+                        <span className="text-slate-400 dark:text-slate-500">
+                            Hoy: <strong className="text-slate-800 dark:text-slate-200">{kpis.prestamos_hoy} en curso</strong>
                         </span>
                         <Link
                             href={route('prestamos.index')}
-                            className="font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-0.5"
+                            className="font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-0.5"
                         >
                             <span>Agenda</span>
                             <ArrowRight className="w-3 h-3" />
                         </Link>
                     </div>
                 </div>
+                </RevealOnScroll>
             </div>
 
             {/* Pestañas de Especialización por Dependencia / Área */}
-            <div className="flex items-center gap-2 border-b border-slate-200 mb-6 overflow-x-auto pb-px">
+            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 mb-6 overflow-x-auto pb-px">
                 {[
                     { id: 'general', label: 'Vista General & Sedes', icon: BarChart3 },
                     { id: 'tramites', label: 'Trámites en Línea', icon: FileText },
@@ -500,11 +509,11 @@ export default function Dashboard({
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
                                 isActive
-                                    ? 'border-emerald-600 text-emerald-700 bg-emerald-50/40 rounded-t-xl'
-                                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+                                    ? 'border-emerald-600 dark:border-emerald-400 text-emerald-700 dark:text-emerald-300 bg-emerald-50/40 dark:bg-emerald-950/40 rounded-t-xl'
+                                    : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
                         >
-                            <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`} />
+                            <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`} />
                             <span>{tab.label}</span>
                         </button>
                     );
@@ -519,18 +528,18 @@ export default function Dashboard({
                     {/* Gráfico de Afluencia Temporal + Red de Sedes */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Gráfico Temporal (2 Columnas) */}
-                        <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                        <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors duration-200">
                             <div>
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                                     <div>
-                                        <h2 className="text-base font-bold text-slate-900">
+                                        <h2 className="text-base font-bold text-slate-900 dark:text-white">
                                             Afluencia y Demanda Temporal
                                         </h2>
-                                        <p className="text-xs text-slate-500 font-medium">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                                             Comportamiento de la demanda en {periodo.label} ({scope.nombre})
                                         </p>
                                     </div>
-                                    <span className="self-start sm:self-auto text-xs font-bold px-3 py-1 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">
+                                    <span className="self-start sm:self-auto text-xs font-bold px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                         {chart_serie.length} puntos de registro
                                     </span>
                                 </div>
@@ -538,7 +547,7 @@ export default function Dashboard({
                                 <div className="h-64 sm:h-72 w-full pt-2">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={chart_serie} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.5} />
                                             <XAxis dataKey="dia" stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} />
                                             <YAxis stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
                                             <Tooltip content={<CustomTooltip />} />
@@ -556,7 +565,7 @@ export default function Dashboard({
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-slate-100 mt-3 flex items-center justify-between text-xs text-slate-500">
+                            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                                 <div className="flex items-center gap-4">
                                     <span className="flex items-center gap-1.5 font-medium">
                                         <span className="w-2.5 h-2.5 rounded bg-emerald-600 inline-block"></span>
@@ -569,7 +578,7 @@ export default function Dashboard({
                                 </div>
                                 <Link
                                     href={route('visitas.index')}
-                                    className="font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                                    className="font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-1"
                                 >
                                     <span>Ver registro de visitas</span>
                                     <ArrowRight className="w-3.5 h-3.5" />
@@ -578,17 +587,17 @@ export default function Dashboard({
                         </div>
 
                         {/* Comparativa de Sedes (1 Columna) */}
-                        <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors duration-200">
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <h2 className="text-base font-bold text-slate-900">
+                                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
                                         Demanda por Sede
                                     </h2>
-                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600">
+                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                                         {comparativa_sedes.length} Sedes
                                     </span>
                                 </div>
-                                <p className="text-xs text-slate-500 font-medium mb-4">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-4">
                                     Participación de demanda en {periodo.label}
                                 </p>
 
@@ -596,24 +605,24 @@ export default function Dashboard({
                                     {comparativa_sedes.map((punto) => (
                                         <div key={punto.id_punto} className="space-y-1.5">
                                             <div className="flex items-center justify-between text-xs">
-                                                <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                                                <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
                                                     <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                                     <span className="truncate max-w-[140px]">{punto.nombre_punto}</span>
                                                     <span
                                                         className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
                                                             punto.zona === 'Rural'
-                                                                ? 'bg-amber-100 text-amber-800'
-                                                                : 'bg-slate-100 text-slate-600'
+                                                                ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                                                         }`}
                                                     >
                                                         {punto.zona}
                                                     </span>
                                                 </div>
-                                                <span className="font-bold text-slate-700 tabular-nums">
+                                                <span className="font-bold text-slate-700 dark:text-slate-300 tabular-nums">
                                                     {punto.total_visitas.toLocaleString()} ({punto.porcentaje}%)
                                                 </span>
                                             </div>
-                                            <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                                            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                                                 <div
                                                     className="h-full rounded-full bg-emerald-600 transition-all duration-500"
                                                     style={{ width: `${Math.max(4, punto.porcentaje)}%` }}
@@ -624,9 +633,9 @@ export default function Dashboard({
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-slate-100 mt-4 text-xs text-slate-500 flex items-center justify-between">
+                            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
                                 <span>PVD Urbanos y Aulas Digitales</span>
-                                <Link href={route('configuracion.index')} className="font-bold text-emerald-700 hover:underline">
+                                <Link href={route('configuracion.index')} className="font-bold text-emerald-700 dark:text-emerald-400 hover:underline">
                                     Configurar
                                 </Link>
                             </div>
@@ -634,13 +643,13 @@ export default function Dashboard({
                     </div>
 
                     {/* Tabla de Comparativa Multidimensional de Sedes */}
-                    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
-                        <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
+                        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                             <div>
-                                <h2 className="text-base font-bold text-slate-900">
+                                <h2 className="text-base font-bold text-slate-900 dark:text-white">
                                     Balance Operativo por Punto Digital y Aula Rural
                                 </h2>
-                                <p className="text-xs text-slate-500 font-medium">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                                     Desglose de atenciones, impresiones y salas congregadas por punto
                                 </p>
                             </div>
@@ -648,7 +657,7 @@ export default function Dashboard({
 
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                                <thead className="bg-slate-50 dark:bg-slate-800/60 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
                                     <tr>
                                         <th className="px-6 py-4">Sede / Aula Digital</th>
                                         <th className="px-4 py-4">Zona</th>
@@ -659,10 +668,10 @@ export default function Dashboard({
                                         <th className="px-6 py-4 text-right">Acción</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {comparativa_sedes.map((p) => (
-                                        <tr key={p.id_punto} className="hover:bg-slate-50/80 transition-colors">
-                                            <td className="px-6 py-4 font-bold text-slate-900 text-xs">
+                                        <tr key={p.id_punto} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                            <td className="px-6 py-4 font-bold text-slate-900 dark:text-white text-xs">
                                                 <div className="flex items-center gap-2">
                                                     <span className={`w-2 h-2 rounded-full ${p.zona === 'Rural' ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
                                                     <span>{p.nombre_punto}</span>
@@ -673,23 +682,23 @@ export default function Dashboard({
                                                 <span
                                                     className={`inline-block px-2 py-0.5 rounded-lg text-[10px] font-bold ${
                                                         p.zona === 'Rural'
-                                                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                                                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                                            ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60'
+                                                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'
                                                     }`}
                                                 >
                                                     {p.zona}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-4 text-center font-bold text-slate-800 text-xs tabular-nums">
+                                            <td className="px-4 py-4 text-center font-bold text-slate-800 dark:text-slate-200 text-xs tabular-nums">
                                                 {p.total_visitas.toLocaleString()}
                                             </td>
                                             <td className="px-4 py-4 text-center text-xs">
-                                                <span className="font-semibold text-slate-600">{p.porcentaje}%</span>
+                                                <span className="font-semibold text-slate-600 dark:text-slate-300">{p.porcentaje}%</span>
                                             </td>
-                                            <td className="px-4 py-4 text-center text-xs text-amber-700 font-bold tabular-nums">
+                                            <td className="px-4 py-4 text-center text-xs text-amber-700 dark:text-amber-400 font-bold tabular-nums">
                                                 {p.total_hojas.toLocaleString()} págs
                                             </td>
-                                            <td className="px-4 py-4 text-center text-xs text-slate-700 font-medium tabular-nums">
+                                            <td className="px-4 py-4 text-center text-xs text-slate-700 dark:text-slate-300 font-medium tabular-nums">
                                                 {p.total_prestamos} ({p.total_asistentes} pers.)
                                             </td>
                                             <td className="px-6 py-4 text-right">
@@ -697,7 +706,7 @@ export default function Dashboard({
                                                     onClick={() => {
                                                         router.get(route('dashboard'), { ...filters, id_punto: p.id_punto }, { preserveState: true });
                                                     }}
-                                                    className="btn-tactile text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 transition-colors"
+                                                    className="btn-tactile text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 transition-colors"
                                                 >
                                                     Filtrar esta sede
                                                 </button>
@@ -710,63 +719,63 @@ export default function Dashboard({
                     </div>
 
                     {/* Flujo de Atenciones Recientes */}
-                    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
-                        <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
+                        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                             <div>
-                                <h2 className="text-base font-bold text-slate-900">
+                                <h2 className="text-base font-bold text-slate-900 dark:text-white">
                                     Flujo de Atenciones Ciudadanas Recientes
                                 </h2>
-                                <p className="text-xs text-slate-500 font-medium">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                                     Últimos registros procesados en la red
                                 </p>
                             </div>
                             <Link
                                 href={route('visitas.index')}
-                                className="btn-tactile text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/70 px-3.5 py-1.5 rounded-xl border border-emerald-200 transition-colors flex items-center gap-1"
+                                className="btn-tactile text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/60 px-3.5 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 transition-colors flex items-center gap-1"
                             >
                                 <span>Ver Historial</span>
                                 <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
                         </div>
 
-                        <div className="divide-y divide-slate-100">
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
                             {recentVisits.map((v) => (
                                 <div
                                     key={v.id_visita}
-                                    className="p-4 sm:px-6 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                    className="p-4 sm:px-6 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className="w-10 h-10 rounded-2xl bg-slate-100 border border-slate-200 text-slate-700 font-black text-xs flex items-center justify-center shrink-0">
+                                        <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-black text-xs flex items-center justify-center shrink-0">
                                             {v.ciudadano?.nombres ? v.ciudadano.nombres.charAt(0) : 'C'}
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <Link
                                                     href={route('ciudadanos.show', v.ciudadano?.id_form_pvd || 1)}
-                                                    className="font-bold text-slate-900 text-xs hover:text-emerald-700 truncate"
+                                                    className="font-bold text-slate-900 dark:text-white text-xs hover:text-emerald-700 dark:hover:text-emerald-400 truncate"
                                                 >
                                                     {v.ciudadano?.nombre_completo || 'Ciudadano'}
                                                 </Link>
-                                                <span className="text-[10px] text-slate-400 font-mono">
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
                                                     CC {v.ciudadano?.documento}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
-                                                <span className="font-semibold text-slate-700">
+                                            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                                <span className="font-semibold text-slate-700 dark:text-slate-300">
                                                     {v.subcategoria?.nombre || v.categoria?.nombre || v.servicio_texto || 'Servicio General'}
                                                 </span>
                                                 <span>•</span>
-                                                <span className="text-slate-400">{v.punto?.nombre_punto}</span>
+                                                <span className="text-slate-400 dark:text-slate-500">{v.punto?.nombre_punto}</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
                                         <div className="text-right">
-                                            <div className="text-xs font-semibold text-slate-700">
+                                            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                                                 {new Date(v.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
-                                            <div className="text-[10px] text-slate-400">
+                                            <div className="text-[10px] text-slate-400 dark:text-slate-500">
                                                 Gestor: {v.gestor?.name || 'Ventanilla'}
                                             </div>
                                         </div>

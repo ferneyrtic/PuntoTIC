@@ -28,7 +28,7 @@ class CitizenController extends Controller
         $filters = $request->only(['search', 'id_punto', 'zona', 'nivel_educativo', 'estrato', 'sort_by', 'sort_dir']);
         $citizens = $this->citizenService->paginate($filters, 15);
         $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto']);
-        $documentTypes = DocumentType::where('activo', true)->get(['id_tipo', 'sigla', 'nombre_tipo']);
+        $documentTypes = $this->getActiveDocumentTypes();
 
         return Inertia::render('Citizens/Index', [
             'citizens' => $citizens,
@@ -41,7 +41,7 @@ class CitizenController extends Controller
     public function create(): Response
     {
         $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona']);
-        $documentTypes = DocumentType::where('activo', true)->get(['id_tipo', 'sigla', 'nombre_tipo']);
+        $documentTypes = $this->getActiveDocumentTypes();
         $categories = Category::with('subcategorias')->where('activo', true)->orderBy('orden')->get();
 
         return Inertia::render('Citizens/Create', [
@@ -95,7 +95,7 @@ class CitizenController extends Controller
     {
         $citizen->load(['tipoDocumento', 'punto']);
         $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona']);
-        $documentTypes = DocumentType::where('activo', true)->get(['id_tipo', 'sigla', 'nombre_tipo']);
+        $documentTypes = $this->getActiveDocumentTypes();
 
         return Inertia::render('Citizens/Edit', [
             'citizen' => $citizen,
@@ -189,5 +189,14 @@ class CitizenController extends Controller
             ->get(['id_form_pvd', 'documento', 'nombres', 'apellidos', 'barrio', 'edad']);
 
         return response()->json($students);
+    }
+
+    protected function getActiveDocumentTypes()
+    {
+        return DocumentType::all()->filter(fn ($dt) => $dt->activo)->map(fn ($dt) => [
+            'id_tipo' => $dt->id_tipo,
+            'sigla' => $dt->sigla,
+            'nombre_tipo' => $dt->nombre_tipo,
+        ])->values();
     }
 }

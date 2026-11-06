@@ -97,13 +97,43 @@ class RolesAndPermissionsSeeder extends Seeder
             'gestionar_prestamos',
         ]);
 
-        // Compatibilidad con rol legacy
+        // Compatibilidad con rol legacy y Coordinador General
         $legacyCoordinador = Role::firstOrCreate(['name' => 'Coordinador', 'guard_name' => 'web']);
         $legacyCoordinador->syncPermissions($coordinadorPvdRole->permissions);
+
+        // Rol Coordinador General (Supervisión global municipal de todas las sedes)
+        $coordGeneralRole = Role::firstOrCreate(['name' => 'Coordinador General', 'guard_name' => 'web']);
+        $coordGeneralRole->syncPermissions([
+            'ver_dashboard',
+            'gestionar_ciudadanos',
+            'editar_todos_campos_ciudadano',
+            'registrar_visitas',
+            'acceder_modo_pvd_general',
+            'acceder_modo_aula_digital',
+            'gestionar_prestamos',
+            'gestionar_impresiones',
+            'exportar_reportes',
+            'gestionar_categorias',
+            'gestionar_campos_dinamicos',
+            'ver_auditoria',
+        ]);
 
         // =====================================================================
         // CUENTAS OFICIALES PARA PRUEBAS Y OPERACIÓN
         // =====================================================================
+
+        // 0. Coordinador General Municipal
+        $coordGeneral = User::updateOrCreate(
+            ['email' => 'coordinador.general@acacias.gov.co'],
+            [
+                'name' => 'Coordinador General TIC',
+                'password' => Hash::make('CoordGeneral2026*'),
+                'id_punto' => null,
+                'cargo' => 'Coordinador General PVD',
+                'activo' => true,
+            ]
+        );
+        $coordGeneral->syncRoles(['Coordinador General', 'Coordinador']);
 
         // 1. Administrador TIC
         $admin = User::updateOrCreate(
@@ -231,10 +261,8 @@ class RolesAndPermissionsSeeder extends Seeder
                 'id_punto' => 4,
                 'cargo' => 'Gestor Sala Chichimene',
                 'activo' => true,
-                'puede_acceder_pvd_general' => true,
-                'puede_acceder_aula_digital' => true,
             ]
         );
-        $wilberAvila->syncRoles(['Gestor Aula Digital', 'Gestor']);
+        $wilberAvila->syncRoles(['Gestor Aula Digital']);
     }
 }

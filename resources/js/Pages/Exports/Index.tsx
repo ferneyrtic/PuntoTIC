@@ -30,6 +30,7 @@ interface Props {
     currentUserRole?: string;
     responsableDefault?: string;
     isAdmin?: boolean;
+    canExportAllPoints?: boolean;
     userPointId?: number | null;
 }
 
@@ -41,16 +42,19 @@ export default function ExportsIndex({
     currentUserRole = 'Gestor PVD',
     responsableDefault = 'ADMIN',
     isAdmin = false,
+    canExportAllPoints = false,
     userPointId = null,
 }: Props) {
     const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const initialTipo = (searchParams?.get('tipo') as any) || 'visitas';
 
+    const canSelectAnyPoint = isAdmin || canExportAllPoints;
+
     const [reportType, setReportType] = useState<'visitas' | 'ciudadanos' | 'prestamos' | 'impresiones' | 'asistencia'>(
         ['visitas', 'ciudadanos', 'prestamos', 'impresiones', 'asistencia'].includes(initialTipo) ? initialTipo : 'visitas'
     );
     const [format, setFormat] = useState<'xlsx' | 'csv'>('xlsx');
-    const defaultPoint = !isAdmin && userPointId ? String(userPointId) : '';
+    const defaultPoint = !canSelectAnyPoint && userPointId ? String(userPointId) : '';
     const [selectedPoint, setSelectedPoint] = useState(
         searchParams?.get('id_punto') || defaultPoint
     );
@@ -290,13 +294,17 @@ export default function ExportsIndex({
                         <div>
                             <div className="flex items-center justify-between mb-1">
                                 <label className="block text-xs font-bold text-slate-700">Sede PVD</label>
-                                {!isAdmin && userPointId && (
+                                {!canSelectAnyPoint && userPointId ? (
                                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
                                         <Lock className="w-2.5 h-2.5 text-slate-400" /> Sede Fija
                                     </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                                        <ShieldCheck className="w-3 h-3 text-emerald-500" /> Multi-Sede
+                                    </span>
                                 )}
                             </div>
-                            {!isAdmin && userPointId ? (
+                            {!canSelectAnyPoint && userPointId ? (
                                 <div className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-800 flex items-center gap-2">
                                     <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                                     <span className="truncate">
@@ -309,7 +317,7 @@ export default function ExportsIndex({
                                     onChange={(e) => setSelectedPoint(e.target.value)}
                                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 focus:border-alcaldia-green outline-none"
                                 >
-                                    <option value="">Todas las Sedes PVD</option>
+                                    <option value="">Todas las Sedes PVD (Consolidado Municipal)</option>
                                     {points.map((p) => (
                                         <option key={p.id_punto} value={p.id_punto}>
                                             {p.nombre_punto}

@@ -18,8 +18,11 @@ class Citizen extends Model
     protected $primaryKey = 'id_form_pvd';
 
     protected $fillable = [
+        'id',
+        'id_form_pvd',
         'documento',
         'id_tipo',
+        'tipo_id',
         'nombres',
         'apellidos',
         'fecha_nac',
@@ -49,13 +52,42 @@ class Citizen extends Model
         'activo' => 'boolean',
     ];
 
-    protected $appends = ['nombre_completo'];
+    protected $appends = ['nombre_completo', 'id_form_pvd', 'documento', 'id_tipo'];
 
     protected function nombreCompleto(): Attribute
     {
         return Attribute::make(
             get: fn () => trim("{$this->nombres} {$this->apellidos}")
         );
+    }
+
+    public function getIdFormPvdAttribute()
+    {
+        return $this->attributes['id_form_pvd'] ?? $this->attributes['id'] ?? null;
+    }
+
+    public function getDocumentoAttribute()
+    {
+        return $this->attributes['documento'] ?? (isset($this->attributes['id']) ? (string)$this->attributes['id'] : '');
+    }
+
+    public function getIdTipoAttribute()
+    {
+        return $this->attributes['id_tipo'] ?? $this->attributes['tipo_id'] ?? null;
+    }
+
+    public function setDocumentoAttribute($value)
+    {
+        $this->attributes['documento'] = $value;
+        if (! isset($this->attributes['id']) || empty($this->attributes['id'])) {
+            $this->attributes['id'] = $value;
+        }
+    }
+
+    public function setIdTipoAttribute($value)
+    {
+        $this->attributes['id_tipo'] = $value;
+        $this->attributes['tipo_id'] = $value;
     }
 
     public function tipoDocumento(): BelongsTo
@@ -103,6 +135,7 @@ class Citizen extends Model
 
         return $query->where(function (Builder $q) use ($term) {
             $q->where('documento', 'like', "%{$term}%")
+              ->orWhere('id', 'like', "%{$term}%")
               ->orWhere('nombres', 'like', "%{$term}%")
               ->orWhere('apellidos', 'like', "%{$term}%")
               ->orWhere('correo', 'like', "%{$term}%")

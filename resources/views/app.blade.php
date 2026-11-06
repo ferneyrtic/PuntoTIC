@@ -5,9 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <title inertia>{{ config('app.name', 'PuntoTIC') }}</title>
-        <link rel="icon" type="image/png" href="/images/icons/favicon-32x32.png">
-        <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png">
-        <link rel="manifest" href="/manifest.webmanifest">
+        <link rel="icon" type="image/png" href="{{ asset('images/icons/favicon-32x32.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('images/icons/apple-touch-icon.png') }}">
+        <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
         <meta name="theme-color" content="#1B6B35">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">

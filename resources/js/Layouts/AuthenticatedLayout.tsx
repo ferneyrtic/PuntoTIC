@@ -1,5 +1,6 @@
 import React, { useState, useEffect, PropsWithChildren, ReactNode } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
+import { asset } from '@/utils/asset';
 import {
     LayoutDashboard,
     UserPlus,
@@ -22,6 +23,9 @@ import {
     Download,
 } from 'lucide-react';
 import PwaStatusBanner from '@/Components/PwaStatusBanner';
+import BackToTop from '@/Components/ui/BackToTop';
+import PageProgressBar from '@/Components/ui/PageProgressBar';
+import DarkModeToggle from '@/Components/ui/DarkModeToggle';
 import { promptPwaInstall, isPwaStandalone } from '@/services/pwaService';
 
 interface Props {
@@ -30,12 +34,21 @@ interface Props {
 
 export default function AuthenticatedLayout({ header, children }: PropsWithChildren<Props>) {
     const { auth, flash, points, selectedPointId } = usePage<any>().props;
+    const [pageLoading, setPageLoading] = useState(false);
+
+    // Track Inertia navigation for subtle content fade
+    useEffect(() => {
+        const start = router.on('start', () => setPageLoading(true));
+        const finish = router.on('finish', () => setTimeout(() => setPageLoading(false), 200));
+        return () => { start(); finish(); };
+    }, []);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dismissFlash, setDismissFlash] = useState(false);
     const [quickSearch, setQuickSearch] = useState('');
     const [canInstallApp, setCanInstallApp] = useState(false);
     const [isInstalled, setIsInstalled] = useState(false);
     const user = auth?.user;
+    const isAdmin = auth?.is_admin ?? false;
 
     const currentUrl = window.location.pathname;
 
@@ -157,12 +170,16 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     icon: SlidersHorizontal,
                     active: currentUrl.startsWith('/campos-dinamicos'),
                 },
-                {
-                    name: 'Configuración y Auditoría',
-                    href: route('configuracion.index'),
-                    icon: Settings,
-                    active: currentUrl.startsWith('/configuracion'),
-                },
+                ...(isAdmin
+                    ? [
+                          {
+                              name: 'Configuración y Auditoría',
+                              href: route('configuracion.index'),
+                              icon: Settings,
+                              active: currentUrl.startsWith('/configuracion'),
+                          },
+                      ]
+                    : []),
             ],
         },
     ];
@@ -172,7 +189,8 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
         'Punto Vive Digital';
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col md:flex-row font-sans selection:bg-emerald-600 selection:text-white">
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col md:flex-row font-sans selection:bg-emerald-600 selection:text-white transition-colors duration-200">
+            <PageProgressBar />
             {/* Mobile Header */}
             <header className="md:hidden bg-slate-950 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800/80">
                 <div className="flex items-center space-x-3">
@@ -185,7 +203,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     </button>
                     <div className="bg-white px-2.5 py-1 rounded-xl shadow-xs flex items-center justify-center">
                         <img
-                            src="/images/logo_alcaldia.png"
+                            src={asset('images/logo_alcaldia.png')}
                             alt="Logo Alcaldía"
                             className="h-8 w-auto max-w-[130px] object-contain"
                         />
@@ -204,6 +222,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <DarkModeToggle />
                     <Link
                         href={route('visitas.create')}
                         className="btn-tactile p-2 rounded-xl bg-emerald-600 text-white shadow-sm"
@@ -225,7 +244,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     {/* Official Banner Card: Full-width container giving maximum visibility to the logo */}
                     <div className="bg-white rounded-2xl px-3.5 py-3 shadow-md border border-white/10 flex items-center justify-center mb-3 group transition-all duration-200 hover:shadow-lg">
                         <img
-                            src="/images/logo_alcaldia.png"
+                            src={asset('images/logo_alcaldia.png')}
                             alt="Alcaldía de Acacías"
                             className="h-11 w-full object-contain"
                         />
@@ -320,6 +339,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                             </div>
                         </div>
 
+                        <DarkModeToggle />
                         <Link
                             href={route('logout')}
                             method="post"
@@ -345,24 +365,24 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-6">
                 {/* Modern Command Topbar */}
-                <header className="bg-white sticky top-0 z-20 px-4 md:px-8 py-2.5 flex items-center justify-between border-b border-slate-200/80 shadow-2xs">
+                <header className="bg-white dark:bg-slate-900 sticky top-0 z-20 px-4 md:px-8 py-2.5 flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 shadow-2xs transition-colors duration-200">
                     <div className="flex items-center gap-3 min-w-0">
                         {/* Institutional Brand Badge in Topbar */}
-                        <div className="hidden sm:flex items-center gap-2.5 pr-3 border-r border-slate-200">
+                        <div className="hidden sm:flex items-center gap-2.5 pr-3 border-r border-slate-200 dark:border-slate-800">
                             <img
-                                src="/images/escudo_acacias.png"
+                                src={asset('images/escudo_acacias.png')}
                                 alt="Escudo Alcaldía de Acacías"
                                 className="h-7 w-auto object-contain"
                             />
                             <div className="leading-tight">
-                                <span className="text-xs font-black text-slate-900 tracking-tight block">Alcaldía de Acacías</span>
-                                <span className="text-[10px] text-emerald-700 font-bold tracking-wide">Puntos Vive Digital</span>
+                                <span className="text-xs font-black text-slate-900 dark:text-white tracking-tight block">Alcaldía de Acacías</span>
+                                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold tracking-wide">Puntos Vive Digital</span>
                             </div>
                         </div>
 
                         {/* Active Sede Badge positioned elegantly in the Topbar */}
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 shrink-0">
-                            <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 shrink-0">
+                            <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                             <span className="truncate max-w-[200px] sm:max-w-xs">{currentPointName}</span>
                         </div>
                     </div>
@@ -377,18 +397,21 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                                 placeholder="Buscar ciudadano o CC..."
                                 value={quickSearch}
                                 onChange={(e) => setQuickSearch(e.target.value)}
-                                className="w-full pl-9 pr-14 py-2 rounded-xl bg-slate-100/80 hover:bg-slate-100 border border-slate-200/80 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+                                className="w-full pl-9 pr-14 py-2 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                             />
-                            <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white border border-slate-200 text-slate-400 pointer-events-none">
+                            <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-400 dark:text-slate-300 pointer-events-none">
                                 ⌘K
                             </kbd>
                         </form>
 
                         {/* Calendar Date Badge */}
-                        <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700">
-                            <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                        <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                            <Calendar className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                             <span className="capitalize">{currentDateFormatted}</span>
                         </div>
+
+                        {/* Dark Mode Toggle in Topbar */}
+                        <DarkModeToggle showLabel={false} />
 
                         {/* Direct Action */}
                         <Link
@@ -441,7 +464,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                 )}
 
                 {/* Page Content Container */}
-                <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+                <main className={`flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6 transition-opacity duration-200 ${pageLoading ? 'opacity-60' : 'opacity-100'}`}>
                     {header && (
                         <div className="animate-fade-in">
                             {header}
@@ -451,14 +474,16 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                 </main>
             </div>
 
+            <BackToTop />
+
             {/* Mobile Bottom Thumb Navigation Bar */}
-            <div className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 z-30 px-3 py-2 flex items-center justify-around shadow-xl">
+            <div className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200/90 dark:border-slate-800/90 z-30 px-3 py-2 flex items-center justify-around shadow-xl transition-colors duration-200">
                 <Link
                     href={route('dashboard')}
                     className={`btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
                         currentUrl === '/dashboard' || currentUrl === '/'
-                            ? 'text-emerald-700'
-                            : 'text-slate-500 hover:text-slate-800'
+                            ? 'text-emerald-700 dark:text-emerald-400'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                     }`}
                 >
                     <LayoutDashboard className="w-5 h-5" />
@@ -469,8 +494,8 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     href={route('visitas.index')}
                     className={`btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
                         currentUrl === '/visitas'
-                            ? 'text-emerald-700'
-                            : 'text-slate-500 hover:text-slate-800'
+                            ? 'text-emerald-700 dark:text-emerald-400'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                     }`}
                 >
                     <CalendarCheck className="w-5 h-5" />
@@ -479,7 +504,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
 
                 <Link
                     href={route('visitas.create')}
-                    className="btn-tactile -mt-5 flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-700/30 ring-4 ring-white"
+                    className="btn-tactile -mt-5 flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-700/30 ring-4 ring-white dark:ring-slate-900"
                     title="Registrar Visita"
                 >
                     <UserPlus className="w-5 h-5" />
@@ -489,8 +514,8 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     href={route('ciudadanos.index')}
                     className={`btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold ${
                         currentUrl.startsWith('/ciudadanos')
-                            ? 'text-emerald-700'
-                            : 'text-slate-500 hover:text-slate-800'
+                            ? 'text-emerald-700 dark:text-emerald-400'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                     }`}
                 >
                     <Users className="w-5 h-5" />
@@ -499,7 +524,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
 
                 <button
                     onClick={() => setSidebarOpen(true)}
-                    className="btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold text-slate-500 hover:text-slate-800"
+                    className="btn-tactile flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                 >
                     <Menu className="w-5 h-5" />
                     <span>Más</span>

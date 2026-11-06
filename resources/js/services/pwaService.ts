@@ -63,8 +63,9 @@ export function registerPwaServiceWorker(): void {
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+            const swPath = window.location.pathname.startsWith('/test') ? '/test/sw.js' : '/sw.js';
             navigator.serviceWorker
-                .register('/sw.js')
+                .register(swPath)
                 .then((registration) => {
                     // Chequear si hay actualización en espera
                     registration.addEventListener('updatefound', () => {

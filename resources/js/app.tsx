@@ -26,6 +26,15 @@ createInertiaApp({
     },
 });
 
+// Asegurar que por defecto inicie en Modo Claro institucional
+if (typeof window !== 'undefined') {
+    if (localStorage.getItem('puntotic-theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+}
+
 // Inicializar capacidades PWA (Service Worker y prompt de instalación)
 registerPwaServiceWorker();
 initPwaInstallListener();

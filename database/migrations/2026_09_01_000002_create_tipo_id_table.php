@@ -8,13 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('tipo_id', function (Blueprint $table) {
-            $table->id('id_tipo');
-            $table->string('sigla', 10)->unique();
-            $table->string('nombre_tipo', 100);
-            $table->boolean('activo')->default(true);
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('tipo_id')) {
+            Schema::create('tipo_id', function (Blueprint $table) {
+                $table->id('id_tipo');
+                $table->string('sigla', 10)->unique();
+                $table->string('nombre_tipo', 100);
+                $table->boolean('activo')->default(true);
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void

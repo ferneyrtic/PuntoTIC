@@ -15,13 +15,26 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'names',
         'email',
         'password',
         'id_punto',
+        'id_perfil',
         'telefono',
         'cargo',
         'activo',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function ($user) {
+            if (!empty($user->name) && empty($user->names)) {
+                $user->names = $user->name;
+            } elseif (!empty($user->names) && empty($user->name)) {
+                $user->name = $user->names;
+            }
+        });
+    }
 
     protected $hidden = [
         'password',
@@ -43,6 +56,7 @@ class User extends Authenticatable
         'es_gestor_pvd',
         'puede_acceder_aula_digital',
         'puede_acceder_pvd_general',
+        'puede_exportar_todas_sedes',
         'roles_nombres',
     ];
 
@@ -84,6 +98,19 @@ class User extends Authenticatable
     public function getPuedeAccederPvdGeneralAttribute(): bool
     {
         return true;
+    }
+
+    public function getPuedeExportarTodasSedesAttribute(): bool
+    {
+        if ($this->hasRole(['Administrador', 'Coordinador General', 'Coordinador', 'Coordinador PVD', 'Coordinador Aula Digital'])) {
+            return true;
+        }
+
+        if ($this->cargo && str_contains(mb_strtolower($this->cargo), 'coordinador')) {
+            return true;
+        }
+
+        return false;
     }
 
     public function punto(): BelongsTo

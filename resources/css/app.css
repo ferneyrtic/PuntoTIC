@@ -8,8 +8,16 @@
         -webkit-tap-highlight-color: transparent;
     }
 
+    html.dark {
+        color-scheme: dark;
+    }
+
     body {
-        @apply bg-slate-50 text-slate-800 antialiased selection:bg-emerald-500 selection:text-white;
+        @apply bg-slate-50 text-slate-800 antialiased selection:bg-emerald-500 selection:text-white transition-colors duration-200;
+    }
+
+    html.dark body {
+        @apply bg-slate-950 text-slate-100;
     }
 
     /* Custom slim & rounded scrollbar */
@@ -22,6 +30,58 @@
     }
     ::-webkit-scrollbar-thumb {
         @apply bg-slate-200 hover:bg-slate-300 rounded-full transition-colors;
+    }
+    html.dark ::-webkit-scrollbar-thumb {
+        @apply bg-slate-700 hover:bg-slate-600;
+    }
+
+    /* Global Dark Mode smart overrides */
+    .dark .bg-white {
+        background-color: #0f172a;
+        color: #f8fafc;
+    }
+    .dark .bg-slate-50 {
+        background-color: #0b1120;
+    }
+    .dark .bg-slate-100 {
+        background-color: #1e293b;
+        color: #e2e8f0;
+    }
+    .dark .border-slate-200,
+    .dark .border-slate-200\/90,
+    .dark .border-slate-200\/80,
+    .dark .border-slate-200\/60,
+    .dark .border-slate-100 {
+        border-color: #334155;
+    }
+    .dark .border-slate-300 {
+        border-color: #475569;
+    }
+    .dark .text-slate-900,
+    .dark .text-slate-800 {
+        color: #f1f5f9;
+    }
+    .dark .text-slate-700 {
+        color: #cbd5e1;
+    }
+    .dark .text-slate-600,
+    .dark .text-slate-500 {
+        color: #94a3b8;
+    }
+    .dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+    .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+        border-color: #1e293b;
+    }
+    .dark input:not([type="checkbox"]):not([type="radio"]),
+    .dark select,
+    .dark textarea {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+    .dark input::placeholder,
+    .dark textarea::placeholder {
+        color: #64748b !important;
     }
 }
 
@@ -64,5 +124,18 @@
             background-position: 200% 0;
         }
     }
+
+    /* Page progress bar glow */
+    .progress-bar-glow {
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+
+    /* Stagger animation for lists */
+    .stagger-child:nth-child(1) { animation-delay: 0ms; }
+    .stagger-child:nth-child(2) { animation-delay: 60ms; }
+    .stagger-child:nth-child(3) { animation-delay: 120ms; }
+    .stagger-child:nth-child(4) { animation-delay: 180ms; }
+    .stagger-child:nth-child(5) { animation-delay: 240ms; }
+    .stagger-child:nth-child(6) { animation-delay: 300ms; }
 }
 
