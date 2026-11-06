@@ -83,7 +83,7 @@ class VisitService
                     ->first();
 
                 if ($existingChild) {
-                    $citizenId = $existingChild->id_form_pvd;
+                    $citizenId = $existingChild->id ?: $existingChild->id_form_pvd;
                 } else {
                     $count = Citizen::where('documento', 'like', "ESC-{$prefix}-%")->count() + 1;
                     $autoDoc = sprintf("ESC-%s-%05d", $prefix, $count);
@@ -100,12 +100,15 @@ class VisitService
                         'id_punto' => $pointId,
                         'id_gestor' => Auth::id(),
                     ]);
-                    $citizenId = $citizen->id_form_pvd;
+                    $citizenId = $citizen->id ?: $citizen->id_form_pvd;
                 }
             }
             // Caso B: Registro tradicional PVD con número de documento
             elseif (! $citizenId && ! empty($data['documento'])) {
-                $citizen = Citizen::where('documento', trim($data['documento']))->first();
+                $docClean = trim((string) $data['documento']);
+                $citizen = Citizen::where('documento', $docClean)
+                    ->orWhere('id', is_numeric($docClean) ? (int)$docClean : 0)
+                    ->first();
                 if (! $citizen) {
                     $citizen = $this->citizenService->createCitizen([
                         'documento' => $data['documento'],
@@ -120,17 +123,17 @@ class VisitService
                         'barrio' => $data['barrio'] ?? null,
                         'zona' => $data['zona'] ?? ($isAulaDigital ? 'Rural' : 'Urbana'),
                         'up' => $data['up'] ?? null,
-                        'estrato' => $data['estrato'] ?? null,
-                        'grupo_etnico' => $data['grupo_etnico'] ?? null,
-                        'nivel_educativo' => $data['nivel_educativo'] ?? null,
-                        'ocupacion' => $data['ocupacion'] ?? null,
+                        'estrato' => $data['estrato'] ?? 1,
+                        'grupo_etnico' => $data['grupo_etnico'] ?? 'NINGUNO',
+                        'nivel_educativo' => $data['nivel_educativo'] ?? 'PRIMARIA',
+                        'ocupacion' => $data['ocupacion'] ?? 'OTRO',
                         'g_poblacional' => $data['g_poblacional'] ?? null,
                         't_aseguramiento' => $data['t_aseguramiento'] ?? null,
                         'id_punto' => $pointId,
                         'id_gestor' => Auth::id(),
                     ]);
                 }
-                $citizenId = $citizen->id_form_pvd;
+                $citizenId = $citizen->id ?: $citizen->id_form_pvd;
             }
 
             // Categoría por defecto si es aula digital y no se seleccionó

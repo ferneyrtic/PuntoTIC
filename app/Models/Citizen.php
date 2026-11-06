@@ -15,7 +15,30 @@ class Citizen extends Model
     use HasFactory;
 
     protected $table = 'form_pvd';
-    protected $primaryKey = 'id_form_pvd';
+    protected $primaryKey = 'id';
+    public $incrementing = false;
+
+    protected static function booted(): void
+    {
+        static::saving(function ($citizen) {
+            if (empty($citizen->id) && !empty($citizen->documento)) {
+                $num = preg_replace('/\D/', '', (string)$citizen->documento);
+                $citizen->id = !empty($num) ? (int)$num : (int)(substr((string)time(), -8) . rand(10, 99));
+            }
+            if (empty($citizen->id_form_pvd)) {
+                $citizen->id_form_pvd = $citizen->id;
+            }
+            if (empty($citizen->tipo_id) && !empty($citizen->id_tipo)) {
+                $citizen->tipo_id = $citizen->id_tipo;
+            } elseif (empty($citizen->id_tipo) && !empty($citizen->tipo_id)) {
+                $citizen->id_tipo = $citizen->tipo_id;
+            }
+            if (empty($citizen->tipo_id)) {
+                $citizen->tipo_id = 1;
+                $citizen->id_tipo = 1;
+            }
+        });
+    }
 
     protected $fillable = [
         'id',

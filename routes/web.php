@@ -16,11 +16,14 @@ use Illuminate\Support\Facades\Route;
 
 // Redirección inicial al Dashboard, Portal Ciudadano o Login
 Route::get('/', function () {
-    if (auth()->check() && auth()->user()->hasRole(['Usuario', 'Ciudadano'])) {
-        return redirect()->route('portal.index');
+    if (auth()->check()) {
+        if (auth()->user()->hasRole(['Usuario', 'Ciudadano']) || auth()->user()->es_usuario_ciudadano) {
+            return redirect()->route('portal.index');
+        }
+        return redirect()->route('dashboard');
     }
 
-    return redirect()->route('dashboard');
+    return redirect()->route('login');
 });
 
 // Rutas autenticadas del sistema PVD

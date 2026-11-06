@@ -13,7 +13,7 @@ class Visit extends Model
     use HasFactory;
 
     protected $table = 'visitas';
-    protected $primaryKey = 'id_visita';
+    protected $primaryKey = 'id_visitas';
 
     protected $fillable = [
         'id_visita',

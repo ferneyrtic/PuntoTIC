@@ -33,9 +33,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $user = $request->user();
-        if ($user && $user->hasRole(['Usuario', 'Ciudadano'])) {
-            return redirect()->intended(route('portal.index'));
+        $user = Auth::user();
+        if ($user && ($user->hasRole(['Usuario', 'Ciudadano']) || $user->es_usuario_ciudadano)) {
+            return redirect()->route('portal.index');
         }
 
         return redirect()->intended(route('dashboard'));
