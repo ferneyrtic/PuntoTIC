@@ -1,19 +1,25 @@
 <?php
 
+use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CitizenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DynamicFieldController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PrintRecordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoomLoanController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\VisitController;
-use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
 
-// Redirección inicial al Dashboard o Login
+// Redirección inicial al Dashboard, Portal Ciudadano o Login
 Route::get('/', function () {
+    if (auth()->check() && auth()->user()->hasRole(['Usuario', 'Ciudadano'])) {
+        return redirect()->route('portal.index');
+    }
+
     return redirect()->route('dashboard');
 });
 
@@ -21,6 +27,7 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     // Dashboard General con métricas e IA
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/api/metas', [DashboardController::class, 'updateMetas'])->name('metas.update');
 
     // Gestión de Ciudadanos (Directorio, Búsqueda, Creación y Edición)
     Route::resource('ciudadanos', CitizenController::class);
@@ -65,11 +72,19 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('campos-dinamicos', DynamicFieldController::class)->only(['index', 'store', 'destroy']);
     });
 
-    // Configuración y Auditoría del Sistema (Blindada: Exclusivo para Administrador)
+    // Configuración del Sistema (Blindada: Exclusivo para Administrador)
     Route::middleware(['role:Administrador'])->group(function () {
         Route::get('/configuracion', [SettingController::class, 'index'])->name('configuracion.index');
         Route::post('/configuracion', [SettingController::class, 'update'])->name('configuracion.update');
     });
+
+    // Registro de Auditoría y Trazabilidad
+    Route::get('/auditoria', [AuditLogController::class, 'index'])->name('auditoria.index');
+
+    // Portal Ciudadano y Solicitud de Espacios / Salas
+    Route::get('/portal', [PortalController::class, 'index'])->name('portal.index');
+    Route::post('/portal/solicitar-sala', [PortalController::class, 'solicitarSala'])->name('portal.solicitar-sala');
+    Route::get('/api/portal/disponibilidad', [PortalController::class, 'disponibilidad'])->name('portal.disponibilidad');
 
     // Perfil de usuario autenticado
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

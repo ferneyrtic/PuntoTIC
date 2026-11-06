@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Citizen;
+use App\Models\AuditLog;
 use App\Models\Point;
 use App\Models\RoomLoan;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,17 +20,17 @@ class RoomLoanController extends Controller
 
         $loans = RoomLoan::with(['ciudadano', 'punto', 'gestor'])
             ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
-            ->when($filters['id_punto'] ?? null, fn($q, $p) => $q->where('id_punto', $p))
-            ->when($filters['estado'] ?? null, fn($q, $e) => $q->where('estado', $e))
-            ->when($filters['tipo_actividad'] ?? null, fn($q, $t) => $q->where('tipo_actividad', $t))
+            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where('id_punto', $p))
+            ->when($filters['estado'] ?? null, fn ($q, $e) => $q->where('estado', $e))
+            ->when($filters['tipo_actividad'] ?? null, fn ($q, $t) => $q->where('tipo_actividad', $t))
             ->when($filters['search'] ?? null, function ($q, $search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('nombre_responsable_texto', 'like', "%{$search}%")
                         ->orWhere('observaciones', 'like', "%{$search}%")
                         ->orWhereHas('ciudadano', function ($c) use ($search) {
                             $c->where('nombres', 'like', "%{$search}%")
-                              ->orWhere('apellidos', 'like', "%{$search}%")
-                              ->orWhere('documento', 'like', "%{$search}%");
+                                ->orWhere('apellidos', 'like', "%{$search}%")
+                                ->orWhere('documento', 'like', "%{$search}%");
                         });
                 });
             })
@@ -46,7 +47,7 @@ class RoomLoanController extends Controller
         // Eventos completos para la vista de calendario
         $selectedMonth = $request->get('mes', now()->format('Y-m'));
         try {
-            $monthCarbon = \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth);
+            $monthCarbon = Carbon::createFromFormat('Y-m', $selectedMonth);
         } catch (\Exception $e) {
             $monthCarbon = now();
             $selectedMonth = now()->format('Y-m');
@@ -57,8 +58,8 @@ class RoomLoanController extends Controller
 
         $calendarLoans = RoomLoan::with(['ciudadano', 'punto'])
             ->whereBetween('fecha_prestamo', [$monthStart, $monthEnd])
-            ->when($filters['id_punto'] ?? null, fn($q, $p) => $q->where('id_punto', $p))
-            ->when($filters['tipo_actividad'] ?? null, fn($q, $t) => $q->where('tipo_actividad', $t))
+            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where('id_punto', $p))
+            ->when($filters['tipo_actividad'] ?? null, fn ($q, $t) => $q->where('tipo_actividad', $t))
             ->orderBy('fecha_prestamo')
             ->get();
 
@@ -69,6 +70,7 @@ class RoomLoanController extends Controller
             'filters' => $filters,
             'points' => $points,
             'tiposActividad' => $tiposActividad,
+            'pendingCount' => RoomLoan::where('estado', 'Pendiente')->count(),
         ]);
     }
 
@@ -84,25 +86,53 @@ class RoomLoanController extends Controller
             'hora_inicio' => ['nullable', 'string'],
             'hora_fin' => ['nullable', 'string'],
             'observaciones' => ['nullable', 'string'],
-            'estado' => ['required', 'in:Reservado,En curso,Completado,Cancelado'],
+            'estado' => ['required', 'in:Pendiente,Reservado,En curso,Completado,Cancelado'],
         ]);
 
         $validated['id_gestor'] = Auth::id();
 
-        RoomLoan::create($validated);
+        $loan = RoomLoan::create($validated);
+
+        AuditLog::registrar(
+            accion: 'PRESTAMO_SALA',
+            modulo: 'prestamos',
+            registroId: (string) $loan->id_prestamo,
+            antiguos: null,
+            nuevos: [
+                'tipo_actividad' => $loan->tipo_actividad,
+                'asistentes' => $loan->num_asistentes,
+                'fecha_prestamo' => $loan->fecha_prestamo,
+                'id_punto' => $loan->id_punto,
+                'estado' => $loan->estado,
+            ]
+        );
 
         return redirect()->route('prestamos.index')
             ->with('success', 'Préstamo de sala registrado con éxito.');
     }
 
-    public function update(Request $request, RoomLoan $loan): RedirectResponse
+    public function update(Request $request, RoomLoan $prestamo): RedirectResponse
     {
+        $loan = $prestamo;
+
         $validated = $request->validate([
-            'estado' => ['required', 'in:Reservado,En curso,Completado,Cancelado'],
+            'estado' => ['required', 'in:Pendiente,Reservado,En curso,Completado,Cancelado'],
             'observaciones' => ['nullable', 'string'],
         ]);
 
+        $oldData = ['estado' => $loan->estado, 'observaciones' => $loan->observaciones];
+        if (empty($loan->id_gestor)) {
+            $loan->id_gestor = Auth::id();
+        }
         $loan->update($validated);
+
+        AuditLog::registrar(
+            accion: 'ACTUALIZAR_PRESTAMO',
+            modulo: 'prestamos',
+            registroId: (string) $loan->id_prestamo,
+            antiguos: $oldData,
+            nuevos: $validated
+        );
 
         return redirect()->route('prestamos.index')
             ->with('success', 'Estado del préstamo actualizado.');

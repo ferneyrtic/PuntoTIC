@@ -6,7 +6,7 @@
         "expected": "Usuario existe y hash de contraseña coincide",
         "actual": "Usuario autenticado correctamente",
         "passed": true,
-        "time_ms": 183.58,
+        "time_ms": 236.24,
         "notes": ""
     },
     {
@@ -16,7 +16,7 @@
         "expected": "26 años",
         "actual": "26 años",
         "passed": true,
-        "time_ms": 1.3,
+        "time_ms": 42.95,
         "notes": ""
     },
     {
@@ -26,7 +26,7 @@
         "expected": "nivel_educativo: Maestría \/ Posgrado, barrio: Alcaraván, audit log registrado",
         "actual": "nivel_educativo: Maestría \/ Posgrado, barrio: Alcaraván, audit: OK",
         "passed": true,
-        "time_ms": 13.47,
+        "time_ms": 108.71,
         "notes": ""
     },
     {
@@ -36,7 +36,7 @@
         "expected": "Visita creada y vinculada correctamente a id_form_pvd",
         "actual": "Visita persistida con FK válida",
         "passed": true,
-        "time_ms": 5.86,
+        "time_ms": 114.84,
         "notes": ""
     },
     {
@@ -44,9 +44,9 @@
         "name": "Auto-registro Atómico de Ciudadano Nuevo durante Registro de Visita",
         "category": "Funcional",
         "expected": "Ciudadano nuevo creado y visita vinculada en una sola transacción",
-        "actual": "Ciudadano 7778889992 creado con id 23871 y visita vinculada",
+        "actual": "Ciudadano 7778889992 creado con id 943164104091992 y visita vinculada",
         "passed": true,
-        "time_ms": 4.52,
+        "time_ms": 10.07,
         "notes": ""
     },
     {
@@ -56,7 +56,7 @@
         "expected": "Convenios Formativos y Cursos SENA \/ Alcaldía",
         "actual": "Convenios Formativos y Cursos SENA \/ Alcaldía",
         "passed": true,
-        "time_ms": 1.95,
+        "time_ms": 2.09,
         "notes": ""
     },
     {
@@ -66,7 +66,7 @@
         "expected": "14 hojas registradas",
         "actual": "14 hojas registradas",
         "passed": true,
-        "time_ms": 1.74,
+        "time_ms": 2.93,
         "notes": ""
     },
     {
@@ -74,9 +74,9 @@
         "name": "Motor de Predicción IA (Próximos Trámites y Previsión de Aforo)",
         "category": "Funcional",
         "expected": "Array de predicciones con porcentaje y objeto de aforo con visitas_estimadas",
-        "actual": "Predicciones: 1, Aforo estimado: 18",
+        "actual": "Predicciones: 3, Aforo estimado: 18",
         "passed": true,
-        "time_ms": 77.17,
+        "time_ms": 242.84,
         "notes": ""
     },
     {
@@ -86,7 +86,7 @@
         "expected": "Respuesta HTTP 200 con archivo .xlsx y mime phpspreadsheet",
         "actual": "Archivo .xlsx generado exitosamente con cabeceras verdes\/oro (1.000 registros)",
         "passed": true,
-        "time_ms": 591.51,
+        "time_ms": 4448.83,
         "notes": ""
     },
     {
@@ -96,7 +96,7 @@
         "expected": "Respuesta HTTP 200 con archivo .csv delimitado por comas",
         "actual": "Archivo .csv generado correctamente con UTF-8",
         "passed": true,
-        "time_ms": 457.26,
+        "time_ms": 798.66,
         "notes": ""
     },
     {
@@ -104,19 +104,19 @@
         "name": "Cálculo Integral de Métricas Dashboard (25 ejecuciones)",
         "category": "Rendimiento",
         "expected": "Latencia media < 150ms sobre 154.996 visitas",
-        "actual": "Media: 40.3ms (Min: 39.2ms, P95: 41.2ms, Memoria: 20.94MB)",
+        "actual": "Media: 37.2ms (Min: 34.4ms, P95: 39.7ms, Memoria: 20.89MB)",
         "passed": true,
-        "time_ms": 40.33,
-        "notes": "P95: 41.2ms"
+        "time_ms": 37.2,
+        "notes": "P95: 39.7ms"
     },
     {
         "code": "L02",
         "name": "Búsqueda Compuesta en 23.847 Ciudadanos (40 consultas)",
         "category": "Rendimiento",
         "expected": "Latencia media < 50ms con búsqueda por cédula, nombre y barrio",
-        "actual": "Media: 4.6ms por consulta",
+        "actual": "Media: 7.1ms por consulta",
         "passed": true,
-        "time_ms": 4.59,
+        "time_ms": 7.14,
         "notes": ""
     },
     {
@@ -124,9 +124,9 @@
         "name": "Consulta Paginada con Relaciones Eloquent (30 consultas)",
         "category": "Rendimiento",
         "expected": "Latencia media < 60ms con eager loading de relaciones",
-        "actual": "Media: 1ms",
+        "actual": "Media: 1.4ms",
         "passed": true,
-        "time_ms": 0.96,
+        "time_ms": 1.4,
         "notes": ""
     },
     {
@@ -134,9 +134,9 @@
         "name": "Extracción y Mapeo en Memoria de 2.000 Registros para Exportación",
         "category": "Carga",
         "expected": "Tiempo de procesamiento de 2.000 filas < 300ms",
-        "actual": "Procesados 2.000 registros en 49.3ms",
+        "actual": "Procesados 2.000 registros en 81.6ms",
         "passed": true,
-        "time_ms": 49.28,
+        "time_ms": 81.61,
         "notes": ""
     },
     {
@@ -146,7 +146,7 @@
         "expected": "Cero registros huérfanos tras fallo forzado (DB::rollBack efectivo)",
         "actual": "Rollback 100% exitoso: el registro no existe en la BD",
         "passed": true,
-        "time_ms": 1.41,
+        "time_ms": 20.17,
         "notes": ""
     },
     {
@@ -154,9 +154,9 @@
         "name": "Ráfaga de Inserción Transaccional (100 registros concurrentes)",
         "category": "Estrés",
         "expected": "Tiempo < 100ms con throughput > 1.000 operaciones\/segundo",
-        "actual": "Completado en 3.2ms (31124 ops\/segundo)",
+        "actual": "Completado en 34.7ms (2881 ops\/segundo)",
         "passed": true,
-        "time_ms": 3.21,
+        "time_ms": 34.71,
         "notes": ""
     }
 ]

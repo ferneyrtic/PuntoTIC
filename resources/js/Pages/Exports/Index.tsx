@@ -20,6 +20,7 @@ import {
     Lock,
     Building2,
     User,
+    BarChart3,
 } from 'lucide-react';
 
 interface Props {
@@ -50,10 +51,10 @@ export default function ExportsIndex({
 
     const canSelectAnyPoint = isAdmin || canExportAllPoints;
 
-    const [reportType, setReportType] = useState<'visitas' | 'ciudadanos' | 'prestamos' | 'impresiones' | 'asistencia'>(
-        ['visitas', 'ciudadanos', 'prestamos', 'impresiones', 'asistencia'].includes(initialTipo) ? initialTipo : 'visitas'
+    const [reportType, setReportType] = useState<'visitas' | 'ciudadanos' | 'prestamos' | 'impresiones' | 'asistencia' | 'graficas_pdf'>(
+        ['visitas', 'ciudadanos', 'prestamos', 'impresiones', 'asistencia', 'graficas_pdf'].includes(initialTipo) ? initialTipo : 'visitas'
     );
-    const [format, setFormat] = useState<'xlsx' | 'csv'>('xlsx');
+    const [format, setFormat] = useState<'xlsx' | 'csv' | 'pdf'>('xlsx');
     const defaultPoint = !canSelectAnyPoint && userPointId ? String(userPointId) : '';
     const [selectedPoint, setSelectedPoint] = useState(
         searchParams?.get('id_punto') || defaultPoint
@@ -119,6 +120,16 @@ export default function ExportsIndex({
         const params = new URLSearchParams();
         const activePoint = !isAdmin && userPointId ? String(userPointId) : selectedPoint;
 
+        if (reportType === 'graficas_pdf') {
+            params.append('print', 'true');
+            if (activePoint) params.append('id_punto', activePoint);
+            if (dateFrom) params.append('fecha_desde', dateFrom);
+            if (dateTo) params.append('fecha_hasta', dateTo);
+
+            window.location.href = `${route('dashboard')}?${params.toString()}`;
+            return;
+        }
+
         if (reportType === 'asistencia') {
             params.append('tipo', 'asistencia');
             if (activePoint) params.append('id_punto', activePoint);
@@ -173,7 +184,7 @@ export default function ExportsIndex({
                         <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Seleccionar Tipo de Reporte</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                         {/* 1. Visitas */}
                         <button
                             type="button"
@@ -256,6 +267,29 @@ export default function ExportsIndex({
                             <div className="text-xs font-bold text-slate-900">Impresiones / Copias</div>
                             <div className="text-[11px] text-slate-500 mt-1">Conteo de hojas, tipo de trámite y usuarios</div>
                         </button>
+
+                        {/* 6. Gráficas y Estadísticas en PDF */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setReportType('graficas_pdf');
+                                setFormat('pdf');
+                            }}
+                            className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden ${
+                                reportType === 'graficas_pdf'
+                                    ? 'bg-rose-50/80 border-rose-600 shadow-sm ring-2 ring-rose-600/80'
+                                    : 'border-rose-200/80 bg-rose-50/30 hover:border-rose-300 hover:bg-rose-50/50'
+                            }`}
+                        >
+                            <div className="absolute top-2 right-2">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-200 text-rose-900 border border-rose-300">
+                                    PDF VISUAL
+                                </span>
+                            </div>
+                            <BarChart3 className={`w-6 h-6 mb-2 ${reportType === 'graficas_pdf' ? 'text-rose-700' : 'text-rose-600'}`} />
+                            <div className="text-xs font-black text-slate-900">Gráficas (PDF)</div>
+                            <div className="text-[11px] text-slate-600 mt-1">Informe visual con gráficas de afluencia y métricas</div>
+                        </button>
                     </div>
                 </div>
 
@@ -333,6 +367,11 @@ export default function ExportsIndex({
                                 <div className="py-2 px-3 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 text-xs font-black flex items-center justify-center gap-1.5">
                                     <FileSpreadsheet className="w-4 h-4 text-amber-700" />
                                     <span>Plantilla Excel GTIC-F-16</span>
+                                </div>
+                            ) : reportType === 'graficas_pdf' ? (
+                                <div className="py-2 px-3 rounded-xl border border-rose-300 bg-rose-50 text-rose-900 text-xs font-black flex items-center justify-center gap-1.5">
+                                    <Printer className="w-4 h-4 text-rose-700" />
+                                    <span>PDF (Gráficas e Informe Visual)</span>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 gap-2">
@@ -522,6 +561,34 @@ export default function ExportsIndex({
                     </div>
                 )}
 
+                {/* Panel informativo para Gráficas y Analítica Visual en PDF */}
+                {reportType === 'graficas_pdf' && (
+                    <div className="bg-rose-50/70 p-5 rounded-2xl border border-rose-200/80 shadow-xs flex items-start gap-3.5">
+                        <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0">
+                            <BarChart3 className="w-5 h-5" />
+                        </div>
+                        <div className="text-xs text-rose-950 space-y-1.5">
+                            <div className="font-black uppercase tracking-wider text-rose-900">
+                                Reporte Gráfico y Estadístico en PDF (Alcaldía de Acacías)
+                            </div>
+                            <p className="text-slate-600 leading-relaxed font-medium">
+                                Este informe está diseñado específicamente para compilar de forma visual todos los gráficos interactivos, histogramas de visitas por día, comparativas de sedes urbanas y rurales, distribución por trámites y perfil sociodemográfico (edad, género, nivel educativo y zona de residencia).
+                            </p>
+                            <div className="pt-1 flex flex-wrap gap-2 text-[11px] font-bold text-rose-800">
+                                <span className="bg-white/80 px-2.5 py-1 rounded-lg border border-rose-200">
+                                    • Encabezado oficial con escudo y logo municipal
+                                </span>
+                                <span className="bg-white/80 px-2.5 py-1 rounded-lg border border-rose-200">
+                                    • Gráficas vectoriales nítidas para impresión
+                                </span>
+                                <span className="bg-white/80 px-2.5 py-1 rounded-lg border border-rose-200">
+                                    • Filtros aplicados de sede y período
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Panel informativo para Asistencia GTIC-F-16 */}
                 {reportType === 'asistencia' && (
                     <div className="bg-emerald-50/60 p-5 rounded-2xl border border-emerald-200/80 shadow-xs flex items-start gap-3.5">
@@ -543,7 +610,9 @@ export default function ExportsIndex({
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="text-xs text-slate-500 font-medium">
                         {reportType === 'asistencia'
-                            ? 'El archivo descargado será un .xlsx idéntico a Registro_Usuarios (2).xlsx con datos en vivo filtrados.'
+                            ? 'El archivo descargado será un .xlsx oficial idéntico a la plantilla institucional con datos en vivo filtrados.'
+                            : reportType === 'graficas_pdf'
+                            ? 'Se abrirá el reporte gráfico institucional para guardar como PDF o imprimir con los filtros seleccionados.'
                             : 'El archivo generado incluirá encabezados institucionales verdes/oro, autoajuste de celdas y formato enriquecido.'}
                     </div>
                     <button
@@ -552,13 +621,21 @@ export default function ExportsIndex({
                         className={`w-full sm:w-auto px-8 py-3 rounded-xl text-white text-xs font-black shadow-lg transition-all flex items-center justify-center gap-2 ${
                             reportType === 'asistencia'
                                 ? 'bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-700/25 ring-2 ring-emerald-500/30'
+                                : reportType === 'graficas_pdf'
+                                ? 'bg-gradient-to-r from-rose-700 to-red-700 hover:from-rose-600 hover:to-red-600 shadow-rose-700/25 ring-2 ring-rose-500/30'
                                 : 'bg-alcaldia-green hover:bg-alcaldia-green-dark shadow-alcaldia-green/20'
                         }`}
                     >
-                        <Download className="w-4 h-4" />
+                        {reportType === 'graficas_pdf' ? (
+                            <Printer className="w-4 h-4" />
+                        ) : (
+                            <Download className="w-4 h-4" />
+                        )}
                         <span>
                             {reportType === 'asistencia'
                                 ? 'Descargar Listado Oficial GTIC-F-16 (.xlsx)'
+                                : reportType === 'graficas_pdf'
+                                ? 'Generar y Descargar Gráficas (PDF)'
                                 : 'Generar y Descargar Reporte'}
                         </span>
                     </button>

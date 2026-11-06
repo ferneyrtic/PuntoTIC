@@ -38,6 +38,7 @@ interface Props {
     filters: any;
     points: Array<any>;
     tiposActividad: Array<string>;
+    pendingCount?: number;
 }
 
 const CATEGORIAS_PRESTAMO = [
@@ -63,6 +64,7 @@ export default function RoomLoansIndex({
     filters,
     points,
     tiposActividad,
+    pendingCount = 0,
 }: Props) {
     const [modalOpen, setModalOpen] = useState(false);
     const [documentInput, setDocumentInput] = useState('');
@@ -79,10 +81,65 @@ export default function RoomLoansIndex({
     // Modal para ver detalle de un evento al hacer clic en el calendario
     const [selectedLoanDetail, setSelectedLoanDetail] = useState<any>(null);
 
+    // Acciones de actualización de estado para préstamos
+    const updateLoanStatus = (id: number, newEstado: string) => {
+        router.put(
+            route('prestamos.update', id),
+            { estado: newEstado },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSelectedLoanDetail(null);
+                },
+            }
+        );
+    };
+
+    const renderEstadoBadge = (estado: string) => {
+        switch (estado) {
+            case 'Pendiente':
+                return (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-xs">
+                        <Clock className="w-3 h-3 text-amber-600 animate-pulse" />
+                        <span>Pendiente</span>
+                    </span>
+                );
+            case 'Reservado':
+                return (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                        <CheckCircle2 className="w-3 h-3 text-blue-600" />
+                        <span>Reservado</span>
+                    </span>
+                );
+            case 'En curso':
+                return (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                        <span>En curso</span>
+                    </span>
+                );
+            case 'Cancelado':
+                return (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                        <X className="w-3 h-3 text-rose-600" />
+                        <span>Cancelado</span>
+                    </span>
+                );
+            case 'Completado':
+            default:
+                return (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Completado</span>
+                    </span>
+                );
+        }
+    };
+
     // Filtros de búsqueda
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedPoint, setSelectedPoint] = useState(filters.id_punto || '');
     const [selectedTipo, setSelectedTipo] = useState(filters.tipo_actividad || '');
+    const [selectedEstado, setSelectedEstado] = useState(filters.estado || '');
     const [dateFrom, setDateFrom] = useState(filters.fecha_desde || '');
     const [dateTo, setDateTo] = useState(filters.fecha_hasta || '');
 
@@ -124,6 +181,7 @@ export default function RoomLoansIndex({
                 search: searchTerm,
                 id_punto: selectedPoint,
                 tipo_actividad: selectedTipo,
+                estado: selectedEstado,
                 fecha_desde: dateFrom,
                 fecha_hasta: dateTo,
                 mes: currentMonthStr,
@@ -136,6 +194,7 @@ export default function RoomLoansIndex({
         setSearchTerm('');
         setSelectedPoint('');
         setSelectedTipo('');
+        setSelectedEstado('');
         setDateFrom('');
         setDateTo('');
         router.get(route('prestamos.index'), { mes: currentMonthStr });
@@ -329,6 +388,44 @@ export default function RoomLoansIndex({
         >
             <Head title="Préstamo de Salas" />
 
+            {/* Banner de Solicitudes Pendientes de Ciudadanos */}
+            {pendingCount > 0 && (
+                <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs mb-6">
+                    <div className="flex items-center gap-3">
+                        <span className="p-2.5 rounded-xl bg-amber-100 text-amber-700 shrink-0">
+                            <Clock className="w-5 h-5 animate-pulse text-amber-600" />
+                        </span>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-xs font-black uppercase tracking-wider text-amber-900">
+                                    Solicitudes Ciudadanas Pendientes de Confirmación
+                                </h4>
+                                <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 text-[10px] font-black">
+                                    {pendingCount}
+                                </span>
+                            </div>
+                            <p className="text-xs text-amber-800/90 mt-0.5">
+                                Hay {pendingCount === 1 ? '1 solicitud de préstamo realizada' : `${pendingCount} solicitudes de préstamo realizadas`} por ciudadanos en espera de tu confirmación o rechazo.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setViewMode('lista');
+                                setSelectedEstado('Pendiente');
+                                router.get(route('prestamos.index'), { estado: 'Pendiente' }, { preserveState: true });
+                            }}
+                            className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs shrink-0 flex items-center gap-1.5"
+                        >
+                            <Filter className="w-3.5 h-3.5" />
+                            <span>Ver Solicitudes Pendientes</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Filter Bar */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs mb-6">
                 <form onSubmit={handleFilter} className="flex flex-wrap items-center gap-3">
@@ -370,6 +467,21 @@ export default function RoomLoansIndex({
                                     {p.nombre_punto}
                                 </option>
                             ))}
+                        </select>
+                    </div>
+
+                    <div className="w-full sm:w-auto min-w-[140px]">
+                        <select
+                            value={selectedEstado}
+                            onChange={(e) => setSelectedEstado(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 focus:border-alcaldia-green outline-none"
+                        >
+                            <option value="">Todos los Estados</option>
+                            <option value="Pendiente">Pendiente (Por Aprobar)</option>
+                            <option value="Reservado">Reservado</option>
+                            <option value="En curso">En curso</option>
+                            <option value="Completado">Completado</option>
+                            <option value="Cancelado">Cancelado</option>
                         </select>
                     </div>
 
@@ -531,7 +643,14 @@ export default function RoomLoansIndex({
                                                 </div>
                                                 <div className="flex items-center justify-between text-[9px] text-slate-500 font-normal">
                                                     <span>{event.punto?.nombre_punto?.split(' ')[0] || 'Sede'}</span>
-                                                    <span className="font-bold">{event.num_asistentes}p</span>
+                                                    {event.estado === 'Pendiente' ? (
+                                                        <span className="font-bold text-amber-600 flex items-center gap-0.5 bg-amber-100/80 px-1 rounded">
+                                                            <Clock className="w-2.5 h-2.5 animate-pulse" />
+                                                            Por aprobar
+                                                        </span>
+                                                    ) : (
+                                                        <span className="font-bold">{event.num_asistentes}p</span>
+                                                    )}
                                                 </div>
                                             </button>
                                         ))}
@@ -567,12 +686,17 @@ export default function RoomLoansIndex({
                                     <th className="px-4 py-3.5">Sede PVD</th>
                                     <th className="px-4 py-3.5">Asistentes</th>
                                     <th className="px-4 py-3.5">Estado</th>
+                                    <th className="px-4 py-3.5 text-center">Acciones</th>
                                     <th className="px-5 py-3.5 text-right">Fecha</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {loans.data.map((loan) => (
-                                    <tr key={loan.id_prestamo} className="hover:bg-slate-50/80 transition-colors">
+                                    <tr
+                                        key={loan.id_prestamo}
+                                        onClick={() => setSelectedLoanDetail(loan)}
+                                        className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                                    >
                                         <td className="px-5 py-3.5">
                                             <div className="font-bold text-slate-900 text-xs">
                                                 {loan.ciudadano?.nombre_completo || loan.nombre_responsable_texto || 'Responsable'}
@@ -586,7 +710,7 @@ export default function RoomLoansIndex({
                                                 {loan.tipo_actividad}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3.5 text-xs text-slate-600 max-w-[260px] truncate" title={loan.observaciones || '-'}>
+                                        <td className="px-4 py-3.5 text-xs text-slate-600 max-w-[240px] truncate" title={loan.observaciones || '-'}>
                                             {loan.observaciones || '-'}
                                         </td>
                                         <td className="px-4 py-3.5 text-xs text-slate-600 font-medium whitespace-nowrap">
@@ -594,9 +718,43 @@ export default function RoomLoansIndex({
                                         </td>
                                         <td className="px-4 py-3.5 text-xs text-slate-700 font-semibold whitespace-nowrap">{loan.num_asistentes} pers.</td>
                                         <td className="px-4 py-3.5 whitespace-nowrap">
-                                            <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                                                {loan.estado}
-                                            </span>
+                                            {renderEstadoBadge(loan.estado)}
+                                        </td>
+                                        <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                                            {loan.estado === 'Pendiente' ? (
+                                                <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateLoanStatus(loan.id_prestamo, 'Reservado')}
+                                                        className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-xs transition-colors flex items-center gap-1"
+                                                        title="Aprobar y Confirmar Reserva"
+                                                    >
+                                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                                        <span>Aprobar</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateLoanStatus(loan.id_prestamo, 'Cancelado')}
+                                                        className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition-colors flex items-center gap-1"
+                                                        title="Rechazar Solicitud"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
+                                                        <span>Rechazar</span>
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedLoanDetail(loan);
+                                                    }}
+                                                    className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                                                    title="Ver Detalle"
+                                                >
+                                                    <Info className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </td>
                                         <td className="px-5 py-3.5 text-right text-xs font-bold text-slate-800 whitespace-nowrap">
                                             {loan.fecha_prestamo ? loan.fecha_prestamo.split('T')[0] : '-'}
@@ -605,7 +763,7 @@ export default function RoomLoansIndex({
                                 ))}
                                 {loans.data.length === 0 && (
                                     <tr>
-                                        <td colSpan={7} className="px-5 py-10 text-center text-slate-400 text-xs">
+                                        <td colSpan={8} className="px-5 py-10 text-center text-slate-400 text-xs">
                                             No se encontraron préstamos que coincidan con los filtros seleccionados.
                                         </td>
                                     </tr>
@@ -617,7 +775,11 @@ export default function RoomLoansIndex({
                     {/* Mobile Cards View (< md) */}
                     <div className="md:hidden divide-y divide-slate-100">
                         {loans.data.map((loan) => (
-                            <div key={loan.id_prestamo} className="p-4 space-y-2.5 hover:bg-slate-50/80 transition-colors">
+                            <div
+                                key={loan.id_prestamo}
+                                onClick={() => setSelectedLoanDetail(loan)}
+                                className="p-4 space-y-2.5 hover:bg-slate-50/80 transition-colors cursor-pointer"
+                            >
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
                                         <div className="font-bold text-slate-900 text-sm">
@@ -627,9 +789,9 @@ export default function RoomLoansIndex({
                                             {loan.ciudadano ? `CC ${loan.ciudadano.documento}` : 'Entidad / Particular'}
                                         </div>
                                     </div>
-                                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
-                                        {loan.estado}
-                                    </span>
+                                    <div className="shrink-0">
+                                        {renderEstadoBadge(loan.estado)}
+                                    </div>
                                 </div>
 
                                 <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 space-y-1">
@@ -647,6 +809,27 @@ export default function RoomLoansIndex({
                                         </div>
                                     )}
                                 </div>
+
+                                {loan.estado === 'Pendiente' && (
+                                    <div className="pt-2 flex items-center gap-2 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateLoanStatus(loan.id_prestamo, 'Reservado')}
+                                            className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+                                        >
+                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                            <span>Aprobar Reserva</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateLoanStatus(loan.id_prestamo, 'Cancelado')}
+                                            className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors flex items-center justify-center gap-1"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                            <span>Rechazar</span>
+                                        </button>
+                                    </div>
+                                )}
 
                                 <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
                                     <div className="flex items-center gap-1.5 font-medium text-slate-700">
@@ -747,9 +930,7 @@ export default function RoomLoansIndex({
                                 <div>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase">Estado</span>
                                     <div className="mt-0.5">
-                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                            {selectedLoanDetail.estado}
-                                        </span>
+                                        {renderEstadoBadge(selectedLoanDetail.estado)}
                                     </div>
                                 </div>
                             </div>
@@ -776,7 +957,31 @@ export default function RoomLoansIndex({
                             )}
                         </div>
 
-                        <div className="mt-5 pt-3 border-t border-slate-100 flex justify-end">
+                        <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                            {selectedLoanDetail.estado === 'Pendiente' ? (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => updateLoanStatus(selectedLoanDetail.id_prestamo, 'Reservado')}
+                                        className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
+                                    >
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        <span>Aprobar Reserva</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => updateLoanStatus(selectedLoanDetail.id_prestamo, 'Cancelado')}
+                                        className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors flex items-center gap-1"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                        <span>Rechazar</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="text-[11px] text-slate-400">
+                                    {selectedLoanDetail.gestor?.name ? `Gestor responsable: ${selectedLoanDetail.gestor.name}` : ''}
+                                </div>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => setSelectedLoanDetail(null)}
