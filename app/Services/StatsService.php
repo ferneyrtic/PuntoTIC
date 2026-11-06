@@ -7,7 +7,6 @@ use App\Models\Citizen;
 use App\Models\Point;
 use App\Models\PrintRecord;
 use App\Models\RoomLoan;
-use App\Models\Setting;
 use App\Models\SubCategory;
 use App\Models\Visit;
 use Carbon\Carbon;
@@ -70,17 +69,6 @@ class StatsService
         // 11. Distribución por Categorías Generales
         $distribucionCategorias = $this->calculateCategoryDistribution($targetPointIds, $startDate, $endDate, $kpis['visitas_periodo']);
 
-        // 12. Semáforo y Cumplimiento de Metas Adaptado al Período y Sede
-        $semaforoMetas = $this->calculateSemaforoMetas(
-            $pointId,
-            $zona,
-            $targetPointIds,
-            $startDate,
-            $endDate,
-            $periodoKey,
-            $kpis['visitas_periodo']
-        );
-
         return [
             'scope' => $scopeInfo,
             'periodo' => [
@@ -100,109 +88,6 @@ class StatsService
             'dependencia_formacion' => $dependenciaFormacion,
             'dependencia_salas' => $dependenciaSalas,
             'dependencia_impresiones' => $dependenciaImpresiones,
-            'semaforo_metas' => $semaforoMetas,
-        ];
-    }
-
-    /**
-     * Calcula el estado de cumplimiento y semáforo de metas de atención adaptado al período (día, semana, mes, trimestre, año) y sede.
-     */
-    protected function calculateSemaforoMetas(
-        ?int $pointId,
-        ?string $zona,
-        ?array $targetPointIds,
-        Carbon $startDate,
-        Carbon $endDate,
-        string $periodoKey,
-        int $visitasPeriodo
-    ): array {
-        $defaultMetas = [
-            '1' => 1200, // Punto Vive Digital PLUS
-            '2' => 1000, // Punto Vive Digital Tradicional
-            '3' => 350,  // Aula Digital Dinamarca
-            '4' => 350,  // Aula Digital Chichimene
-            'consolidado' => 2900,
-        ];
-
-        $stored = Setting::get('metas_mensuales_sedes');
-        $metasConfig = is_array($stored) ? ($stored + $defaultMetas) : $defaultMetas;
-
-        // 1. Meta base mensual para el ámbito activo
-        if ($pointId && isset($metasConfig[$pointId])) {
-            $metaBaseMensual = (int) $metasConfig[$pointId];
-        } elseif ($zona === 'Urbana') {
-            $metaBaseMensual = (int) ($metasConfig['1'] ?? 1200) + (int) ($metasConfig['2'] ?? 1000);
-        } elseif ($zona === 'Rural') {
-            $metaBaseMensual = (int) ($metasConfig['3'] ?? 350) + (int) ($metasConfig['4'] ?? 350);
-        } else {
-            $metaBaseMensual = (int) ($metasConfig['consolidado'] ?? 2900);
-        }
-
-        // 2. Escalar la meta según el período seleccionado
-        switch ($periodoKey) {
-            case 'hoy':
-                $metaObjetivo = (int) max(1, round($metaBaseMensual / 30));
-                $tipoMetaLabel = 'Meta Diaria (Hoy)';
-                break;
-            case 'semana':
-                $metaObjetivo = (int) max(1, round(($metaBaseMensual / 30) * 7));
-                $tipoMetaLabel = 'Meta Semanal (7 Días)';
-                break;
-            case 'trimestre':
-                $metaObjetivo = (int) round($metaBaseMensual * 3);
-                $tipoMetaLabel = 'Meta Trimestral (3 Meses)';
-                break;
-            case 'ano':
-                $metaObjetivo = (int) round($metaBaseMensual * 12);
-                $tipoMetaLabel = 'Meta Anual';
-                break;
-            case 'custom':
-                $diasRango = max(1, (int) round($startDate->diffInDays($endDate) + 1));
-                $metaObjetivo = (int) max(1, round(($metaBaseMensual / 30) * $diasRango));
-                $tipoMetaLabel = "Meta del Período ({$diasRango} días)";
-                break;
-            case 'mes':
-            default:
-                $metaObjetivo = $metaBaseMensual;
-                $tipoMetaLabel = 'Meta Mensual';
-                break;
-        }
-
-        // 3. Atenciones reales logradas en este período y ámbito
-        $visitasActuales = $visitasPeriodo;
-
-        $porcentaje = $metaObjetivo > 0 ? round(($visitasActuales / $metaObjetivo) * 100, 1) : 0;
-        $faltante = max(0, $metaObjetivo - $visitasActuales);
-
-        // 4. Días restantes y ritmo sugerido
-        $now = Carbon::now();
-        if ($endDate->isPast() && $endDate->diffInDays($now, false) > 0) {
-            // Período concluido en el pasado
-            $diasRestantes = 0;
-            $ritmoDiarioSugerido = 0;
-            $periodoCerrado = true;
-        } else {
-            // Período en curso
-            $diasRestantes = max(1, (int) $now->diffInDays($endDate, false));
-            $ritmoDiarioSugerido = $diasRestantes > 0 ? (int) ceil($faltante / $diasRestantes) : 0;
-            $periodoCerrado = false;
-        }
-
-        // Semáforo: cumplida (>=100%), óptimo (>=80%), moderado (50-79%), alerta (<50%)
-        $estado = $porcentaje >= 100 ? 'cumplida' : ($porcentaje >= 80 ? 'optimo' : ($porcentaje >= 50 ? 'moderado' : 'alerta'));
-
-        return [
-            'meta_objetivo' => $metaObjetivo,
-            'meta_base_mensual' => $metaBaseMensual,
-            'tipo_meta_label' => $tipoMetaLabel,
-            'visitas_periodo' => $visitasActuales,
-            'porcentaje_cumplimiento' => min(999, $porcentaje),
-            'faltante' => $faltante,
-            'dias_restantes' => $diasRestantes,
-            'ritmo_diario_sugerido' => $ritmoDiarioSugerido,
-            'estado' => $estado,
-            'periodo_cerrado' => $periodoCerrado,
-            'metas_config' => $metasConfig,
         ];
     }
 

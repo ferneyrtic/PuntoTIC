@@ -27,7 +27,6 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     // Dashboard General con métricas e IA
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::post('/api/metas', [DashboardController::class, 'updateMetas'])->name('metas.update');
 
     // Gestión de Ciudadanos (Directorio, Búsqueda, Creación y Edición)
     Route::resource('ciudadanos', CitizenController::class);

@@ -46,9 +46,9 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
     const [christmasMode, setChristmasMode] = useState<boolean>(() => {
         if (typeof window !== 'undefined') {
             const stored = localStorage.getItem('pvd_christmas_mode');
-            return stored !== null ? stored === 'true' : true;
+            return stored === 'true';
         }
-        return true;
+        return false;
     });
 
     const toggleChristmasMode = () => {
@@ -294,14 +294,14 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                 </div>
             </header>
 
-            {/* Sidebar (Desktop Permanent, Mobile Slide-out Drawer) */}
+            {/* Sidebar (Desktop Permanent Sticky, Mobile Slide-out Drawer) */}
             <aside
-                className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0B132B] text-slate-300 flex flex-col border-r border-slate-800/60 shadow-xl transition-all duration-300 ease-out md:translate-x-0 ${
-                    sidebarOpen ? 'translate-x-0' : '-translate-x-full md:static'
+                className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0B132B] text-slate-300 flex flex-col border-r border-slate-800/60 shadow-xl transition-all duration-300 ease-out md:translate-x-0 md:sticky md:top-0 md:h-screen md:shrink-0 ${
+                    sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
                 }`}
             >
                 {/* Brand Header - High Prominence Institutional Logo */}
-                <div className="p-4 border-b border-slate-800/60 bg-slate-950/40">
+                <div className="p-4 border-b border-slate-800/60 bg-slate-950/40 shrink-0">
                     {/* Official Banner Card: Full-width container giving maximum visibility to the logo */}
                     <div className="bg-white rounded-2xl px-3.5 py-3 shadow-md border border-white/10 flex items-center justify-center mb-3 group transition-all duration-200 hover:shadow-lg">
                         <img
@@ -390,7 +390,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                 )}
 
                 {/* User Footer Profile */}
-                <div className="p-3.5 border-t border-slate-800/80 bg-slate-950/60">
+                <div className="p-3.5 border-t border-slate-800/80 bg-slate-950/60 shrink-0">
                     <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-900/80 border border-slate-800/60">
                         <div className="flex items-center space-x-2.5 min-w-0">
                             <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white font-black text-xs flex items-center justify-center shadow-sm shrink-0">
