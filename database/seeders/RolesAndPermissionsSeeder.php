@@ -150,17 +150,18 @@ class RolesAndPermissionsSeeder extends Seeder
         );
         $coordGeneral->syncRoles(['Coordinador General', 'Coordinador']);
 
-        // 1. Administrador TIC
-        $admin = User::updateOrCreate(
-            ['email' => 'admin@acacias.gov.co'],
-            [
+        // 1. Administrador TIC (Preserva contraseña original de producción)
+        $admin = User::firstWhere('email', 'admin@acacias.gov.co');
+        if (!$admin) {
+            $admin = User::create([
                 'name' => 'Administrador TIC',
+                'email' => 'admin@acacias.gov.co',
                 'password' => Hash::make('Acacias2026*'),
                 'id_punto' => 1,
                 'cargo' => 'Líder TIC Municipal',
                 'activo' => true,
-            ]
-        );
+            ]);
+        }
         $admin->syncRoles(['Administrador']);
 
         // 2. Coordinador PVD PLUS (Punto 1)
@@ -176,44 +177,29 @@ class RolesAndPermissionsSeeder extends Seeder
         );
         $coordPlus->syncRoles(['Coordinador PVD', 'Coordinador']);
 
-        // 3. Gestor PVD PLUS (Punto 1)
-        $gestorPlus = User::updateOrCreate(
-            ['email' => 'gestor.plus@acacias.gov.co'],
-            [
-                'name' => 'Gestor PVD PLUS',
-                'password' => Hash::make('GestorPlus2026*'),
-                'id_punto' => 1,
-                'cargo' => 'Gestor Ventanilla PLUS',
-                'activo' => true,
-            ]
-        );
-        $gestorPlus->syncRoles(['Gestor PVD']);
+        // 3. Gestor Global Unificado (Puntos y Aulas Digitales)
+        $gestorGlobalRole = Role::firstOrCreate(['name' => 'Gestor Global', 'guard_name' => 'web']);
+        $gestorGlobalRole->syncPermissions([
+            'ver_dashboard',
+            'gestionar_ciudadanos',
+            'registrar_visitas',
+            'acceder_modo_pvd_general',
+            'acceder_modo_aula_digital',
+            'gestionar_prestamos',
+            'gestionar_impresiones',
+        ]);
 
-        // 4. Coordinador PVD Tradicional (Punto 2)
-        $coordTradicional = User::updateOrCreate(
-            ['email' => 'coordinador.tradicional@acacias.gov.co'],
+        $gestorGlobal = User::updateOrCreate(
+            ['email' => 'gestor.global@acacias.gov.co'],
             [
-                'name' => 'Coordinador PVD Tradicional',
-                'password' => Hash::make('PvdTradicional2026*'),
-                'id_punto' => 2,
-                'cargo' => 'Coordinador PVD Tradicional',
+                'name' => 'Gestor Global PVD y Aulas',
+                'password' => Hash::make('GestorGlobal2026*'),
+                'id_punto' => null,
+                'cargo' => 'Gestor Operativo Global (Puntos y Aulas)',
                 'activo' => true,
             ]
         );
-        $coordTradicional->syncRoles(['Coordinador PVD', 'Coordinador']);
-
-        // 5. Gestor PVD Tradicional (Punto 2)
-        $gestorTradicional = User::updateOrCreate(
-            ['email' => 'gestor.tradicional@acacias.gov.co'],
-            [
-                'name' => 'Gestor PVD Tradicional',
-                'password' => Hash::make('GestorTradicional2026*'),
-                'id_punto' => 2,
-                'cargo' => 'Gestor Ventanilla Tradicional',
-                'activo' => true,
-            ]
-        );
-        $gestorTradicional->syncRoles(['Gestor PVD']);
+        $gestorGlobal->syncRoles(['Gestor Global', 'Gestor']);
 
         // 6. Coordinador Aula Digital Dinamarca (Punto 3)
         $coordDinamarca = User::updateOrCreate(

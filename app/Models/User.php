@@ -96,12 +96,21 @@ class User extends Authenticatable
 
     public function getPuedeAccederAulaDigitalAttribute(): bool
     {
-        if ($this->hasRole('Administrador')) {
+        if ($this->hasRole(['Administrador', 'Coordinador General', 'Gestor Global'])) {
             return true;
         }
 
-        // Si es coordinador o gestor de PVD, o su sede es PVD (1 o 2), NO tiene acceso a aula digital
-        if ($this->hasRole(['Coordinador PVD', 'Gestor PVD']) || in_array($this->id_punto, [1, 2])) {
+        // Si es coordinador o gestor específico de PVD urbano, no accede a aula digital escolar
+        if ($this->hasRole(['Coordinador PVD', 'Gestor PVD']) && !$this->hasRole('Gestor Global')) {
+            return false;
+        }
+
+        // Si no tiene punto asignado (usuario global)
+        if (empty($this->id_punto)) {
+            return true;
+        }
+
+        if (in_array($this->id_punto, [1, 2])) {
             return false;
         }
 
@@ -116,7 +125,7 @@ class User extends Authenticatable
 
     public function getPuedeExportarTodasSedesAttribute(): bool
     {
-        if ($this->hasRole(['Administrador', 'Coordinador General', 'Coordinador', 'Coordinador PVD', 'Coordinador Aula Digital'])) {
+        if ($this->hasRole(['Administrador', 'Coordinador General', 'Coordinador', 'Coordinador PVD', 'Coordinador Aula Digital', 'Gestor Global'])) {
             return true;
         }
 

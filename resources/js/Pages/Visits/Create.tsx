@@ -322,14 +322,32 @@ export default function VisitCreate({
                         </div>
                     </div>
 
-                    {/* Sede Indicator */}
-                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
-                        <Building2 className="w-4 h-4 text-emerald-600" />
-                        <span>
-                            {points.find((p) => p.id_punto === Number(data.id_punto))
-                                ?.nombre_punto || 'Sede'}
-                        </span>
-                    </div>
+                    {/* Sede Indicator / Selector */}
+                    {!user?.id_punto || user?.is_admin || user?.roles_nombres?.includes('Gestor Global') || user?.roles_nombres?.includes('Coordinador General') ? (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 shadow-soft-xs">
+                            <Building2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span className="text-[11px] font-semibold text-emerald-700 hidden md:inline">Sede:</span>
+                            <select
+                                value={data.id_punto}
+                                onChange={(e) => setData('id_punto', Number(e.target.value))}
+                                className="bg-transparent text-xs font-bold text-slate-800 border-none outline-none focus:ring-0 cursor-pointer p-0 pr-6"
+                            >
+                                {points.map((p) => (
+                                    <option key={p.id_punto} value={p.id_punto}>
+                                        {p.nombre_punto} {p.zona ? `(${p.zona})` : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    ) : (
+                        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
+                            <Building2 className="w-4 h-4 text-emerald-600" />
+                            <span>
+                                {points.find((p) => p.id_punto === Number(data.id_punto))
+                                    ?.nombre_punto || 'Sede'}
+                            </span>
+                        </div>
+                    )}
                 </div>
             }
         >

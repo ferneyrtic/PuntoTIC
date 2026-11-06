@@ -136,114 +136,76 @@ export default function Login({ status }: { status?: string }) {
                     <div className="mt-6 pt-5 border-t border-slate-100 text-center">
                         <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center justify-center gap-1.5">
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Perfiles Oficiales de Prueba (Clic para autocompletar)</span>
+                            <span>Perfiles Oficiales Unificados (Clic para autocompletar)</span>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-left">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+                            {/* Gestor Global Unificado */}
                             <button
                                 type="button"
-                                onClick={() => handleQuickSelect('coordinador.general@acacias.gov.co', 'CoordGeneral2026*')}
-                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
-                                title="Supervisión global de todas las sedes y descarga de reportes generales"
+                                onClick={() => handleQuickSelect('gestor.global@acacias.gov.co', 'GestorGlobal2026*')}
+                                className="btn-tactile p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-300 transition-all text-[11px] text-emerald-950 font-medium"
+                                title="Gestor único operativo con acceso a todos los Puntos PVD y Aulas Digitales"
                             >
-                                <div className="font-bold text-slate-900 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                                    <span>Coord. General</span>
-                                </div>
-                                <div className="text-[10px] text-slate-400 truncate">coordinador.general...</div>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => handleQuickSelect('usuario.prueba@acacias.gov.co', 'Acacias2026*')}
-                                className="btn-tactile p-2 rounded-xl bg-indigo-50/90 hover:bg-indigo-100 border border-indigo-200 transition-all text-[11px] text-indigo-900 font-medium sm:col-span-3 text-left"
-                            >
-                                <div className="font-bold text-indigo-950 flex items-center justify-between">
+                                <div className="font-bold flex items-center justify-between">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
-                                        <span>👤 Ciudadano / Usuario (Prueba Portal)</span>
+                                        <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                                        <span>Gestor Global (Puntos y Aulas)</span>
                                     </div>
-                                    <span className="text-[9px] bg-indigo-200 text-indigo-900 font-black px-1.5 py-0.5 rounded uppercase">Nuevo Rol</span>
+                                    <span className="text-[9px] bg-emerald-200 text-emerald-900 font-black px-1.5 py-0.5 rounded uppercase">Unificado</span>
                                 </div>
-                                <div className="text-[10px] text-indigo-600 font-mono mt-0.5">usuario.prueba@acacias.gov.co · Acacias2026*</div>
+                                <div className="text-[10px] text-emerald-700 truncate font-mono mt-0.5">gestor.global@acacias.gov.co</div>
                             </button>
 
-                            <button
-                                type="button"
-                                onClick={() => handleQuickSelect('admin@acacias.gov.co', 'Acacias2026*')}
-                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
-                                title="Acceso total a todas las sedes, configuración y auditoría"
-                            >
-                                <div className="font-bold text-slate-900 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    <span>Admin TIC</span>
-                                </div>
-                                <div className="text-[10px] text-slate-400 truncate">admin@acacias...</div>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => handleQuickSelect('gestor.plus@acacias.gov.co', 'GestorPlus2026*')}
-                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
-                                title="Punto Vive Digital PLUS (Urbano)"
-                            >
-                                <div className="font-bold text-slate-900 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-                                    <span>Gestor PLUS</span>
-                                </div>
-                                <div className="text-[10px] text-slate-400 truncate">gestor.plus@acacias...</div>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => handleQuickSelect('gestor.tradicional@acacias.gov.co', 'GestorTradicional2026*')}
-                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
-                                title="Punto Vive Digital Tradicional (Urbano)"
-                            >
-                                <div className="font-bold text-slate-900 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                                    <span>Gestor Tradicional</span>
-                                </div>
-                                <div className="text-[10px] text-slate-400 truncate">gestor.tradicional...</div>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => handleQuickSelect('gestor.dinamarca@acacias.gov.co', 'GestorDinamarca2026*')}
-                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
-                                title="Aula Digital Rural Dinamarca (Modo Niños/Escolar)"
-                            >
-                                <div className="font-bold text-slate-900 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                    <span>Aula Dinamarca</span>
-                                </div>
-                                <div className="text-[10px] text-slate-400 truncate">gestor.dinamarca...</div>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => handleQuickSelect('gestor.chichimene@acacias.gov.co', 'GestorChichimene2026*')}
-                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
-                                title="Aula Digital Rural Chichimene (Modo Niños/Escolar)"
-                            >
-                                <div className="font-bold text-slate-900 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                                    <span>Aula Chichimene</span>
-                                </div>
-                                <div className="text-[10px] text-slate-400 truncate">gestor.chichimene...</div>
-                            </button>
-
+                            {/* Coordinador PVD PLUS */}
                             <button
                                 type="button"
                                 onClick={() => handleQuickSelect('coordinador.plus@acacias.gov.co', 'PvdPlus2026*')}
-                                className="btn-tactile p-2 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
-                                title="Coordinador de Sedes"
+                                className="btn-tactile p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                                title="Coordinador de Sedes PVD"
                             >
-                                <div className="font-bold text-slate-900 flex items-center gap-1">
+                                <div className="font-bold text-slate-900 flex items-center gap-1.5">
                                     <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                                    <span>Coordinador</span>
+                                    <span>Coordinador PVD</span>
                                 </div>
-                                <div className="text-[10px] text-slate-400 truncate">coordinador.plus...</div>
+                                <div className="text-[10px] text-slate-400 truncate font-mono mt-0.5">coordinador.plus@acacias.gov.co</div>
                             </button>
+
+                            {/* Coordinador General */}
+                            <button
+                                type="button"
+                                onClick={() => handleQuickSelect('coordinador.general@acacias.gov.co', 'CoordGeneral2026*')}
+                                className="btn-tactile p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-300 transition-all text-[11px] text-slate-700 font-medium"
+                                title="Supervisión global municipal y reportes consolidados"
+                            >
+                                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-sky-500"></span>
+                                    <span>Coordinador General TIC</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 truncate font-mono mt-0.5">coordinador.general@acacias.gov.co</div>
+                            </button>
+
+                            {/* Ciudadano / Portal */}
+                            <button
+                                type="button"
+                                onClick={() => handleQuickSelect('usuario.prueba@acacias.gov.co', 'Acacias2026*')}
+                                className="btn-tactile p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all text-[11px] text-indigo-950 font-medium"
+                                title="Portal ciudadano para autogestión y reserva de salas"
+                            >
+                                <div className="font-bold flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
+                                        <span>Portal Ciudadano (Reservas)</span>
+                                    </div>
+                                    <span className="text-[9px] bg-indigo-200 text-indigo-900 font-black px-1.5 py-0.5 rounded uppercase">Ciudadano</span>
+                                </div>
+                                <div className="text-[10px] text-indigo-700 truncate font-mono mt-0.5">usuario.prueba@acacias.gov.co</div>
+                            </button>
+                        </div>
+
+                        <div className="mt-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/60 text-[10px] text-slate-500 flex items-center justify-between text-left">
+                            <div>
+                                <span className="font-bold text-slate-700">Cuenta Admin TIC:</span> Ingrese con <code className="font-mono text-slate-800">admin@acacias.gov.co</code> y su contraseña original de producción (restaurada).
+                            </div>
                         </div>
                     </div>
                 </div>
