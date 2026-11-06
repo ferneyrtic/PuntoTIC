@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,6 +15,7 @@ class Category extends Model
     protected $primaryKey = 'id_categoria';
 
     protected $fillable = [
+        'id_categoria',
         'nombre',
         'descripcion',
         'icono',
@@ -27,9 +29,18 @@ class Category extends Model
         'orden' => 'integer',
     ];
 
+    protected $appends = ['id_categoria'];
+
+    public function getIdCategoriaAttribute()
+    {
+        return $this->attributes['id_categoria'] ?? $this->attributes['id'] ?? null;
+    }
+
     public function subcategorias(): HasMany
     {
-        return $this->hasMany(SubCategory::class, 'categoria_id', 'id_categoria')->orderBy('orden');
+        return $this->hasMany(SubCategory::class, 'categoria_id', 'id_categoria')
+            ->where('activo', true)
+            ->orderBy('orden');
     }
 
     public function visitas(): HasMany

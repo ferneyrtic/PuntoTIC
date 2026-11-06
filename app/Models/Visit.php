@@ -16,10 +16,13 @@ class Visit extends Model
     protected $primaryKey = 'id_visita';
 
     protected $fillable = [
+        'id_visita',
+        'id_visitas',
         'id_form_pvd',
         'id_punto',
         'id_categoria',
         'id_subcategoria',
+        'servicio',
         'servicio_texto',
         'descripcion',
         'id_gestor',
@@ -30,6 +33,48 @@ class Visit extends Model
         'duracion_minutos' => 'integer',
         'created_at' => 'datetime',
     ];
+
+    protected $appends = ['id_visita', 'servicio_texto'];
+
+    protected static function booted(): void
+    {
+        static::saving(function ($visit) {
+            if (empty($visit->servicio)) {
+                $sub = $visit->subcategoria?->nombre;
+                $cat = $visit->categoria?->nombre;
+                $visit->servicio = $sub ?: ($cat ?: ($visit->servicio_texto ?: 'Atención PuntoTIC'));
+            }
+            if (empty($visit->servicio_texto)) {
+                $visit->servicio_texto = $visit->servicio;
+            }
+        });
+    }
+
+    public function getIdVisitaAttribute()
+    {
+        return $this->attributes['id_visita'] ?? $this->attributes['id_visitas'] ?? null;
+    }
+
+    public function getServicioTextoAttribute()
+    {
+        return $this->attributes['servicio_texto'] ?? $this->attributes['servicio'] ?? null;
+    }
+
+    public function setServicioTextoAttribute($value)
+    {
+        $this->attributes['servicio_texto'] = $value;
+        if (! isset($this->attributes['servicio']) || empty($this->attributes['servicio'])) {
+            $this->attributes['servicio'] = $value;
+        }
+    }
+
+    public function setServicioAttribute($value)
+    {
+        $this->attributes['servicio'] = $value;
+        if (! isset($this->attributes['servicio_texto']) || empty($this->attributes['servicio_texto'])) {
+            $this->attributes['servicio_texto'] = $value;
+        }
+    }
 
     public function ciudadano(): BelongsTo
     {

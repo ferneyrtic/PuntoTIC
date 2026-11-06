@@ -15,6 +15,7 @@ class SubCategory extends Model
     protected $primaryKey = 'id_subcategoria';
 
     protected $fillable = [
+        'id_subcategoria',
         'categoria_id',
         'nombre',
         'descripcion',
@@ -26,6 +27,13 @@ class SubCategory extends Model
         'activo' => 'boolean',
         'orden' => 'integer',
     ];
+
+    protected $appends = ['id_subcategoria'];
+
+    public function getIdSubcategoriaAttribute()
+    {
+        return $this->attributes['id_subcategoria'] ?? $this->attributes['id'] ?? null;
+    }
 
     public function categoria(): BelongsTo
     {
