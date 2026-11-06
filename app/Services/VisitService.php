@@ -87,15 +87,21 @@ class VisitService
                 } else {
                     $count = Citizen::where('documento', 'like', "ESC-{$prefix}-%")->count() + 1;
                     $autoDoc = sprintf("ESC-%s-%05d", $prefix, $count);
+                    $numericId = (int)("99" . $pointId . sprintf("%06d", $count));
 
                     $citizen = $this->citizenService->createCitizen([
+                        'id' => $numericId,
+                        'id_form_pvd' => $numericId,
                         'documento' => $autoDoc,
                         'id_tipo' => 2, // Tarjeta de Identidad / Escolar
                         'nombres' => $nombres,
                         'apellidos' => $apellidos ?: 'Estudiante',
                         'barrio' => $point?->nombre_punto ?? 'Corregimiento',
                         'zona' => 'Rural',
+                        'estrato' => 1,
+                        'grupo_etnico' => 'NINGUNO',
                         'nivel_educativo' => 'Primaria / Escolar',
+                        'ocupacion' => 'ESTUDIANTE',
                         'g_poblacional' => 'Estudiante Menor de Edad',
                         'id_punto' => $pointId,
                         'id_gestor' => Auth::id(),

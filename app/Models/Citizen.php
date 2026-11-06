@@ -101,9 +101,17 @@ class Citizen extends Model
 
     public function setDocumentoAttribute($value)
     {
-        $this->attributes['documento'] = $value;
+        $this->attributes['documento'] = (string)$value;
         if (! isset($this->attributes['id']) || empty($this->attributes['id'])) {
-            $this->attributes['id'] = $value;
+            $num = preg_replace('/\D/', '', (string)$value);
+            if (!empty($num)) {
+                $this->attributes['id'] = (int)$num;
+            } else {
+                $this->attributes['id'] = (int)(substr((string)time(), -7) . rand(100, 999));
+            }
+        }
+        if (! isset($this->attributes['id_form_pvd']) || empty($this->attributes['id_form_pvd'])) {
+            $this->attributes['id_form_pvd'] = $this->attributes['id'];
         }
     }
 
