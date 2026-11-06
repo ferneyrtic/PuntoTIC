@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Point;
+use App\Models\Setting;
 use App\Models\Visit;
 use App\Services\MLService;
 use App\Services\StatsService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -58,7 +61,7 @@ class DashboardController extends Controller
         if ($pointId) {
             $recentVisitsQuery->where('id_punto', $pointId);
         } elseif ($zona) {
-            $recentVisitsQuery->whereHas('punto', fn($q) => $q->where('zona', $zona));
+            $recentVisitsQuery->whereHas('punto', fn ($q) => $q->where('zona', $zona));
         }
         $recentVisits = $recentVisitsQuery->latest('created_at')->limit(8)->get();
 
@@ -80,5 +83,37 @@ class DashboardController extends Controller
             ],
             'selectedPointId' => $pointId,
         ]);
+    }
+
+    /**
+     * Actualización exclusiva de metas operativas mensuales por el Super Administrador.
+     */
+    public function updateMetas(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || ! $user->hasRole('Administrador')) {
+            abort(403, 'Acceso denegado: únicamente el Super Administrador TIC puede modificar las metas operativas.');
+        }
+
+        $validated = $request->validate([
+            'metas' => ['required', 'array'],
+            'metas.1' => ['required', 'integer', 'min:1'],
+            'metas.2' => ['required', 'integer', 'min:1'],
+            'metas.3' => ['required', 'integer', 'min:1'],
+            'metas.4' => ['required', 'integer', 'min:1'],
+            'metas.consolidado' => ['required', 'integer', 'min:1'],
+        ]);
+
+        Setting::set('metas_mensuales_sedes', $validated['metas'], 'json', 'Metas mensuales de atenciones por sede');
+
+        AuditLog::registrar(
+            accion: 'ACTUALIZAR_METAS',
+            modulo: 'configuracion',
+            registroId: 'metas_mensuales',
+            antiguos: null,
+            nuevos: $validated['metas']
+        );
+
+        return back()->with('success', 'Metas operativas mensuales actualizadas exitosamente.');
     }
 }

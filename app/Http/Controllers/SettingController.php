@@ -18,11 +18,9 @@ class SettingController extends Controller
         }
 
         $settings = Setting::all();
-        $auditLogs = AuditLog::with('usuario')->latest('created_at')->limit(50)->get();
 
         return Inertia::render('Settings/Index', [
             'settings' => $settings,
-            'auditLogs' => $auditLogs,
         ]);
     }
 
@@ -45,11 +43,11 @@ class SettingController extends Controller
 
         // Registrar auditoría de seguridad
         AuditLog::registrar(
-            'ACTUALIZACION_CONFIGURACION',
-            'Configuracion',
-            'sistema',
-            $anteriores,
-            $data['settings']
+            accion: 'ACTUALIZAR_CONFIGURACION',
+            modulo: 'configuracion',
+            registroId: 'parametros_globales',
+            antiguos: $anteriores,
+            nuevos: $data['settings']
         );
 
         return redirect()->route('configuracion.index')

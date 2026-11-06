@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Point;
 use App\Models\PrintRecord;
 use Carbon\Carbon;
@@ -19,7 +20,7 @@ class PrintRecordController extends Controller
 
         $records = PrintRecord::with(['ciudadano', 'punto', 'gestor'])
             ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
-            ->when($filters['id_punto'] ?? null, fn($q, $p) => $q->where('id_punto', $p))
+            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where('id_punto', $p))
             ->latest('created_at')
             ->paginate(15)
             ->withQueryString();
@@ -56,7 +57,20 @@ class PrintRecordController extends Controller
 
         $validated['id_gestor'] = Auth::id();
 
-        PrintRecord::create($validated);
+        $record = PrintRecord::create($validated);
+
+        AuditLog::registrar(
+            accion: 'REGISTRO_IMPRESION',
+            modulo: 'impresiones',
+            registroId: (string) $record->id_impresion,
+            antiguos: null,
+            nuevos: [
+                'numero_hojas' => $record->numero_hojas,
+                'tipo_impresion' => $record->tipo_impresion,
+                'id_punto' => $record->id_punto,
+                'descripcion' => $record->descripcion,
+            ]
+        );
 
         return redirect()->route('impresiones.index')
             ->with('success', 'Registro de impresión guardado exitosamente.');

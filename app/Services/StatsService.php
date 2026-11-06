@@ -7,6 +7,7 @@ use App\Models\Citizen;
 use App\Models\Point;
 use App\Models\PrintRecord;
 use App\Models\RoomLoan;
+use App\Models\Setting;
 use App\Models\SubCategory;
 use App\Models\Visit;
 use Carbon\Carbon;
@@ -17,7 +18,7 @@ class StatsService
     /**
      * Resumen completo de métricas del Dashboard con soporte de ámbitos y períodos.
      *
-     * @param array|int|null $params Filtros del dashboard (point_id, zona, periodo, fecha_desde, fecha_hasta)
+     * @param  array|int|null  $params  Filtros del dashboard (point_id, zona, periodo, fecha_desde, fecha_hasta)
      */
     public function getDashboardStats(array|int|null $params = null): array
     {
@@ -28,8 +29,8 @@ class StatsService
             $filters = $params;
         }
 
-        $pointId = !empty($filters['point_id']) ? (int) $filters['point_id'] : null;
-        $zona = !empty($filters['zona']) && in_array($filters['zona'], ['Urbana', 'Rural']) ? $filters['zona'] : null;
+        $pointId = ! empty($filters['point_id']) ? (int) $filters['point_id'] : null;
+        $zona = ! empty($filters['zona']) && in_array($filters['zona'], ['Urbana', 'Rural']) ? $filters['zona'] : null;
 
         // Si se selecciona un punto específico, la zona queda implícita por ese punto
         if ($pointId) {
@@ -69,6 +70,17 @@ class StatsService
         // 11. Distribución por Categorías Generales
         $distribucionCategorias = $this->calculateCategoryDistribution($targetPointIds, $startDate, $endDate, $kpis['visitas_periodo']);
 
+        // 12. Semáforo y Cumplimiento de Metas Adaptado al Período y Sede
+        $semaforoMetas = $this->calculateSemaforoMetas(
+            $pointId,
+            $zona,
+            $targetPointIds,
+            $startDate,
+            $endDate,
+            $periodoKey,
+            $kpis['visitas_periodo']
+        );
+
         return [
             'scope' => $scopeInfo,
             'periodo' => [
@@ -88,6 +100,109 @@ class StatsService
             'dependencia_formacion' => $dependenciaFormacion,
             'dependencia_salas' => $dependenciaSalas,
             'dependencia_impresiones' => $dependenciaImpresiones,
+            'semaforo_metas' => $semaforoMetas,
+        ];
+    }
+
+    /**
+     * Calcula el estado de cumplimiento y semáforo de metas de atención adaptado al período (día, semana, mes, trimestre, año) y sede.
+     */
+    protected function calculateSemaforoMetas(
+        ?int $pointId,
+        ?string $zona,
+        ?array $targetPointIds,
+        Carbon $startDate,
+        Carbon $endDate,
+        string $periodoKey,
+        int $visitasPeriodo
+    ): array {
+        $defaultMetas = [
+            '1' => 1200, // Punto Vive Digital PLUS
+            '2' => 1000, // Punto Vive Digital Tradicional
+            '3' => 350,  // Aula Digital Dinamarca
+            '4' => 350,  // Aula Digital Chichimene
+            'consolidado' => 2900,
+        ];
+
+        $stored = Setting::get('metas_mensuales_sedes');
+        $metasConfig = is_array($stored) ? ($stored + $defaultMetas) : $defaultMetas;
+
+        // 1. Meta base mensual para el ámbito activo
+        if ($pointId && isset($metasConfig[$pointId])) {
+            $metaBaseMensual = (int) $metasConfig[$pointId];
+        } elseif ($zona === 'Urbana') {
+            $metaBaseMensual = (int) ($metasConfig['1'] ?? 1200) + (int) ($metasConfig['2'] ?? 1000);
+        } elseif ($zona === 'Rural') {
+            $metaBaseMensual = (int) ($metasConfig['3'] ?? 350) + (int) ($metasConfig['4'] ?? 350);
+        } else {
+            $metaBaseMensual = (int) ($metasConfig['consolidado'] ?? 2900);
+        }
+
+        // 2. Escalar la meta según el período seleccionado
+        switch ($periodoKey) {
+            case 'hoy':
+                $metaObjetivo = (int) max(1, round($metaBaseMensual / 30));
+                $tipoMetaLabel = 'Meta Diaria (Hoy)';
+                break;
+            case 'semana':
+                $metaObjetivo = (int) max(1, round(($metaBaseMensual / 30) * 7));
+                $tipoMetaLabel = 'Meta Semanal (7 Días)';
+                break;
+            case 'trimestre':
+                $metaObjetivo = (int) round($metaBaseMensual * 3);
+                $tipoMetaLabel = 'Meta Trimestral (3 Meses)';
+                break;
+            case 'ano':
+                $metaObjetivo = (int) round($metaBaseMensual * 12);
+                $tipoMetaLabel = 'Meta Anual';
+                break;
+            case 'custom':
+                $diasRango = max(1, (int) round($startDate->diffInDays($endDate) + 1));
+                $metaObjetivo = (int) max(1, round(($metaBaseMensual / 30) * $diasRango));
+                $tipoMetaLabel = "Meta del Período ({$diasRango} días)";
+                break;
+            case 'mes':
+            default:
+                $metaObjetivo = $metaBaseMensual;
+                $tipoMetaLabel = 'Meta Mensual';
+                break;
+        }
+
+        // 3. Atenciones reales logradas en este período y ámbito
+        $visitasActuales = $visitasPeriodo;
+
+        $porcentaje = $metaObjetivo > 0 ? round(($visitasActuales / $metaObjetivo) * 100, 1) : 0;
+        $faltante = max(0, $metaObjetivo - $visitasActuales);
+
+        // 4. Días restantes y ritmo sugerido
+        $now = Carbon::now();
+        if ($endDate->isPast() && $endDate->diffInDays($now, false) > 0) {
+            // Período concluido en el pasado
+            $diasRestantes = 0;
+            $ritmoDiarioSugerido = 0;
+            $periodoCerrado = true;
+        } else {
+            // Período en curso
+            $diasRestantes = max(1, (int) $now->diffInDays($endDate, false));
+            $ritmoDiarioSugerido = $diasRestantes > 0 ? (int) ceil($faltante / $diasRestantes) : 0;
+            $periodoCerrado = false;
+        }
+
+        // Semáforo: cumplida (>=100%), óptimo (>=80%), moderado (50-79%), alerta (<50%)
+        $estado = $porcentaje >= 100 ? 'cumplida' : ($porcentaje >= 80 ? 'optimo' : ($porcentaje >= 50 ? 'moderado' : 'alerta'));
+
+        return [
+            'meta_objetivo' => $metaObjetivo,
+            'meta_base_mensual' => $metaBaseMensual,
+            'tipo_meta_label' => $tipoMetaLabel,
+            'visitas_periodo' => $visitasActuales,
+            'porcentaje_cumplimiento' => min(999, $porcentaje),
+            'faltante' => $faltante,
+            'dias_restantes' => $diasRestantes,
+            'ritmo_diario_sugerido' => $ritmoDiarioSugerido,
+            'estado' => $estado,
+            'periodo_cerrado' => $periodoCerrado,
+            'metas_config' => $metasConfig,
         ];
     }
 
@@ -98,6 +213,7 @@ class StatsService
     {
         if ($pointId) {
             $point = Point::find($pointId);
+
             return [
                 'id_punto' => $pointId,
                 'zona' => $point?->zona,
@@ -140,7 +256,7 @@ class StatsService
             case 'hoy':
                 $start = Carbon::today()->startOfDay();
                 $end = Carbon::today()->endOfDay();
-                $label = 'Hoy (' . $start->format('d/m/Y') . ')';
+                $label = 'Hoy ('.$start->format('d/m/Y').')';
                 break;
 
             case 'semana':
@@ -158,17 +274,17 @@ class StatsService
             case 'ano':
                 $start = Carbon::now()->startOfYear();
                 $end = Carbon::now()->endOfDay();
-                $label = 'Año ' . $now->year;
+                $label = 'Año '.$now->year;
                 break;
 
             case 'custom':
-                $start = !empty($filters['fecha_desde'])
+                $start = ! empty($filters['fecha_desde'])
                     ? Carbon::parse($filters['fecha_desde'])->startOfDay()
                     : Carbon::now()->startOfMonth();
-                $end = !empty($filters['fecha_hasta'])
+                $end = ! empty($filters['fecha_hasta'])
                     ? Carbon::parse($filters['fecha_hasta'])->endOfDay()
                     : Carbon::now()->endOfDay();
-                $label = $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
+                $label = $start->format('d/m/Y').' - '.$end->format('d/m/Y');
                 break;
 
             case 'mes':
@@ -176,7 +292,7 @@ class StatsService
                 $periodo = 'mes';
                 $start = Carbon::now()->startOfMonth();
                 $end = Carbon::now()->endOfDay();
-                $label = ucfirst($now->locale('es')->monthName) . ' ' . $now->year;
+                $label = ucfirst($now->locale('es')->monthName).' '.$now->year;
                 break;
         }
 
@@ -309,14 +425,15 @@ class StatsService
                     'es_hoy' => true,
                 ];
             }
+
             return $series;
         }
 
         // Si es 'ano' o 'trimestre', agrupamos por mes
         if ($periodoKey === 'ano' || $periodoKey === 'trimestre') {
             $rawMonthly = (clone $query)
-                ->selectRaw("substr(created_at, 1, 7) as mes, count(*) as total")
-                ->groupBy(DB::raw("substr(created_at, 1, 7)"))
+                ->selectRaw('substr(created_at, 1, 7) as mes, count(*) as total')
+                ->groupBy(DB::raw('substr(created_at, 1, 7)'))
                 ->pluck('total', 'mes')
                 ->toArray();
 
@@ -332,13 +449,14 @@ class StatsService
                 ];
                 $cursor->addMonth();
             }
+
             return $series;
         }
 
         // Período 'semana', 'mes' o 'custom' (agrupación diaria)
         $rawDaily = (clone $query)
-            ->selectRaw("substr(created_at, 1, 10) as fecha, count(*) as total")
-            ->groupBy(DB::raw("substr(created_at, 1, 10)"))
+            ->selectRaw('substr(created_at, 1, 10) as fecha, count(*) as total')
+            ->groupBy(DB::raw('substr(created_at, 1, 10)'))
             ->pluck('total', 'fecha')
             ->toArray();
 
@@ -425,8 +543,8 @@ class StatsService
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where(function ($q) {
                 $q->where('id_categoria', 1) // Trámites en Línea
-                  ->orWhereNotNull('id_subcategoria')
-                  ->orWhereNotNull('servicio_texto');
+                    ->orWhereNotNull('id_subcategoria')
+                    ->orWhereNotNull('servicio_texto');
             });
 
         if ($targetPointIds) {
@@ -448,6 +566,7 @@ class StatsService
             ->map(function ($sub) use ($subCounts, $totalTramites) {
                 $count = $subCounts[$sub->id_subcategoria] ?? 0;
                 $pct = $totalTramites > 0 ? round(($count / $totalTramites) * 100, 1) : 0;
+
                 return [
                     'id_subcategoria' => $sub->id_subcategoria,
                     'nombre' => $sub->nombre,
@@ -519,8 +638,8 @@ class StatsService
         }
 
         // 3. Demografía por Nivel Educativo
-        $educacion = $citizens->groupBy(fn($c) => $c->nivel_educativo ?: 'Sin Registrar')
-            ->map(fn($group) => $group->count())
+        $educacion = $citizens->groupBy(fn ($c) => $c->nivel_educativo ?: 'Sin Registrar')
+            ->map(fn ($group) => $group->count())
             ->sortDesc()
             ->take(5)
             ->toArray();
@@ -604,6 +723,7 @@ class StatsService
             ->get()
             ->map(function ($row) use ($totalHojas) {
                 $hojas = (int) $row->total_hojas;
+
                 return [
                     'tipo' => $row->tipo_impresion,
                     'solicitudes' => (int) $row->total_solicitudes,
@@ -644,6 +764,7 @@ class StatsService
             ->map(function ($cat) use ($visitsByCategory, $totalVisitas) {
                 $count = $visitsByCategory[$cat->id_categoria] ?? 0;
                 $pct = $totalVisitas > 0 ? round(($count / $totalVisitas) * 100, 1) : 0;
+
                 return [
                     'id_categoria' => $cat->id_categoria,
                     'nombre' => $cat->nombre,

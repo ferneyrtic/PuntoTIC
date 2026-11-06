@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import React, { useState, useEffect } from 'react';
+import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import {
     Users,
@@ -29,6 +29,11 @@ import {
     RotateCcw,
     SlidersHorizontal,
     Share2,
+    Target,
+    Award,
+    Pencil,
+    Lock,
+    X,
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from 'recharts';
 
@@ -132,6 +137,20 @@ interface Props {
                 porcentaje: number;
             }>;
         };
+        semaforo_metas?: {
+            meta_objetivo: number;
+            meta_base_mensual?: number;
+            tipo_meta_label?: string;
+            visitas_periodo?: number;
+            visitas_mes_actual: number;
+            porcentaje_cumplimiento: number;
+            faltante: number;
+            dias_restantes: number;
+            ritmo_diario_sugerido: number;
+            estado: 'cumplida' | 'optimo' | 'moderado' | 'alerta';
+            periodo_cerrado?: boolean;
+            metas_config: Record<string, number>;
+        };
     };
     churnAlerts: Array<{
         id_form_pvd: number;
@@ -169,8 +188,48 @@ export default function Dashboard({
 }: Props) {
     const { scope, periodo, kpis, chart_serie, comparativa_sedes, distribucion_categorias } = stats;
 
+    const { auth } = usePage<any>().props;
+    const isAdmin = auth?.user?.is_admin || auth?.user?.roles_nombres?.includes('Administrador');
+
+    const [showMetasModal, setShowMetasModal] = useState(false);
+    const metasForm = useForm({
+        metas: {
+            '1': stats.semaforo_metas?.metas_config?.['1'] || 1200,
+            '2': stats.semaforo_metas?.metas_config?.['2'] || 1000,
+            '3': stats.semaforo_metas?.metas_config?.['3'] || 350,
+            '4': stats.semaforo_metas?.metas_config?.['4'] || 350,
+            'consolidado': stats.semaforo_metas?.metas_config?.['consolidado'] || 2900,
+        },
+    });
+
+    const handleSaveMetas = (e: React.FormEvent) => {
+        e.preventDefault();
+        metasForm.post(route('metas.update'), {
+            preserveScroll: true,
+            onSuccess: () => setShowMetasModal(false),
+        });
+    };
+
     // Pestaña activa del dashboard
     const [activeTab, setActiveTab] = useState<'general' | 'tramites' | 'formacion' | 'salas' | 'impresiones'>('general');
+
+    // Manejador para exportar o imprimir gráficas en PDF
+    const handlePrintPdf = () => {
+        window.print();
+    };
+
+    // Auto-activación de diálogo de impresión/PDF si viene con parámetro en la URL
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('print') === 'true' || urlParams.get('pdf') === 'true') {
+                const timer = setTimeout(() => {
+                    window.print();
+                }, 600);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, []);
 
     // Manejador del cambio de ámbito (Sede individual o Consolidado)
     const handleScopeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -282,20 +341,79 @@ export default function Dashboard({
                             </select>
                         </div>
 
-                        {/* Botón de Exportar Reporte Ejecutivo */}
+                        {/* Botón Descargar Gráficas (PDF) */}
+                        <button
+                            type="button"
+                            onClick={handlePrintPdf}
+                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
+                            title="Descargar o imprimir las gráficas y estadísticas filtradas en formato PDF oficial"
+                        >
+                            <Printer className="w-3.5 h-3.5 text-emerald-200" />
+                            <span>Descargar Gráficas (PDF)</span>
+                        </button>
+
+                        {/* Botón de Exportar Datos Tabulares */}
                         <Link
                             href={route('exportar.index')}
                             className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
-                            title="Exportar informe ejecutivo con filtros"
+                            title="Exportar tablas y bases de datos en Excel / CSV"
                         >
                             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Exportar Informe</span>
+                            <span>Exportar Datos</span>
                         </Link>
                     </div>
                 </div>
             }
         >
             <Head title="Centro de Mando & Analítica · PuntoTIC" />
+
+            {/* Encabezado Oficial Institucional Exclusivo para Exportación / Impresión a PDF */}
+            <div className="print-only mb-6 border-b-2 border-emerald-800 pb-4">
+                <div className="flex items-center justify-between gap-4 mb-3">
+                    <div className="flex items-center gap-3">
+                        <img
+                            src="/images/escudo_acacias.png"
+                            alt="Escudo Alcaldía de Acacías"
+                            className="h-16 w-auto object-contain"
+                        />
+                        <div>
+                            <h1 className="text-lg font-black text-slate-900 tracking-tight uppercase leading-tight">
+                                Alcaldía Municipal de Acacías
+                            </h1>
+                            <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                                Secretaría de las Tecnologías de la Información y las Comunicaciones (TIC)
+                            </p>
+                            <p className="text-[11px] font-semibold text-slate-600">
+                                Red Municipal de Puntos Vive Digital y Aulas Digitales
+                            </p>
+                        </div>
+                    </div>
+                    <img
+                        src="/images/logo_alcaldia.png"
+                        alt="Logo Alcaldía de Acacías"
+                        className="h-12 w-auto object-contain"
+                    />
+                </div>
+
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-300 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <div>
+                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Documento</span>
+                        <span className="font-black text-slate-900">Informe Gráfico & Analítica Visual</span>
+                    </div>
+                    <div>
+                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Sede / Ámbito</span>
+                        <span className="font-black text-emerald-800">{scope.nombre}</span>
+                    </div>
+                    <div>
+                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Período Analizado</span>
+                        <span className="font-semibold text-slate-900">{periodo.label} ({periodo.fecha_desde} al {periodo.fecha_hasta})</span>
+                    </div>
+                    <div>
+                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Fecha de Expedición</span>
+                        <span className="font-semibold text-slate-800">{new Date().toLocaleString('es-CO')}</span>
+                    </div>
+                </div>
+            </div>
 
             {/* Barra de Ámbito y Período Activo */}
             <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-xs mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -342,6 +460,117 @@ export default function Dashboard({
                     ))}
                 </div>
             </div>
+
+            {/* Banner Semáforo de Cumplimiento de Metas Mensuales */}
+            {stats.semaforo_metas && (
+                <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-6 mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                                stats.semaforo_metas.estado === 'cumplida'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : stats.semaforo_metas.estado === 'optimo'
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : stats.semaforo_metas.estado === 'moderado'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-rose-100 text-rose-800'
+                            }`}>
+                                <Target className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                                        Cumplimiento de {stats.semaforo_metas.tipo_meta_label || 'Meta'} · {scope.nombre}
+                                    </h2>
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide border ${
+                                        stats.semaforo_metas.estado === 'cumplida'
+                                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                            : stats.semaforo_metas.estado === 'optimo'
+                                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                            : stats.semaforo_metas.estado === 'moderado'
+                                            ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                            : 'bg-rose-100 text-rose-800 border-rose-300'
+                                    }`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${
+                                            stats.semaforo_metas.estado === 'cumplida' || stats.semaforo_metas.estado === 'optimo'
+                                                ? 'bg-emerald-500'
+                                                : stats.semaforo_metas.estado === 'moderado'
+                                                ? 'bg-amber-500'
+                                                : 'bg-rose-500'
+                                        }`}></span>
+                                        {stats.semaforo_metas.estado === 'cumplida'
+                                            ? 'Meta Superada'
+                                            : stats.semaforo_metas.estado === 'optimo'
+                                            ? 'Ritmo Óptimo'
+                                            : stats.semaforo_metas.estado === 'moderado'
+                                            ? 'Ritmo Moderado'
+                                            : 'Atención Requerida'}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500 font-medium">
+                                    Seguimiento de atenciones registradas ({periodo.label}) vs meta oficial
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Botón de Ajustar Metas (Exclusivo Super Admin) o Candado informativo para otros roles */}
+                        {isAdmin ? (
+                            <button
+                                type="button"
+                                onClick={() => setShowMetasModal(true)}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs shrink-0"
+                            >
+                                <Pencil className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Ajustar Metas (Admin)</span>
+                            </button>
+                        ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-xs font-semibold border border-slate-200 shrink-0">
+                                <Lock className="w-3 h-3 text-slate-400" />
+                                <span>Meta fijada por Alcaldía</span>
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Barra de Progreso y Estadísticas */}
+                    <div className="space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 text-xs">
+                            <div className="flex items-baseline gap-1.5">
+                                <span className="text-2xl font-black text-slate-900 tabular-nums">
+                                    {(stats.semaforo_metas.visitas_periodo ?? stats.semaforo_metas.visitas_mes_actual ?? 0).toLocaleString()}
+                                </span>
+                                <span className="text-slate-500 font-medium">
+                                    / {stats.semaforo_metas.meta_objetivo.toLocaleString()} atenciones ({stats.semaforo_metas.porcentaje_cumplimiento}%)
+                                </span>
+                            </div>
+                            <span className="text-slate-500 font-semibold text-[11px]">
+                                {stats.semaforo_metas.faltante > 0 ? (
+                                    stats.semaforo_metas.periodo_cerrado ? (
+                                        <>Período finalizado · Faltaron <strong className="text-slate-800">{stats.semaforo_metas.faltante.toLocaleString()}</strong> atenciones</>
+                                    ) : (
+                                        <>Faltan <strong className="text-slate-800">{stats.semaforo_metas.faltante.toLocaleString()}</strong> atenciones · Quedan {stats.semaforo_metas.dias_restantes} días (Ritmo sugerido: {stats.semaforo_metas.ritmo_diario_sugerido} al día)</>
+                                    )
+                                ) : (
+                                    <strong className="text-emerald-700">¡Meta del período 100% alcanzada!</strong>
+                                )}
+                            </span>
+                        </div>
+
+                        {/* Barra de progreso coloreada */}
+                        <div className="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden p-0.5 border border-slate-200">
+                            <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                    stats.semaforo_metas.estado === 'cumplida' || stats.semaforo_metas.estado === 'optimo'
+                                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                                        : stats.semaforo_metas.estado === 'moderado'
+                                        ? 'bg-gradient-to-r from-amber-400 to-yellow-500'
+                                        : 'bg-gradient-to-r from-rose-500 to-red-500'
+                                }`}
+                                style={{ width: `${Math.min(100, stats.semaforo_metas.porcentaje_cumplimiento)}%` }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Tarjetas Principales de KPIs (Grid Bento) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -1059,6 +1288,142 @@ export default function Dashboard({
                                 </div>
                             )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Configuración de Metas Mensuales (Exclusivo Super Admin) */}
+            {showMetasModal && isAdmin && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in">
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black">
+                                    <Target className="w-4 h-4 text-emerald-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-black text-slate-900">Configurar Metas Mensuales</h3>
+                                    <p className="text-[11px] text-slate-500">Exclusivo Super Administrador TIC</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowMetasModal(false)}
+                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveMetas} className="space-y-4">
+                            <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                                Define la cantidad objetivo de atenciones mensuales para cada sede y el consolidado municipal. El semáforo del panel calculará el ritmo de cumplimiento en tiempo real.
+                            </p>
+
+                            <div className="space-y-3">
+                                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className="text-xs font-bold text-slate-800">Punto Vive Digital PLUS</div>
+                                        <div className="text-[10px] text-slate-500">Zona Urbana (Centro)</div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 w-32">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={metasForm.data.metas['1']}
+                                            onChange={(e) => metasForm.setData('metas', { ...metasForm.data.metas, '1': parseInt(e.target.value) || 0 })}
+                                            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 text-right focus:border-emerald-600 outline-none"
+                                        />
+                                        <span className="text-[10px] font-semibold text-slate-400">visitas</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className="text-xs font-bold text-slate-800">Punto Vive Digital Tradicional</div>
+                                        <div className="text-[10px] text-slate-500">Zona Urbana (La Independencia)</div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 w-32">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={metasForm.data.metas['2']}
+                                            onChange={(e) => metasForm.setData('metas', { ...metasForm.data.metas, '2': parseInt(e.target.value) || 0 })}
+                                            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 text-right focus:border-emerald-600 outline-none"
+                                        />
+                                        <span className="text-[10px] font-semibold text-slate-400">visitas</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className="text-xs font-bold text-slate-800">Aula Digital Dinamarca</div>
+                                        <div className="text-[10px] text-slate-500">Zona Rural (Vereda Dinamarca)</div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 w-32">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={metasForm.data.metas['3']}
+                                            onChange={(e) => metasForm.setData('metas', { ...metasForm.data.metas, '3': parseInt(e.target.value) || 0 })}
+                                            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 text-right focus:border-emerald-600 outline-none"
+                                        />
+                                        <span className="text-[10px] font-semibold text-slate-400">visitas</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className="text-xs font-bold text-slate-800">Aula Digital Chichimene</div>
+                                        <div className="text-[10px] text-slate-500">Zona Rural (Vereda Chichimene)</div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 w-32">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={metasForm.data.metas['4']}
+                                            onChange={(e) => metasForm.setData('metas', { ...metasForm.data.metas, '4': parseInt(e.target.value) || 0 })}
+                                            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 text-right focus:border-emerald-600 outline-none"
+                                        />
+                                        <span className="text-[10px] font-semibold text-slate-400">visitas</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className="text-xs font-black text-emerald-950 uppercase tracking-wider">Consolidado Municipal</div>
+                                        <div className="text-[10px] text-emerald-700">Meta total de toda la red municipal</div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 w-32">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={metasForm.data.metas['consolidado']}
+                                            onChange={(e) => metasForm.setData('metas', { ...metasForm.data.metas, 'consolidado': parseInt(e.target.value) || 0 })}
+                                            className="w-full px-2.5 py-1.5 rounded-xl border border-emerald-300 text-xs font-black text-emerald-950 text-right focus:border-emerald-600 outline-none bg-white"
+                                        />
+                                        <span className="text-[10px] font-bold text-emerald-800">visitas</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-2 flex items-center justify-end gap-2.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMetasModal(false)}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={metasForm.processing}
+                                    className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-sm"
+                                >
+                                    Guardar Metas
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

@@ -11,7 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     protected $fillable = [
         'name',
@@ -38,6 +38,7 @@ class User extends Authenticatable
     }
 
     protected $appends = [
+        'is_admin',
         'es_aula_digital',
         'rol_principal',
         'es_gestor_pvd',
@@ -45,6 +46,11 @@ class User extends Authenticatable
         'puede_acceder_pvd_general',
         'roles_nombres',
     ];
+
+    public function getIsAdminAttribute(): bool
+    {
+        return $this->hasRole('Administrador');
+    }
 
     public function getRolesNombresAttribute(): array
     {

@@ -20,9 +20,14 @@ import {
     Calendar,
     Search,
     Download,
+    History,
+    Sparkles,
 } from 'lucide-react';
 import PwaStatusBanner from '@/Components/PwaStatusBanner';
 import { promptPwaInstall, isPwaStandalone } from '@/services/pwaService';
+import CommandPalette from '@/Components/CommandPalette';
+import ChristmasSnow from '@/Components/ChristmasSnow';
+import ChristmasPixelTree from '@/Components/ChristmasPixelTree';
 
 interface Props {
     header?: ReactNode;
@@ -35,6 +40,24 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
     const [quickSearch, setQuickSearch] = useState('');
     const [canInstallApp, setCanInstallApp] = useState(false);
     const [isInstalled, setIsInstalled] = useState(false);
+    const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+    const [christmasMode, setChristmasMode] = useState<boolean>(() => {
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('pvd_christmas_mode');
+            return stored !== null ? stored === 'true' : true;
+        }
+        return true;
+    });
+
+    const toggleChristmasMode = () => {
+        setChristmasMode((prev) => {
+            const next = !prev;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('pvd_christmas_mode', String(next));
+            }
+            return next;
+        });
+    };
     const user = auth?.user;
 
     const currentUrl = window.location.pathname;
@@ -60,14 +83,16 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
         setDismissFlash(false);
     }, [flash]);
 
-    // Keyboard shortcut for search (Ctrl+K or Cmd+K)
+    // Keyboard shortcut for command palette (Ctrl+K or Cmd+K)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setSidebarOpen(false);
+            if (e.key === 'Escape') {
+                setSidebarOpen(false);
+                setCommandPaletteOpen(false);
+            }
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
-                const searchInput = document.getElementById('topbar-quick-search');
-                if (searchInput) searchInput.focus();
+                setCommandPaletteOpen((prev) => !prev);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
@@ -146,6 +171,12 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     active: currentUrl.startsWith('/exportar'),
                 },
                 {
+                    name: 'Registro de Actividad',
+                    href: route('auditoria.index'),
+                    icon: History,
+                    active: currentUrl.startsWith('/auditoria'),
+                },
+                {
                     name: 'Categorías y Servicios',
                     href: route('categorias.index'),
                     icon: Layers,
@@ -158,7 +189,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     active: currentUrl.startsWith('/campos-dinamicos'),
                 },
                 {
-                    name: 'Configuración y Auditoría',
+                    name: 'Configuración del Sistema',
                     href: route('configuracion.index'),
                     icon: Settings,
                     active: currentUrl.startsWith('/configuracion'),
@@ -203,7 +234,27 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                    <button
+                        type="button"
+                        onClick={() => setCommandPaletteOpen(true)}
+                        className="btn-tactile p-2 rounded-xl bg-slate-900 text-slate-300 hover:text-white border border-slate-800"
+                        title="Buscar o comandos (Ctrl+K)"
+                    >
+                        <Search className="w-4 h-4" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={toggleChristmasMode}
+                        className={`btn-tactile p-2 rounded-xl border text-xs font-black transition-all ${
+                            christmasMode
+                                ? 'bg-rose-950 text-rose-300 border-rose-800 shadow-xs'
+                                : 'bg-slate-900 text-slate-400 border-slate-800'
+                        }`}
+                        title={christmasMode ? 'Desactivar modo navideño' : 'Activar modo navideño'}
+                    >
+                        🎄
+                    </button>
                     <Link
                         href={route('visitas.create')}
                         className="btn-tactile p-2 rounded-xl bg-emerald-600 text-white shadow-sm"
@@ -235,12 +286,18 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                         <div>
                             <div className="text-base font-black text-white tracking-tight flex items-center gap-1.5 leading-tight">
                                 <span>PuntoTIC</span>
+                                {christmasMode && (
+                                    <span className="text-xs" title="¡Feliz Navidad en Acacías!">
+                                        🎅
+                                    </span>
+                                )}
                                 <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
                                     Acacías
                                 </span>
                             </div>
-                            <div className="text-[11px] text-slate-400 font-medium truncate mt-1">
-                                Red de Puntos Vive Digital
+                            <div className="text-[11px] text-slate-400 font-medium truncate mt-1 flex items-center gap-1">
+                                {christmasMode && <span className="text-emerald-400">🎄</span>}
+                                <span>Red de Puntos Vive Digital</span>
                             </div>
                         </div>
 
@@ -368,21 +425,38 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* Quick Search Shortcut Bar */}
-                        <form onSubmit={handleSearchSubmit} className="hidden md:block relative w-56 lg:w-72">
-                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                            <input
-                                id="topbar-quick-search"
-                                type="text"
-                                placeholder="Buscar ciudadano o CC..."
-                                value={quickSearch}
-                                onChange={(e) => setQuickSearch(e.target.value)}
-                                className="w-full pl-9 pr-14 py-2 rounded-xl bg-slate-100/80 hover:bg-slate-100 border border-slate-200/80 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
-                            />
-                            <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white border border-slate-200 text-slate-400 pointer-events-none">
-                                ⌘K
+                        {/* Quick Command Palette Trigger */}
+                        <button
+                            type="button"
+                            onClick={() => setCommandPaletteOpen(true)}
+                            className="hidden md:flex items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-xs font-medium text-slate-500 w-52 lg:w-64 transition-all group"
+                            title="Abrir paleta de comandos (Ctrl + K)"
+                        >
+                            <span className="flex items-center gap-2 truncate">
+                                <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
+                                <span className="truncate">Buscar o comando...</span>
+                            </span>
+                            <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white border border-slate-200 text-slate-400 group-hover:text-slate-700 shadow-2xs shrink-0">
+                                Ctrl K
                             </kbd>
-                        </form>
+                        </button>
+
+                        {/* Christmas Mode Toggle Button */}
+                        <button
+                            type="button"
+                            onClick={toggleChristmasMode}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                                christmasMode
+                                    ? 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 shadow-xs'
+                                    : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200'
+                            }`}
+                            title={christmasMode ? 'Desactivar efecto de nieve' : 'Activar efecto de nieve'}
+                        >
+                            <span className="text-sm">🎄</span>
+                            <span className="hidden xl:inline text-[11px]">
+                                {christmasMode ? 'Navidad Activa' : 'Modo Navidad'}
+                            </span>
+                        </button>
 
                         {/* Calendar Date Badge */}
                         <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700">
@@ -505,6 +579,18 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     <span>Más</span>
                 </button>
             </div>
+
+            {/* Christmas Snow Particle Canvas */}
+            <ChristmasSnow enabled={christmasMode} />
+
+            {/* Christmas Pixel Art Tree & Gifts */}
+            <ChristmasPixelTree enabled={christmasMode} />
+
+            {/* Global Command Palette */}
+            <CommandPalette
+                isOpen={commandPaletteOpen}
+                onClose={() => setCommandPaletteOpen(false)}
+            />
         </div>
     );
 }

@@ -7,13 +7,14 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Permisos granulares
         $permissions = [
@@ -100,6 +101,9 @@ class RolesAndPermissionsSeeder extends Seeder
         // Compatibilidad con rol legacy
         $legacyCoordinador = Role::firstOrCreate(['name' => 'Coordinador', 'guard_name' => 'web']);
         $legacyCoordinador->syncPermissions($coordinadorPvdRole->permissions);
+
+        $legacyGestor = Role::firstOrCreate(['name' => 'Gestor', 'guard_name' => 'web']);
+        $legacyGestor->syncPermissions($gestorPvdRole->permissions);
 
         // =====================================================================
         // CUENTAS OFICIALES PARA PRUEBAS Y OPERACIÓN
@@ -231,8 +235,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 'id_punto' => 4,
                 'cargo' => 'Gestor Sala Chichimene',
                 'activo' => true,
-                'puede_acceder_pvd_general' => true,
-                'puede_acceder_aula_digital' => true,
             ]
         );
         $wilberAvila->syncRoles(['Gestor Aula Digital', 'Gestor']);
