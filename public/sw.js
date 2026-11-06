@@ -1,18 +1,17 @@
 /* PuntoTIC Acacías - Service Worker PWA */
-const CACHE_NAME = 'puntotic-pwa-v1.0.0';
-const OFFLINE_URL = '/offline.html';
+const BASE_PATH = self.location.pathname.replace(/\/sw\.js$/, '');
+const CACHE_NAME = 'puntotic-pwa-v1.0.2';
+const OFFLINE_URL = `${BASE_PATH}/offline.html`;
 
 const PRECACHE_ASSETS = [
     OFFLINE_URL,
-    '/manifest.webmanifest',
-    '/manifest.json',
-    '/images/logo_alcaldia.png',
-    '/images/logo.png',
-    '/images/escudo_acacias.png',
-    '/images/icons/icon-192x192.png',
-    '/images/icons/icon-512x512.png',
-    '/images/icons/favicon-32x32.png',
-    '/images/icons/apple-touch-icon.png',
+    `${BASE_PATH}/manifest.webmanifest`,
+    `${BASE_PATH}/images/logo_alcaldia.png`,
+    `${BASE_PATH}/images/escudo_acacias.png`,
+    `${BASE_PATH}/images/icons/icon-192x192.png`,
+    `${BASE_PATH}/images/icons/icon-512x512.png`,
+    `${BASE_PATH}/images/icons/favicon-32x32.png`,
+    `${BASE_PATH}/images/icons/apple-touch-icon.png`,
 ];
 
 // Install Event - Pre-cache core shell assets
