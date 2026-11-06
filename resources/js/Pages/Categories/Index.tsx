@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Layers, Plus, Trash2, Edit2, FolderPlus, CheckCircle2, X, Sparkles } from 'lucide-react';
+import { Layers, Plus, Trash2, Edit2, FolderPlus, CheckCircle2, X, Sparkles, ChevronDown, ChevronUp, Search } from 'lucide-react';
 
 interface Props {
     categories: Array<any>;
@@ -10,6 +10,22 @@ interface Props {
 export default function CategoriesIndex({ categories }: Props) {
     const [selectedCategoryForSub, setSelectedCategoryForSub] = useState<any>(null);
     const [newCatModal, setNewCatModal] = useState(false);
+    const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
+    const [searchTerms, setSearchTerms] = useState<Record<number, string>>({});
+
+    const toggleExpand = (catId: number) => {
+        setExpandedCategories((prev) => ({
+            ...prev,
+            [catId]: !prev[catId],
+        }));
+    };
+
+    const handleSearchChange = (catId: number, val: string) => {
+        setSearchTerms((prev) => ({
+            ...prev,
+            [catId]: val,
+        }));
+    };
 
     const catForm = useForm({
         nombre: '',
@@ -90,46 +106,135 @@ export default function CategoriesIndex({ categories }: Props) {
                                         style={{ backgroundColor: cat.color || '#1B6B35' }}
                                     />
                                     <div>
-                                        <h3 className="text-sm font-bold text-slate-900 leading-tight">{cat.nombre}</h3>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-sm font-bold text-slate-900 leading-tight">{cat.nombre}</h3>
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                                {cat.subcategorias?.length || 0} ítems
+                                            </span>
+                                        </div>
                                         <p className="text-[11px] text-slate-400 mt-0.5">{cat.descripcion || 'Servicios agrupados'}</p>
                                     </div>
                                 </div>
-                                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 shrink-0">
-                                    {cat.visitas_count || 0} visitas
+                                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+                                    {cat.visitas_count || 0} atenciones
                                 </span>
                             </div>
 
                             {/* Subcategories List */}
                             <div className="space-y-1.5">
-                                {cat.subcategorias?.map((sub: any) => (
-                                    <div
-                                        key={sub.id_subcategoria}
-                                        className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-100 flex items-center justify-between text-xs font-medium text-slate-800 hover:bg-slate-100/70 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-2 truncate">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
-                                            <span className="truncate">{sub.nombre}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <span className="text-[10px] text-slate-400 font-bold">
-                                                {sub.visitas_count || 0} usos
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDeleteSubcategory(sub.id_subcategoria)}
-                                                className="text-slate-300 hover:text-rose-500 transition-colors"
-                                                title="Eliminar subcategoría"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                                {(!cat.subcategorias || cat.subcategorias.length === 0) && (
-                                    <div className="p-4 rounded-xl bg-slate-50 text-center text-slate-400 text-xs">
-                                        No hay subcategorías registradas en esta categoría.
-                                    </div>
-                                )}
+                                {(() => {
+                                    const subList = cat.subcategorias || [];
+                                    const isExpanded = !!expandedCategories[cat.id_categoria];
+                                    const search = (searchTerms[cat.id_categoria] || '').toLowerCase().trim();
+
+                                    const filteredList = search
+                                        ? subList.filter((s: any) => s.nombre.toLowerCase().includes(search))
+                                        : subList;
+
+                                    const visibleList = isExpanded || search
+                                        ? filteredList
+                                        : filteredList.slice(0, 5);
+
+                                    const hasMore = filteredList.length > 5 && !isExpanded && !search;
+
+                                    return (
+                                        <>
+                                            {/* Search input for categories with more than 6 items */}
+                                            {subList.length > 6 && (isExpanded || search) && (
+                                                <div className="relative mb-2">
+                                                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                                    <input
+                                                        type="text"
+                                                        value={searchTerms[cat.id_categoria] || ''}
+                                                        onChange={(e) => handleSearchChange(cat.id_categoria, e.target.value)}
+                                                        placeholder={`Buscar entre los ${subList.length} elementos de ${cat.nombre}...`}
+                                                        className="w-full pl-8 pr-7 py-1.5 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-emerald-600"
+                                                    />
+                                                    {search && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSearchChange(cat.id_categoria, '')}
+                                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                                        >
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Subcategory items container */}
+                                            <div className={`space-y-1.5 ${isExpanded && subList.length > 6 ? 'max-h-72 overflow-y-auto pr-1' : ''}`}>
+                                                {visibleList.map((sub: any) => (
+                                                    <div
+                                                        key={sub.id_subcategoria}
+                                                        className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-100 flex items-center justify-between text-xs font-medium text-slate-800 hover:bg-slate-100/70 transition-colors"
+                                                    >
+                                                        <div className="flex items-center gap-2 truncate">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                                            <span className="truncate">{sub.nombre}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <span className="text-[10px] text-slate-400 font-bold">
+                                                                {sub.visitas_count || 0} usos
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteSubcategory(sub.id_subcategoria)}
+                                                                className="text-slate-300 hover:text-rose-500 transition-colors"
+                                                                title="Eliminar subcategoría"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Has more indicator / expander */}
+                                            {hasMore && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleExpand(cat.id_categoria)}
+                                                    className="btn-tactile w-full mt-2 py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 border border-dashed border-emerald-300 text-xs font-bold text-emerald-800 transition-all flex items-center justify-between group"
+                                                >
+                                                    <span className="flex items-center gap-1.5">
+                                                        <ChevronDown className="w-4 h-4 text-emerald-600 group-hover:translate-y-0.5 transition-transform" />
+                                                        <span>Mostrar los {subList.length - 5} restantes (ver todos)...</span>
+                                                    </span>
+                                                    <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full font-mono">
+                                                        Total: {subList.length}
+                                                    </span>
+                                                </button>
+                                            )}
+
+                                            {/* Collapse button when expanded */}
+                                            {isExpanded && subList.length > 5 && !search && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleExpand(cat.id_categoria)}
+                                                    className="btn-tactile w-full mt-2 py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition-all flex items-center justify-center gap-1.5"
+                                                >
+                                                    <ChevronUp className="w-4 h-4" />
+                                                    <span>Mostrar menos (colapsar a 5)</span>
+                                                </button>
+                                            )}
+
+                                            {/* Empty State */}
+                                            {subList.length === 0 && (
+                                                <div className="p-4 rounded-xl bg-slate-50 text-center text-slate-400 text-xs">
+                                                    No hay subcategorías registradas en esta categoría.
+                                                </div>
+                                            )}
+
+                                            {/* No results for search */}
+                                            {search && visibleList.length === 0 && (
+                                                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-center text-amber-800 text-xs font-medium">
+                                                    No se encontraron coincidencias para "{search}".
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
 
