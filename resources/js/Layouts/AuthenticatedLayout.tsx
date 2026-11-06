@@ -674,7 +674,6 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     </>
                 )}
             </div>
-            </div>
 
             {/* Christmas Snow Particle Canvas */}
             <ChristmasSnow enabled={christmasMode} />
