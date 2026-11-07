@@ -184,6 +184,23 @@ export default function Login({ status }: { status?: string }) {
                                 <div className="text-[10px] text-slate-400 truncate font-mono mt-0.5">coordinador.general@acacias.gov.co</div>
                             </button>
 
+                            {/* Gestor Dinamarca (Pruebas) */}
+                            <button
+                                type="button"
+                                onClick={() => handleQuickSelect('gestor.dinamarca@acacias.gov.co', 'Dinamarca2026*')}
+                                className="btn-tactile p-2.5 rounded-xl bg-amber-50/90 hover:bg-amber-100 border border-amber-300/80 transition-all text-[11px] text-amber-950 font-medium"
+                                title="Gestor asignado al Aula Digital Dinamarca para confirmar solicitudes de sala"
+                            >
+                                <div className="font-bold flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                                        <span>Gestor Aula Dinamarca</span>
+                                    </div>
+                                    <span className="text-[9px] bg-amber-200 text-amber-900 font-black px-1.5 py-0.5 rounded uppercase">Dinamarca</span>
+                                </div>
+                                <div className="text-[10px] text-amber-800 truncate font-mono mt-0.5">gestor.dinamarca@acacias.gov.co</div>
+                            </button>
+
                             {/* Ciudadano / Portal */}
                             <button
                                 type="button"
