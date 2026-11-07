@@ -52,7 +52,7 @@ class StatsService
         $timeSeries = $this->calculateTimeSeries($targetPointIds, $startDate, $endDate, $periodoKey);
 
         // 6. Comparativa de Sedes (PVD Urbanos y Aulas Rurales)
-        $comparativaSedes = $this->calculateSedeComparison($startDate, $endDate);
+        $comparativaSedes = $this->calculateSedeComparison($startDate, $endDate, $targetPointIds);
 
         // 7. Dependencia: Trámites en Línea y Servicios Institucionales
         $dependenciaTramites = $this->calculateTramitesStats($targetPointIds, $startDate, $endDate);
@@ -294,9 +294,12 @@ class StatsService
 
         // Si es 'hoy', agrupamos por hora (8:00 a 18:00)
         if ($periodoKey === 'hoy') {
+            $driver = DB::connection()->getDriverName();
+            $hourExpr = $driver === 'sqlite' ? "strftime('%H', created_at)" : "DATE_FORMAT(created_at, '%H')";
+
             $rawHourly = (clone $query)
-                ->selectRaw("strftime('%H', created_at) as hora, count(*) as total")
-                ->groupBy(DB::raw("strftime('%H', created_at)"))
+                ->selectRaw("{$hourExpr} as hora, count(*) as total")
+                ->groupBy(DB::raw($hourExpr))
                 ->pluck('total', 'hora')
                 ->toArray();
 
@@ -369,9 +372,13 @@ class StatsService
     /**
      * Comparativa detallada de todas las sedes y aulas digitales.
      */
-    protected function calculateSedeComparison(Carbon $startDate, Carbon $endDate): array
+    protected function calculateSedeComparison(Carbon $startDate, Carbon $endDate, ?array $targetPointIds = null): array
     {
-        $allPoints = Point::where('activo', true)->get();
+        $pointsQuery = Point::where('activo', true);
+        if ($targetPointIds && count($targetPointIds) > 0) {
+            $pointsQuery->whereIn('id_punto', $targetPointIds);
+        }
+        $allPoints = $pointsQuery->get();
 
         // Visitas por punto en el período
         $visitsByPoint = Visit::whereBetween('created_at', [$startDate, $endDate])

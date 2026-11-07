@@ -33,24 +33,28 @@ class DashboardController extends Controller
         $pointId = null;
         $zona = null;
         $user = $request->user();
+        $isGlobal = $user ? $user->tieneAlcanceGlobal() : false;
 
-        // Interpretación de selectores combinados
-        if ($rawPoint === 'all' || $rawPoint === 'null') {
-            $pointId = null;
-            $zona = null;
-        } elseif ($rawPoint === 'zona_rural' || $rawZona === 'Rural') {
-            $pointId = null;
-            $zona = 'Rural';
-        } elseif ($rawPoint === 'zona_urbana' || $rawZona === 'Urbana') {
-            $pointId = null;
-            $zona = 'Urbana';
-        } elseif (is_numeric($rawPoint)) {
-            $pointId = (int) $rawPoint;
-            $zona = null;
-        } elseif ($rawPoint === null && $rawZona === null && $user && ! $user->hasRole('Administrador') && $user->id_punto) {
-            // Gestores y Coordinadores inician por defecto con la vista de su propia sede
+        // Interpretación de selectores de ámbito según permisos
+        if (! $isGlobal && $user && $user->id_punto) {
+            // Gestores/encargados de sede específica: bloqueados estrictamente a su punto
             $pointId = (int) $user->id_punto;
             $zona = null;
+        } else {
+            // Usuario con alcance global (David Mesa, Admin TIC, Coordinador General, Gestor Global)
+            if ($rawPoint === 'all' || $rawPoint === 'null') {
+                $pointId = null;
+                $zona = null;
+            } elseif ($rawPoint === 'zona_rural' || $rawZona === 'Rural') {
+                $pointId = null;
+                $zona = 'Rural';
+            } elseif ($rawPoint === 'zona_urbana' || $rawZona === 'Urbana') {
+                $pointId = null;
+                $zona = 'Urbana';
+            } elseif (is_numeric($rawPoint)) {
+                $pointId = (int) $rawPoint;
+                $zona = null;
+            }
         }
 
         $stats = $this->statsService->getDashboardStats([
@@ -72,8 +76,11 @@ class DashboardController extends Controller
         }
         $recentVisits = $recentVisitsQuery->latest('created_at')->limit(8)->get();
 
-        $points = Point::where('activo', true)
-            ->get(['id_punto', 'nombre_punto', 'codigo', 'zona']);
+        $pointsQuery = Point::where('activo', true);
+        if (! $isGlobal && $user && $user->id_punto) {
+            $pointsQuery->where('id_punto', $user->id_punto);
+        }
+        $points = $pointsQuery->get(['id_punto', 'nombre_punto', 'codigo', 'zona']);
 
         return Inertia::render('Dashboard', [
             'stats' => $stats,
@@ -81,6 +88,7 @@ class DashboardController extends Controller
             'tomorrowLoad' => $tomorrowLoad,
             'recentVisits' => $recentVisits,
             'points' => $points,
+            'canSelectScope' => $isGlobal,
             'filters' => [
                 'id_punto' => $pointId,
                 'zona' => $zona,

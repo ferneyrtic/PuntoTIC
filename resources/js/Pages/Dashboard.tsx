@@ -154,6 +154,7 @@ interface Props {
         codigo: string;
         zona: string;
     }>;
+    canSelectScope?: boolean;
     filters: {
         id_punto: number | null;
         zona: string | null;
@@ -169,10 +170,12 @@ export default function Dashboard({
     recentVisits,
     points,
     filters,
+    canSelectScope,
 }: Props) {
     const { scope, periodo, kpis, chart_serie, comparativa_sedes, distribucion_categorias } = stats;
 
     const { auth } = usePage<any>().props;
+    const isGlobal = Boolean(auth?.user?.tiene_alcance_global ?? canSelectScope ?? auth?.user?.is_admin);
     const isAdmin = auth?.user?.is_admin || auth?.user?.roles_nombres?.includes('Administrador');
 
     // Pestaña activa del dashboard
@@ -229,9 +232,13 @@ export default function Dashboard({
         });
     };
 
-    // Resetear filtros al consolidado municipal
+    // Resetear filtros al consolidado municipal o sede asignada
     const handleResetToAll = () => {
-        router.get(route('dashboard'), { periodo: 'mes' }, {
+        const nextParams: any = { periodo: 'mes' };
+        if (!isGlobal && filters.id_punto) {
+            nextParams.id_punto = filters.id_punto;
+        }
+        router.get(route('dashboard'), nextParams, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -285,25 +292,35 @@ export default function Dashboard({
                     <div className="flex flex-wrap items-center gap-2.5">
                         {/* Selector de Ámbito / Sede */}
                         <div className="relative flex-1 sm:flex-initial min-w-[240px]">
-                            <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                            <select
-                                value={currentScopeValue}
-                                onChange={handleScopeChange}
-                                className="w-full pl-9 pr-8 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 shadow-xs hover:border-emerald-500 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all cursor-pointer"
-                            >
-                                <option value="all">Consolidado Municipal (Toda la Red)</option>
-                                <optgroup label="Agrupaciones por Zona">
-                                    <option value="zona_urbana">PVD Urbanos (PLUS + Tradicional)</option>
-                                    <option value="zona_rural">Aulas Rurales (Dinamarca + Chichimene)</option>
-                                </optgroup>
-                                <optgroup label="Puntos y Aulas Individuales">
-                                    {points.map((p) => (
-                                        <option key={p.id_punto} value={p.id_punto}>
-                                            {p.nombre_punto} ({p.zona})
-                                        </option>
-                                    ))}
-                                </optgroup>
-                            </select>
+                            {isGlobal ? (
+                                <>
+                                    <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                    <select
+                                        value={currentScopeValue}
+                                        onChange={handleScopeChange}
+                                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 shadow-xs hover:border-emerald-500 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all cursor-pointer"
+                                    >
+                                        <option value="all">Consolidado Municipal (Toda la Red)</option>
+                                        <optgroup label="Agrupaciones por Zona">
+                                            <option value="zona_urbana">PVD Urbanos (PLUS + Tradicional)</option>
+                                            <option value="zona_rural">Aulas Rurales (Dinamarca + Chichimene)</option>
+                                        </optgroup>
+                                        <optgroup label="Puntos y Aulas Individuales">
+                                            {points.map((p) => (
+                                                <option key={p.id_punto} value={p.id_punto}>
+                                                    {p.nombre_punto} ({p.zona})
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    </select>
+                                </>
+                            ) : (
+                                <div className="flex items-center gap-2 pl-9 pr-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-xs font-bold text-emerald-900 dark:text-emerald-200 shadow-xs">
+                                    <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                    <span className="truncate">{scope?.nombre || points[0]?.nombre_punto || 'Sede Asignada'}</span>
+                                    <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold ml-auto shrink-0 uppercase tracking-wider">Tu Sede</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Botón Descargar Gráficas (PDF) */}

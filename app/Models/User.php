@@ -62,7 +62,38 @@ class User extends Authenticatable
         'puede_acceder_pvd_general',
         'puede_exportar_todas_sedes',
         'roles_nombres',
+        'tiene_alcance_global',
     ];
+
+    public function tieneAlcanceGlobal(): bool
+    {
+        if ($this->hasRole(['Administrador', 'Coordinador General', 'Gestor Global'])) {
+            return true;
+        }
+
+        if (in_array($this->email, [
+            'davidmesa.cps.tic@gmail.com',
+            'admin@acacias.gov.co',
+            'coordinador.general@acacias.gov.co',
+            'gestor.global@acacias.gov.co',
+        ])) {
+            return true;
+        }
+
+        if ($this->cargo && (
+            str_contains(mb_strtolower($this->cargo), 'coordinador general') ||
+            str_contains(mb_strtolower($this->cargo), 'administrador')
+        )) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function getTieneAlcanceGlobalAttribute(): bool
+    {
+        return $this->tieneAlcanceGlobal();
+    }
 
     public function getEsUsuarioCiudadanoAttribute(): bool
     {
@@ -125,15 +156,7 @@ class User extends Authenticatable
 
     public function getPuedeExportarTodasSedesAttribute(): bool
     {
-        if ($this->hasRole(['Administrador', 'Coordinador General', 'Coordinador', 'Coordinador PVD', 'Coordinador Aula Digital', 'Gestor Global'])) {
-            return true;
-        }
-
-        if ($this->cargo && str_contains(mb_strtolower($this->cargo), 'coordinador')) {
-            return true;
-        }
-
-        return false;
+        return $this->tieneAlcanceGlobal();
     }
 
     public function punto(): BelongsTo

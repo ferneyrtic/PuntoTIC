@@ -25,10 +25,23 @@ class VisitController extends Controller
 
     public function index(Request $request): Response
     {
+        $user = $request->user();
+        $isGlobal = $user ? $user->tieneAlcanceGlobal() : false;
+
         $filters = $request->only(['search', 'id_punto', 'id_categoria', 'id_subcategoria', 'fecha_desde', 'fecha_hasta']);
+
+        if (! $isGlobal && $user && $user->id_punto) {
+            $filters['id_punto'] = (int) $user->id_punto;
+        }
+
         $visits = $this->visitService->paginate($filters, 15);
 
-        $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto']);
+        $pointsQuery = Point::where('activo', true);
+        if (! $isGlobal && $user && $user->id_punto) {
+            $pointsQuery->where('id_punto', $user->id_punto);
+        }
+        $points = $pointsQuery->get(['id_punto', 'nombre_punto']);
+
         $categories = Category::with('subcategorias')->where('activo', true)->orderBy('orden')->get();
         $dynamicFields = DynamicField::where('modulo', 'visitas')->where('activo', true)->get();
 
@@ -38,12 +51,21 @@ class VisitController extends Controller
             'points' => $points,
             'categories' => $categories,
             'dynamicFields' => $dynamicFields,
+            'canSelectScope' => $isGlobal,
         ]);
     }
 
     public function create(Request $request): Response
     {
-        $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona']);
+        $user = $request->user();
+        $isGlobal = $user ? $user->tieneAlcanceGlobal() : false;
+
+        $pointsQuery = Point::where('activo', true);
+        if (! $isGlobal && $user && $user->id_punto) {
+            $pointsQuery->where('id_punto', $user->id_punto);
+        }
+        $points = $pointsQuery->get(['id_punto', 'nombre_punto', 'zona']);
+
         $categories = Category::with('subcategorias')->where('activo', true)->orderBy('orden')->get();
         $dynamicFields = DynamicField::where('modulo', 'visitas')->where('activo', true)->get();
 
@@ -58,7 +80,6 @@ class VisitController extends Controller
             }
         }
 
-        $user = $request->user();
         $puedeAulaDigital = $user ? (bool) $user->puede_acceder_aula_digital : false;
         $puedePvdGeneral = $user ? (bool) $user->puede_acceder_pvd_general : true;
 
@@ -76,7 +97,13 @@ class VisitController extends Controller
 
     public function store(StoreVisitRequest $request): RedirectResponse|JsonResponse
     {
-        $visit = $this->visitService->registerVisit($request->validated());
+        $validated = $request->validated();
+        $user = $request->user();
+        if ($user && ! $user->tieneAlcanceGlobal() && $user->id_punto) {
+            $validated['id_punto'] = (int) $user->id_punto;
+        }
+
+        $visit = $this->visitService->registerVisit($validated);
 
         if ($request->wantsJson()) {
             return response()->json([

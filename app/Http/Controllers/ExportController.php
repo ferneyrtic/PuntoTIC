@@ -19,13 +19,19 @@ class ExportController extends Controller
 
     public function index(): Response
     {
-        $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto']);
+        $user = auth()->user();
+        $isGlobal = $user ? $user->tieneAlcanceGlobal() : false;
+        $isAdmin = $user ? $user->hasRole('Administrador') : false;
+        $canExportAllPoints = $isGlobal;
+
+        $pointsQuery = Point::where('activo', true);
+        if (! $isGlobal && $user && $user->id_punto) {
+            $pointsQuery->where('id_punto', $user->id_punto);
+        }
+        $points = $pointsQuery->get(['id_punto', 'nombre_punto']);
+
         $categories = Category::where('activo', true)->get(['id_categoria', 'nombre']);
         $dynamicFields = DynamicField::where('activo', true)->get(['id_campo', 'modulo', 'nombre_campo']);
-
-        $user = auth()->user();
-        $isAdmin = $user ? $user->hasRole('Administrador') : false;
-        $canExportAllPoints = $user ? ($isAdmin || $user->puede_exportar_todas_sedes) : false;
         $currentUserRole = $user ? ($user->cargo ?: $user->rol_principal) : 'Gestor PVD';
         $currentUserName = $user ? $user->name : 'ADMIN';
         $responsableDefault = $user ? mb_strtoupper("{$user->name} ({$currentUserRole})", 'UTF-8') : 'ADMIN';

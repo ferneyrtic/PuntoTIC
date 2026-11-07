@@ -16,7 +16,14 @@ class RoomLoanController extends Controller
 {
     public function index(Request $request): Response
     {
+        $user = $request->user();
+        $isGlobal = $user ? $user->tieneAlcanceGlobal() : false;
+
         $filters = $request->only(['fecha_desde', 'fecha_hasta', 'id_punto', 'estado', 'tipo_actividad', 'search']);
+
+        if (! $isGlobal && $user && $user->id_punto) {
+            $filters['id_punto'] = (int) $user->id_punto;
+        }
 
         $loans = RoomLoan::with(['ciudadano', 'punto', 'gestor'])
             ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
@@ -38,7 +45,11 @@ class RoomLoanController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto']);
+        $pointsQuery = Point::where('activo', true);
+        if (! $isGlobal && $user && $user->id_punto) {
+            $pointsQuery->where('id_punto', $user->id_punto);
+        }
+        $points = $pointsQuery->get(['id_punto', 'nombre_punto']);
         $tiposActividad = RoomLoan::select('tipo_actividad')
             ->distinct()
             ->orderBy('tipo_actividad')
@@ -70,12 +81,17 @@ class RoomLoanController extends Controller
             'filters' => $filters,
             'points' => $points,
             'tiposActividad' => $tiposActividad,
-            'pendingCount' => RoomLoan::where('estado', 'Pendiente')->count(),
+            'pendingCount' => RoomLoan::where('estado', 'Pendiente')
+                ->when(! $isGlobal && $user?->id_punto, fn ($q) => $q->where('id_punto', $user->id_punto))
+                ->count(),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+        $isGlobal = $user ? $user->tieneAlcanceGlobal() : false;
+
         $validated = $request->validate([
             'id_form_pvd' => ['nullable', 'exists:form_pvd,id_form_pvd'],
             'nombre_responsable_texto' => ['nullable', 'string', 'max:150'],
@@ -88,6 +104,10 @@ class RoomLoanController extends Controller
             'observaciones' => ['nullable', 'string'],
             'estado' => ['required', 'in:Pendiente,Reservado,En curso,Completado,Cancelado'],
         ]);
+
+        if (! $isGlobal && $user && $user->id_punto) {
+            $validated['id_punto'] = (int) $user->id_punto;
+        }
 
         $validated['id_gestor'] = Auth::id();
 

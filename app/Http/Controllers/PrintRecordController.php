@@ -16,7 +16,14 @@ class PrintRecordController extends Controller
 {
     public function index(Request $request): Response
     {
+        $user = $request->user();
+        $isGlobal = $user ? $user->tieneAlcanceGlobal() : false;
+
         $filters = $request->only(['fecha_desde', 'fecha_hasta', 'id_punto']);
+
+        if (! $isGlobal && $user && $user->id_punto) {
+            $filters['id_punto'] = (int) $user->id_punto;
+        }
 
         $records = PrintRecord::with(['ciudadano', 'punto', 'gestor'])
             ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
@@ -25,12 +32,25 @@ class PrintRecordController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto']);
+        $pointsQuery = Point::where('activo', true);
+        if (! $isGlobal && $user && $user->id_punto) {
+            $pointsQuery->where('id_punto', $user->id_punto);
+        }
+        $points = $pointsQuery->get(['id_punto', 'nombre_punto']);
 
-        // Stats del mes
-        $todaySum = PrintRecord::whereDate('created_at', Carbon::today())->sum('numero_hojas');
-        $monthSum = PrintRecord::where('created_at', '>=', Carbon::now()->startOfMonth())->sum('numero_hojas');
-        $totalAttended = PrintRecord::where('created_at', '>=', Carbon::now()->startOfMonth())->distinct('id_form_pvd')->count();
+        // Stats del mes para el ámbito correspondiente
+        $targetPoint = (! $isGlobal && $user && $user->id_punto) ? $user->id_punto : ($filters['id_punto'] ?? null);
+
+        $todaySum = PrintRecord::whereDate('created_at', Carbon::today())
+            ->when($targetPoint, fn ($q, $p) => $q->where('id_punto', $p))
+            ->sum('numero_hojas');
+        $monthSum = PrintRecord::where('created_at', '>=', Carbon::now()->startOfMonth())
+            ->when($targetPoint, fn ($q, $p) => $q->where('id_punto', $p))
+            ->sum('numero_hojas');
+        $totalAttended = PrintRecord::where('created_at', '>=', Carbon::now()->startOfMonth())
+            ->when($targetPoint, fn ($q, $p) => $q->where('id_punto', $p))
+            ->distinct('id_form_pvd')
+            ->count();
 
         return Inertia::render('PrintRecords/Index', [
             'records' => $records,
@@ -46,6 +66,9 @@ class PrintRecordController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+        $isGlobal = $user ? $user->tieneAlcanceGlobal() : false;
+
         $validated = $request->validate([
             'id_form_pvd' => ['nullable', 'exists:form_pvd,id_form_pvd'],
             'nombre_usuario_texto' => ['nullable', 'string', 'max:150'],
@@ -54,6 +77,10 @@ class PrintRecordController extends Controller
             'tipo_impresion' => ['required', 'string', 'max:100'],
             'descripcion' => ['nullable', 'string'],
         ]);
+
+        if (! $isGlobal && $user && $user->id_punto) {
+            $validated['id_punto'] = (int) $user->id_punto;
+        }
 
         $validated['id_gestor'] = Auth::id();
 
