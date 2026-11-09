@@ -42,6 +42,20 @@ interface Point {
     telefono: string;
 }
 
+const CATEGORIAS_PRESTAMO = [
+    'Convenios Formativos y Cursos SENA / Alcaldía',
+    'Instituciones Educativas y Colegios',
+    'ICBF y Programas de Niñez / Primera Infancia',
+    'Juntas de Acción Comunal (JAC) y Asambleas Barriales',
+    'Cine Comunitario, Cineclub y Proyecciones Audiovisuales',
+    'Talleres de Emprendimiento y Desarrollo Económico',
+    'Ensayos Artísticos, Danza y Expresiones Culturales',
+    'Asambleas y Reuniones de Organizaciones Sociales',
+    'Capacitaciones de Entidades Gubernamentales',
+    'Acceso Comunitario TIC y Práctica Libre',
+    'Otro Tipo de Actividad',
+];
+
 interface RoomLoanItem {
     id_prestamo: number;
     tipo_actividad: string;
@@ -50,6 +64,7 @@ interface RoomLoanItem {
     hora_inicio: string;
     hora_fin: string;
     observaciones: string;
+    respuesta_gestor?: string | null;
     estado: 'Pendiente' | 'Reservado' | 'En curso' | 'Completado' | 'Cancelado';
     punto?: {
         nombre_punto: string;
@@ -159,7 +174,7 @@ export default function PortalIndex({
 
     const { data, setData, post, processing, errors, reset } = useForm({
         id_punto: puntos[0]?.id_punto || 1,
-        tipo_actividad: 'Capacitación o Taller Comunitario',
+        tipo_actividad: CATEGORIAS_PRESTAMO[0],
         num_asistentes: 10,
         fecha_prestamo: defaultDate,
         hora_inicio: '09:00',
@@ -829,11 +844,33 @@ export default function PortalIndex({
                                                         </span>
                                                     </div>
                                                 </td>
-                                                <td className="py-3.5 px-4 max-w-xs">
+                                                <td className="py-3.5 px-4 max-w-sm">
                                                     <div className="font-bold text-slate-900 truncate">{s.tipo_actividad}</div>
                                                     {s.observaciones && (
                                                         <div className="text-[11px] text-slate-500 truncate" title={s.observaciones}>
-                                                            {s.observaciones}
+                                                            "{s.observaciones}"
+                                                        </div>
+                                                    )}
+                                                    {s.respuesta_gestor && s.estado === 'Cancelado' && (
+                                                        <div className="mt-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] shadow-xs">
+                                                            <div className="flex items-center gap-1 font-bold text-rose-900 mb-0.5">
+                                                                <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+                                                                <span>Motivo de rechazo del gestor:</span>
+                                                            </div>
+                                                            <p className="font-medium text-rose-700 whitespace-normal">
+                                                                {s.respuesta_gestor}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    {s.respuesta_gestor && s.estado === 'Reservado' && (
+                                                        <div className="mt-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] shadow-xs">
+                                                            <div className="flex items-center gap-1 font-bold text-emerald-900 mb-0.5">
+                                                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                                                                <span>Indicaciones del gestor:</span>
+                                                            </div>
+                                                            <p className="font-medium text-emerald-700 whitespace-normal">
+                                                                {s.respuesta_gestor}
+                                                            </p>
                                                         </div>
                                                     )}
                                                 </td>
@@ -924,23 +961,31 @@ export default function PortalIndex({
                             <span className="text-[10px] text-slate-500 block">Atención en conmutador</span>
                         </div>
 
-                        <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1">
+                        <a
+                            href={`https://wa.me/573213618632?text=${encodeURIComponent('Hola, me gustaría solicitar información sobre los Puntos Vive Digital de Acacías.')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1 block hover:bg-emerald-100/80 transition-colors group cursor-pointer"
+                        >
                             <span className="text-[10px] font-bold uppercase text-emerald-800 block">WhatsApp Ciudadano</span>
                             <div className="font-black text-emerald-950 text-sm flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                <span>{soporte.whatsapp}</span>
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span className="group-hover:underline">{soporte.whatsapp}</span>
                             </div>
                             <span className="text-[10px] text-emerald-700 block">Línea rápida de mensajes</span>
-                        </div>
+                        </a>
 
-                        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                        <a
+                            href={`mailto:${soporte.correo}`}
+                            className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1 block hover:bg-slate-100 transition-colors group cursor-pointer"
+                        >
                             <span className="text-[10px] font-bold uppercase text-slate-400 block">Correo Institucional</span>
                             <div className="font-black text-slate-900 text-sm flex items-center gap-1.5 truncate">
                                 <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                <span className="truncate">{soporte.correo}</span>
+                                <span className="truncate group-hover:underline">{soporte.correo}</span>
                             </div>
                             <span className="text-[10px] text-slate-500 block">Solicitudes formales</span>
-                        </div>
+                        </a>
 
                         <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
                             <span className="text-[10px] font-bold uppercase text-slate-400 block">Horario de Salas</span>
@@ -1206,15 +1251,20 @@ export default function PortalIndex({
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div className="sm:col-span-2">
                                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
-                                        Tipo de Actividad
+                                        Categoría de Actividad *
                                     </label>
-                                    <input
-                                        type="text"
+                                    <select
                                         value={data.tipo_actividad}
                                         onChange={(e) => setData('tipo_actividad', e.target.value)}
-                                        placeholder="Ej: Taller comunitario, Cineclub, Reunión JAC"
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                    />
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                        required
+                                    >
+                                        {CATEGORIAS_PRESTAMO.map((cat) => (
+                                            <option key={cat} value={cat}>
+                                                {cat}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div>

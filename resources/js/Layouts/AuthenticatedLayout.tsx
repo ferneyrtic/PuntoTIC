@@ -211,12 +211,6 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                           active: currentUrl.startsWith('/exportar'),
                       },
                       {
-                          name: 'Registro de Actividad',
-                          href: route('auditoria.index'),
-                          icon: History,
-                          active: currentUrl.startsWith('/auditoria'),
-                      },
-                      {
                           name: 'Categorías y Servicios',
                           href: route('categorias.index'),
                           icon: Layers,
@@ -230,6 +224,12 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                       },
                       ...(isAdmin
                           ? [
+                                {
+                                    name: 'Registro de Actividad',
+                                    href: route('auditoria.index'),
+                                    icon: History,
+                                    active: currentUrl.startsWith('/auditoria'),
+                                },
                                 {
                                     name: 'Configuración y Auditoría',
                                     href: route('configuracion.index'),

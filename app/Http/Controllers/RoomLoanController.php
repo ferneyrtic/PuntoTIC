@@ -27,7 +27,9 @@ class RoomLoanController extends Controller
 
         $loans = RoomLoan::with(['ciudadano', 'punto', 'gestor'])
             ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
-            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where('id_punto', $p))
+            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
+                $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
+            }))
             ->when($filters['estado'] ?? null, fn ($q, $e) => $q->where('estado', $e))
             ->when($filters['tipo_actividad'] ?? null, fn ($q, $t) => $q->where('tipo_actividad', $t))
             ->when($filters['search'] ?? null, function ($q, $search) {
@@ -41,7 +43,8 @@ class RoomLoanController extends Controller
                         });
                 });
             })
-            ->latest('fecha_prestamo')
+            ->orderByRaw('COALESCE(fecha_prestamo, DATE(created_at)) DESC')
+            ->orderByDesc('id')
             ->paginate(15)
             ->withQueryString();
 
@@ -69,7 +72,9 @@ class RoomLoanController extends Controller
 
         $calendarLoans = RoomLoan::with(['ciudadano', 'punto'])
             ->whereBetween('fecha_prestamo', [$monthStart, $monthEnd])
-            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where('id_punto', $p))
+            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
+                $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
+            }))
             ->when($filters['tipo_actividad'] ?? null, fn ($q, $t) => $q->where('tipo_actividad', $t))
             ->orderBy('fecha_prestamo')
             ->get();
@@ -137,13 +142,22 @@ class RoomLoanController extends Controller
 
         $validated = $request->validate([
             'estado' => ['required', 'in:Pendiente,Reservado,En curso,Completado,Cancelado'],
+            'tipo_actividad' => ['nullable', 'string', 'max:150'],
             'observaciones' => ['nullable', 'string'],
+            'respuesta_gestor' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $oldData = ['estado' => $loan->estado, 'observaciones' => $loan->observaciones];
-        if (empty($loan->id_gestor)) {
+        $oldData = [
+            'estado' => $loan->estado,
+            'tipo_actividad' => $loan->tipo_actividad,
+            'observaciones' => $loan->observaciones,
+            'respuesta_gestor' => $loan->respuesta_gestor,
+        ];
+
+        if (Auth::check()) {
             $loan->id_gestor = Auth::id();
         }
+
         $loan->update($validated);
 
         AuditLog::registrar(
@@ -154,7 +168,10 @@ class RoomLoanController extends Controller
             nuevos: $validated
         );
 
-        return redirect()->route('prestamos.index')
-            ->with('success', 'Estado del préstamo actualizado.');
+        $msg = $validated['estado'] === 'Cancelado'
+            ? 'Solicitud rechazada y motivo notificado al ciudadano.'
+            : 'Estado del préstamo actualizado exitosamente.';
+
+        return redirect()->back()->with('success', $msg);
     }
 }

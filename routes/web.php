@@ -14,7 +14,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\VisitController;
 use Illuminate\Support\Facades\Route;
 
-// Redirección inicial al Dashboard, Portal Ciudadano o Login
+// Redirección inicial: Landing Page para visitantes, o Dashboard/Portal para usuarios autenticados
 Route::get('/', function () {
     if (auth()->check()) {
         if (auth()->user()->hasRole(['Usuario', 'Ciudadano']) || auth()->user()->es_usuario_ciudadano) {
@@ -23,7 +23,13 @@ Route::get('/', function () {
         return redirect()->route('dashboard');
     }
 
-    return redirect()->route('login');
+    $points = \App\Models\Point::where('activo', true)
+        ->whereNotIn('id_punto', [5, 6])
+        ->get(['id_punto', 'nombre_punto', 'zona', 'direccion']);
+
+    return \Inertia\Inertia::render('Welcome', [
+        'points' => $points,
+    ]);
 });
 
 // Rutas autenticadas del sistema PVD
@@ -32,6 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Gestión de Ciudadanos (Directorio, Búsqueda, Creación y Edición)
+    Route::model('ciudadano', \App\Models\Citizen::class);
     Route::resource('ciudadanos', CitizenController::class);
     Route::post('/api/ciudadanos/verificar', [CitizenController::class, 'verify'])
         ->middleware('throttle:60,1')
@@ -48,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Préstamos de Salas
     Route::resource('prestamos', RoomLoanController::class);
+    Route::post('prestamos/{prestamo}', [RoomLoanController::class, 'update'])->name('prestamos.update.post');
 
     // Registro de Impresiones
     Route::resource('impresiones', PrintRecordController::class);
@@ -80,8 +88,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/configuracion', [SettingController::class, 'update'])->name('configuracion.update');
     });
 
-    // Registro de Auditoría y Trazabilidad
-    Route::get('/auditoria', [AuditLogController::class, 'index'])->name('auditoria.index');
+    // Registro de Auditoría y Trazabilidad (Blindada: Exclusivo para Administrador)
+    Route::middleware(['role:Administrador|Coordinador General'])->group(function () {
+        Route::get('/auditoria', [AuditLogController::class, 'index'])->name('auditoria.index');
+    });
 
     // Portal Ciudadano y Solicitud de Espacios / Salas
     Route::get('/portal', [PortalController::class, 'index'])->name('portal.index');

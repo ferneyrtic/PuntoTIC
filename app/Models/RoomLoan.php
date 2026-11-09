@@ -41,6 +41,9 @@ class RoomLoan extends Model
             if (empty($loan->id_gestores) && !empty($loan->id_gestor)) {
                 $loan->id_gestores = $loan->id_gestor;
             }
+            if (empty($loan->fecha_prestamo)) {
+                $loan->fecha_prestamo = now()->toDateString();
+            }
         });
     }
 
@@ -55,6 +58,7 @@ class RoomLoan extends Model
         'hora_inicio',
         'hora_fin',
         'observaciones',
+        'respuesta_gestor',
         'estado',
     ];
 

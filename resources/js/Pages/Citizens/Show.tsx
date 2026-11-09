@@ -45,17 +45,21 @@ export default function CitizenShow({ citizen, mlPredictions }: Props) {
                             <ArrowLeft className="w-4 h-4" />
                         </Link>
                         <div>
-                            <h1 className="text-xl font-black text-slate-900 tracking-tight">{citizen.nombre_completo}</h1>
+                            <h1 className="text-xl font-black text-slate-900 tracking-tight">
+                                {citizen.nombre_completo || `${citizen.nombres || ''} ${citizen.apellidos || ''}`.trim() || 'Ciudadano'}
+                            </h1>
                             <p className="text-xs text-slate-500 font-medium">
-                                {citizen.tipo_documento?.sigla || 'CC'} {citizen.documento} · Registrado el{' '}
-                                {new Date(citizen.created_at).toLocaleDateString()}
+                                {citizen.tipo_documento?.sigla || 'CC'} {citizen.documento || citizen.id || ''}
+                                {citizen.created_at && !isNaN(new Date(citizen.created_at).getTime())
+                                    ? ` · Registrado el ${new Date(citizen.created_at).toLocaleDateString('es-CO')}`
+                                    : ''}
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Link
-                            href={route('ciudadanos.edit', { ciudadano: citizen.id_form_pvd || citizen.id || 1 })}
+                            href={route('ciudadanos.edit', citizen.id_form_pvd || citizen.id || citizen.documento)}
                             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all"
                         >
                             <Edit3 className="w-3.5 h-3.5 text-slate-500" />
@@ -81,13 +85,15 @@ export default function CitizenShow({ citizen, mlPredictions }: Props) {
                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                         <div className="flex items-center gap-3 pb-4 mb-4 border-b border-slate-100">
                             <div className="w-12 h-12 rounded-2xl bg-alcaldia-green text-white font-black text-base flex items-center justify-center shadow-md shadow-alcaldia-green/20">
-                                {citizen.nombres ? citizen.nombres.substring(0, 1) : 'C'}
-                                {citizen.apellidos ? citizen.apellidos.substring(0, 1) : 'D'}
+                                {citizen.nombres ? citizen.nombres.trim().substring(0, 1).toUpperCase() : 'C'}
+                                {citizen.apellidos ? citizen.apellidos.trim().substring(0, 1).toUpperCase() : 'D'}
                             </div>
                             <div>
-                                <h2 className="text-base font-bold text-slate-900 leading-tight">{citizen.nombre_completo}</h2>
+                                <h2 className="text-base font-bold text-slate-900 leading-tight">
+                                    {citizen.nombre_completo || `${citizen.nombres || ''} ${citizen.apellidos || ''}`.trim() || 'Ciudadano'}
+                                </h2>
                                 <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-alcaldia-green border border-emerald-200 mt-1">
-                                    Ciudadano Activo
+                                    Ciudadano {citizen.activo !== false ? 'Activo' : 'Inactivo'}
                                 </span>
                             </div>
                         </div>

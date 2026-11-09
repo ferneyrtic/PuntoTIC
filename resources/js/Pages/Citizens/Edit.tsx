@@ -5,36 +5,39 @@ import { ArrowLeft, Save, CheckCircle2, UserCheck, Sparkles } from 'lucide-react
 
 interface Props {
     citizen: any;
-    points: Array<any>;
-    documentTypes: Array<any>;
+    points?: Array<any>;
+    documentTypes?: Array<any>;
 }
 
-export default function CitizenEdit({ citizen, points, documentTypes }: Props) {
+export default function CitizenEdit({ citizen = {}, points = [], documentTypes = [] }: Props) {
+    const citizenId = citizen?.id_form_pvd || citizen?.id || citizen?.documento || 1;
+    const citizenDisplayName = citizen?.nombre_completo || `${citizen?.nombres || ''} ${citizen?.apellidos || ''}`.trim() || citizen?.documento || 'Ciudadano';
+
     const { data, setData, put, processing, errors } = useForm({
-        documento: citizen.documento || '',
-        id_tipo: citizen.id_tipo || 1,
-        nombres: citizen.nombres || '',
-        apellidos: citizen.apellidos || '',
-        fecha_nac: citizen.fecha_nac ? citizen.fecha_nac.substring(0, 10) : '',
-        edad: citizen.edad ? citizen.edad.toString() : '',
-        genero: citizen.genero || 'Femenino',
-        correo: citizen.correo || '',
-        telefono: citizen.telefono || '',
-        direccion: citizen.direccion || '',
-        barrio: citizen.barrio || '',
-        zona: citizen.zona || 'Urbana',
-        up: citizen.up || '',
-        estrato: citizen.estrato || 1,
-        grupo_etnico: citizen.grupo_etnico || 'Ninguno',
-        nivel_educativo: citizen.nivel_educativo || 'Bachillerato completo', // 100% editable
-        ocupacion: citizen.ocupacion || 'Empleado',
-        g_poblacional: citizen.g_poblacional || 'Ninguno',
-        t_aseguramiento: citizen.t_aseguramiento || 'Subsidiado',
-        id_punto: citizen.id_punto || 1,
-        activo: citizen.activo ?? true,
+        documento: citizen?.documento || (citizen?.id ? String(citizen.id) : ''),
+        id_tipo: citizen?.id_tipo || citizen?.tipo_id || 1,
+        nombres: citizen?.nombres || '',
+        apellidos: citizen?.apellidos || '',
+        fecha_nac: citizen?.fecha_nac ? String(citizen.fecha_nac).substring(0, 10) : '',
+        edad: citizen?.edad ? String(citizen.edad) : '',
+        genero: citizen?.genero || 'Femenino',
+        correo: citizen?.correo || '',
+        telefono: citizen?.telefono || '',
+        direccion: citizen?.direccion || '',
+        barrio: citizen?.barrio || '',
+        zona: citizen?.zona || 'Urbana',
+        up: citizen?.up || '',
+        estrato: citizen?.estrato || 1,
+        grupo_etnico: citizen?.grupo_etnico || 'Ninguno',
+        nivel_educativo: citizen?.nivel_educativo || 'Bachillerato completo', // 100% editable
+        ocupacion: citizen?.ocupacion || 'Empleado',
+        g_poblacional: citizen?.g_poblacional || 'Ninguno',
+        t_aseguramiento: citizen?.t_aseguramiento || 'Subsidiado',
+        id_punto: citizen?.id_punto || 1,
+        activo: citizen?.activo ?? true,
     });
 
-    const [calculatingAge, setCalculatingAge] = useState<number | null>(citizen.edad || null);
+    const [calculatingAge, setCalculatingAge] = useState<number | null>(citizen?.edad ? Number(citizen.edad) : null);
 
     const handleBirthDateChange = (val: string) => {
         setData('fecha_nac', val);
@@ -55,7 +58,7 @@ export default function CitizenEdit({ citizen, points, documentTypes }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('ciudadanos.update', citizen.id_form_pvd));
+        put(route('ciudadanos.update', citizenId));
     };
 
     return (
@@ -63,7 +66,7 @@ export default function CitizenEdit({ citizen, points, documentTypes }: Props) {
             header={
                 <div className="flex items-center gap-3">
                     <Link
-                        href={route('ciudadanos.show', citizen.id_form_pvd)}
+                        href={route('ciudadanos.show', citizenId)}
                         className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4" />
@@ -71,13 +74,13 @@ export default function CitizenEdit({ citizen, points, documentTypes }: Props) {
                     <div>
                         <h1 className="text-xl font-black text-slate-900 tracking-tight">Editar Ciudadano</h1>
                         <p className="text-xs text-slate-500 font-medium">
-                            Modificación integral de todos los campos de {citizen.nombre_completo}
+                            Modificación integral de todos los campos de {citizenDisplayName}
                         </p>
                     </div>
                 </div>
             }
         >
-            <Head title={`Editar - ${citizen.nombre_completo}`} />
+            <Head title={`Editar - ${citizenDisplayName}`} />
 
             <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
                 {/* Banner Edición Completa */}
@@ -87,7 +90,7 @@ export default function CitizenEdit({ citizen, points, documentTypes }: Props) {
                         <span>Todos los campos sociodemográficos (incluyendo Nivel Educativo) ahora son 100% editables.</span>
                     </div>
                     <Link
-                        href={route('ciudadanos.show', citizen.id_form_pvd)}
+                        href={route('ciudadanos.show', citizenId)}
                         className="text-alcaldia-green font-bold hover:underline shrink-0"
                     >
                         Ver historial →
@@ -113,7 +116,7 @@ export default function CitizenEdit({ citizen, points, documentTypes }: Props) {
                                 onChange={(e) => setData('id_tipo', parseInt(e.target.value))}
                                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green focus:ring-1 focus:ring-alcaldia-green outline-none"
                             >
-                                {documentTypes.map((dt) => (
+                                {(documentTypes || []).map((dt) => (
                                     <option key={dt.id_tipo} value={dt.id_tipo}>
                                         {dt.sigla} - {dt.nombre_tipo}
                                     </option>
@@ -142,7 +145,7 @@ export default function CitizenEdit({ citizen, points, documentTypes }: Props) {
                                 onChange={(e) => setData('id_punto', parseInt(e.target.value))}
                                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green focus:ring-1 focus:ring-alcaldia-green outline-none"
                             >
-                                {points.map((p) => (
+                                {(points || []).map((p) => (
                                     <option key={p.id_punto} value={p.id_punto}>
                                         {p.nombre_punto}
                                     </option>
@@ -389,7 +392,7 @@ export default function CitizenEdit({ citizen, points, documentTypes }: Props) {
                 {/* Submit Bar */}
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <Link
-                        href={route('ciudadanos.show', citizen.id_form_pvd)}
+                        href={route('ciudadanos.show', citizenId)}
                         className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
                     >
                         Cancelar

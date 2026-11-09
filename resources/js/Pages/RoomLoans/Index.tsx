@@ -20,6 +20,8 @@ import {
     Users,
     Info,
     CalendarDays,
+    AlertCircle,
+    MessageSquare,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -57,6 +59,21 @@ const CATEGORIAS_PRESTAMO = [
 
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
+const QUICK_REASONS: Record<'Reservado' | 'Cancelado', string[]> = {
+    Cancelado: [
+        'La sala se encuentra ocupada por otra actividad institucional en ese horario',
+        'El horario solicitado no coincide con los horarios de atención del PVD',
+        'Mantenimiento técnico programado en los equipos de cómputo / sala',
+        'Aforo máximo excedido para las instalaciones de esta aula',
+        'Falta información de contacto o coordinador responsable de la actividad',
+    ],
+    Reservado: [
+        'Aprobado. Por favor presentarse 15 minutos antes con documento de identidad.',
+        'Aprobado. Capacidad máxima autorizada: cuidar los equipos y el mobiliario.',
+        'Aprobado. La sala cuenta con proyector y conexión a Internet listos.',
+    ],
+};
+
 export default function RoomLoansIndex({
     loans,
     calendarLoans = [],
@@ -81,11 +98,53 @@ export default function RoomLoansIndex({
     // Modal para ver detalle de un evento al hacer clic en el calendario
     const [selectedLoanDetail, setSelectedLoanDetail] = useState<any>(null);
 
-    // Acciones de actualización de estado para préstamos
-    const updateLoanStatus = (id: number, newEstado: string) => {
-        router.put(
+    // Modal de revisión (Aprobar / Rechazar) con comentario explicativo
+    const [reviewModal, setReviewModal] = useState<{
+        loan: any;
+        action: 'Reservado' | 'Cancelado';
+    } | null>(null);
+    const [reviewComment, setReviewComment] = useState('');
+    const [reviewCategory, setReviewCategory] = useState('');
+    const [submittingReview, setSubmittingReview] = useState(false);
+
+    const openReviewModal = (loan: any, action: 'Reservado' | 'Cancelado') => {
+        setReviewModal({ loan, action });
+        setReviewComment(loan.respuesta_gestor || '');
+        setReviewCategory(loan.tipo_actividad || CATEGORIAS_PRESTAMO[0]);
+    };
+
+    const submitReview = () => {
+        if (!reviewModal) return;
+        setSubmittingReview(true);
+        router.post(
+            route('prestamos.update', reviewModal.loan.id_prestamo),
+            {
+                _method: 'put',
+                estado: reviewModal.action,
+                tipo_actividad: reviewModal.action === 'Reservado' ? (reviewCategory || reviewModal.loan.tipo_actividad) : undefined,
+                respuesta_gestor: reviewComment.trim() || undefined,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setReviewModal(null);
+                    setSelectedLoanDetail(null);
+                    setSubmittingReview(false);
+                },
+                onError: () => setSubmittingReview(false),
+            }
+        );
+    };
+
+    // Acciones de actualización de estado para préstamos directo
+    const updateLoanStatus = (id: number, newEstado: string, comment?: string) => {
+        router.post(
             route('prestamos.update', id),
-            { estado: newEstado },
+            {
+                _method: 'put',
+                estado: newEstado,
+                respuesta_gestor: comment || undefined,
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => {
@@ -710,8 +769,16 @@ export default function RoomLoansIndex({
                                                 {loan.tipo_actividad}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3.5 text-xs text-slate-600 max-w-[240px] truncate" title={loan.observaciones || '-'}>
-                                            {loan.observaciones || '-'}
+                                        <td className="px-4 py-3.5 text-xs text-slate-600 max-w-[240px]">
+                                            <div className="truncate" title={loan.observaciones || '-'}>{loan.observaciones || '-'}</div>
+                                            {loan.respuesta_gestor && (
+                                                <div className={`mt-1 text-[10px] font-medium p-1 rounded-md flex items-center gap-1 ${
+                                                    loan.estado === 'Cancelado' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'
+                                                }`} title={loan.respuesta_gestor}>
+                                                    <MessageSquare className="w-3 h-3 shrink-0" />
+                                                    <span className="truncate">{loan.respuesta_gestor}</span>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3.5 text-xs text-slate-600 font-medium whitespace-nowrap">
                                             {loan.punto?.nombre_punto}
@@ -725,7 +792,7 @@ export default function RoomLoansIndex({
                                                 <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                                                     <button
                                                         type="button"
-                                                        onClick={() => updateLoanStatus(loan.id_prestamo, 'Reservado')}
+                                                        onClick={() => openReviewModal(loan, 'Reservado')}
                                                         className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-xs transition-colors flex items-center gap-1"
                                                         title="Aprobar y Confirmar Reserva"
                                                     >
@@ -734,7 +801,7 @@ export default function RoomLoansIndex({
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => updateLoanStatus(loan.id_prestamo, 'Cancelado')}
+                                                        onClick={() => openReviewModal(loan, 'Cancelado')}
                                                         className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition-colors flex items-center gap-1"
                                                         title="Rechazar Solicitud"
                                                     >
@@ -808,13 +875,21 @@ export default function RoomLoansIndex({
                                             "{loan.observaciones}"
                                         </div>
                                     )}
+                                    {loan.respuesta_gestor && (
+                                        <div className={`mt-1 text-[10px] font-medium p-1.5 rounded-lg flex items-center gap-1.5 ${
+                                            loan.estado === 'Cancelado' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'
+                                        }`}>
+                                            <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                                            <span><strong>Gestor:</strong> {loan.respuesta_gestor}</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {loan.estado === 'Pendiente' && (
                                     <div className="pt-2 flex items-center gap-2 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
                                         <button
                                             type="button"
-                                            onClick={() => updateLoanStatus(loan.id_prestamo, 'Reservado')}
+                                            onClick={() => openReviewModal(loan, 'Reservado')}
                                             className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-xs"
                                         >
                                             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -822,7 +897,7 @@ export default function RoomLoansIndex({
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => updateLoanStatus(loan.id_prestamo, 'Cancelado')}
+                                            onClick={() => openReviewModal(loan, 'Cancelado')}
                                             className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors flex items-center justify-center gap-1"
                                         >
                                             <X className="w-3.5 h-3.5" />
@@ -949,9 +1024,34 @@ export default function RoomLoansIndex({
 
                             {selectedLoanDetail.observaciones && (
                                 <div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Observaciones</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Observaciones del Ciudadano</span>
                                     <p className="text-slate-600 italic bg-slate-50 p-2.5 rounded-xl border border-slate-100 mt-0.5">
                                         "{selectedLoanDetail.observaciones}"
+                                    </p>
+                                </div>
+                            )}
+
+                            {selectedLoanDetail.respuesta_gestor && (
+                                <div className={`p-3 rounded-2xl border text-xs ${
+                                    selectedLoanDetail.estado === 'Cancelado'
+                                        ? 'bg-rose-50 border-rose-200 text-rose-800'
+                                        : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                }`}>
+                                    <div className="flex items-center gap-1.5 font-bold uppercase text-[10px] mb-1">
+                                        {selectedLoanDetail.estado === 'Cancelado' ? (
+                                            <>
+                                                <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                                                <span>Motivo de Rechazo (Gestor):</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                                <span>Indicaciones del Gestor:</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <p className="font-medium whitespace-pre-wrap leading-relaxed">
+                                        {selectedLoanDetail.respuesta_gestor}
                                     </p>
                                 </div>
                             )}
@@ -962,7 +1062,7 @@ export default function RoomLoansIndex({
                                 <div className="flex items-center gap-2">
                                     <button
                                         type="button"
-                                        onClick={() => updateLoanStatus(selectedLoanDetail.id_prestamo, 'Reservado')}
+                                        onClick={() => openReviewModal(selectedLoanDetail, 'Reservado')}
                                         className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
                                     >
                                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -970,7 +1070,7 @@ export default function RoomLoansIndex({
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => updateLoanStatus(selectedLoanDetail.id_prestamo, 'Cancelado')}
+                                        onClick={() => openReviewModal(selectedLoanDetail, 'Cancelado')}
                                         className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors flex items-center gap-1"
                                     >
                                         <X className="w-3.5 h-3.5" />
@@ -1128,6 +1228,168 @@ export default function RoomLoansIndex({
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Revisión y Comentarios del Gestor */}
+            {reviewModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+                        {/* Header del Modal */}
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+                                    reviewModal.action === 'Cancelado'
+                                        ? 'bg-rose-100 text-rose-600'
+                                        : 'bg-emerald-100 text-emerald-600'
+                                }`}>
+                                    {reviewModal.action === 'Cancelado' ? (
+                                        <X className="w-5 h-5" />
+                                    ) : (
+                                        <CheckCircle2 className="w-5 h-5" />
+                                    )}
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-black text-slate-900">
+                                        {reviewModal.action === 'Cancelado'
+                                            ? 'Rechazar Solicitud de Sala'
+                                            : 'Aprobar Solicitud de Sala'}
+                                    </h3>
+                                    <p className="text-xs text-slate-500">
+                                        {reviewModal.action === 'Cancelado'
+                                            ? 'Explica al ciudadano la razón del rechazo para no dejar vacíos.'
+                                            : 'Confirma la reserva e ingresa recomendaciones si es necesario.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setReviewModal(null)}
+                                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Resumen de la Solicitud */}
+                        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1 text-xs">
+                            <div className="flex justify-between font-bold text-slate-800">
+                                <span>{reviewModal.loan.nombre || reviewModal.loan.nombre_responsable_texto || reviewModal.loan.ciudadano?.nombre_completo || 'Ciudadano'}</span>
+                                <span className="text-emerald-700">{reviewModal.loan.punto?.nombre_punto}</span>
+                            </div>
+                            <div className="text-slate-500 text-[11px] flex items-center gap-2">
+                                <span>{reviewModal.loan.fecha_prestamo ? String(reviewModal.loan.fecha_prestamo).split('T')[0] : ''}</span>
+                                <span>•</span>
+                                <span>{reviewModal.loan.tipo_actividad}</span>
+                                <span>•</span>
+                                <span>{reviewModal.loan.num_asistentes} personas</span>
+                            </div>
+                            {reviewModal.loan.observaciones && (
+                                <div className="text-[11px] text-slate-600 italic pt-1 border-t border-slate-200/60">
+                                    Motivo del ciudadano: "{reviewModal.loan.observaciones}"
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Selector de Categoría Oficial al Aprobar */}
+                        {reviewModal.action === 'Reservado' && (
+                            <div className="space-y-1.5 p-3 rounded-2xl bg-emerald-50/60 border border-emerald-200/80">
+                                <label className="block text-xs font-bold text-emerald-950">
+                                    Clasificación / Categoría Oficial de la Actividad *
+                                </label>
+                                <select
+                                    value={reviewCategory}
+                                    onChange={(e) => setReviewCategory(e.target.value)}
+                                    className="w-full text-xs rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 p-2.5 font-semibold text-slate-800 bg-white outline-none"
+                                >
+                                    {CATEGORIAS_PRESTAMO.map((cat) => (
+                                        <option key={cat} value={cat}>
+                                            {cat}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-[10px] text-emerald-800 font-medium">
+                                    Confirme o reclasifique la categoría estándar con la que se consolidarán las estadísticas.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Campo de Comentario / Motivo */}
+                        <div className="space-y-2">
+                            <label className="block text-xs font-bold text-slate-700">
+                                {reviewModal.action === 'Cancelado'
+                                    ? 'Motivo del Rechazo (Visible para el ciudadano en su portal) *'
+                                    : 'Indicaciones o Recomendaciones (Opcional)'}
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={reviewComment}
+                                onChange={(e) => setReviewComment(e.target.value)}
+                                placeholder={
+                                    reviewModal.action === 'Cancelado'
+                                        ? 'Escribe claramente por qué se rechaza la solicitud (ej: sala ocupada, mantenimiento técnico, etc.)...'
+                                        : 'Indicaciones sobre hora de llegada, cuidado de equipos, etc...'
+                                }
+                                className="w-full text-xs rounded-2xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 p-3 leading-relaxed shadow-xs"
+                                autoFocus
+                            />
+
+                            {/* Chips con motivos rápidos */}
+                            <div className="space-y-1 pt-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                                    Sugerencias rápidas (clic para insertar):
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {QUICK_REASONS[reviewModal.action].map((reason, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => setReviewComment(reason)}
+                                            className="text-[10px] font-medium px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors text-left"
+                                        >
+                                            {reason}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Botones de Acción */}
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                            <button
+                                type="button"
+                                disabled={submittingReview}
+                                onClick={() => setReviewModal(null)}
+                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                disabled={submittingReview || (reviewModal.action === 'Cancelado' && !reviewComment.trim())}
+                                onClick={submitReview}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition-all flex items-center gap-1.5 ${
+                                    reviewModal.action === 'Cancelado'
+                                        ? 'bg-rose-600 hover:bg-rose-700 disabled:opacity-50'
+                                        : 'bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50'
+                                }`}
+                            >
+                                {submittingReview ? (
+                                    <span>Guardando...</span>
+                                ) : reviewModal.action === 'Cancelado' ? (
+                                    <>
+                                        <X className="w-4 h-4" />
+                                        <span>Confirmar Rechazo</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        <span>Confirmar Aprobación</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

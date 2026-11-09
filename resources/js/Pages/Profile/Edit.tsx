@@ -8,34 +8,49 @@ import UpdateProfileInformationForm from './Partials/UpdateProfileInformationFor
 export default function Edit({
     mustVerifyEmail,
     status,
-}: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
+    ciudadano,
+    esCiudadano = false,
+}: PageProps<{
+    mustVerifyEmail: boolean;
+    status?: string;
+    ciudadano?: any;
+    esCiudadano?: boolean;
+}>) {
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
+                <div>
+                    <h1 className="text-xl font-black tracking-tight text-slate-900">
+                        Mi Perfil
+                    </h1>
+                    <p className="text-xs text-slate-500 font-medium">
+                        Actualiza tu información personal, datos de caracterización y seguridad de tu cuenta
+                    </p>
+                </div>
             }
         >
-            <Head title="Profile" />
+            <Head title="Mi Perfil" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+            <div className="py-8">
+                <div className="mx-auto max-w-5xl space-y-6 sm:px-6 lg:px-8">
+                    <div className="bg-white p-6 shadow-sm rounded-3xl border border-slate-200/90 sm:p-8">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
-                            className="max-w-xl"
+                            ciudadano={ciudadano}
+                            esCiudadano={esCiudadano}
                         />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="bg-white p-6 shadow-sm rounded-3xl border border-slate-200/90 sm:p-8">
                         <UpdatePasswordForm className="max-w-xl" />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <DeleteUserForm className="max-w-xl" />
-                    </div>
+                    {!esCiudadano && (
+                        <div className="bg-white p-6 shadow-sm rounded-3xl border border-slate-200/90 sm:p-8">
+                            <DeleteUserForm className="max-w-xl" />
+                        </div>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>

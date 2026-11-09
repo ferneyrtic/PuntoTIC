@@ -5,9 +5,17 @@ import { Layers, Plus, Trash2, Edit2, FolderPlus, CheckCircle2, X, Sparkles, Che
 
 interface Props {
     categories: Array<any>;
+    showLegacy?: boolean;
+    activeCount?: number;
+    legacyCount?: number;
 }
 
-export default function CategoriesIndex({ categories }: Props) {
+export default function CategoriesIndex({
+    categories = [],
+    showLegacy = false,
+    activeCount = 5,
+    legacyCount = 12,
+}: Props) {
     const [selectedCategoryForSub, setSelectedCategoryForSub] = useState<any>(null);
     const [newCatModal, setNewCatModal] = useState(false);
     const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
@@ -64,7 +72,9 @@ export default function CategoriesIndex({ categories }: Props) {
 
     const handleDeleteSubcategory = (subId: number) => {
         if (confirm('¿Está seguro de eliminar esta subcategoría de servicio?')) {
-            router.delete(route('categorias.subcategorias.destroy', subId));
+            router.post(route('categorias.subcategorias.destroy', subId), {
+                _method: 'delete',
+            });
         }
     };
 
@@ -89,6 +99,55 @@ export default function CategoriesIndex({ categories }: Props) {
             }
         >
             <Head title="Categorías y Servicios" />
+
+            {/* Selector de pestañas: Servicios Activos vs Diccionarios Heredados */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                <div className="inline-flex p-1 rounded-2xl bg-slate-100/90 border border-slate-200">
+                    <button
+                        type="button"
+                        onClick={() => router.get(route('categorias.index'), { legacy: 0 })}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                            !showLegacy
+                                ? 'bg-white text-emerald-800 shadow-sm shadow-slate-200/50'
+                                : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                    >
+                        Categorías de Servicios Activas ({activeCount})
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => router.get(route('categorias.index'), { legacy: 1 })}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                            showLegacy
+                                ? 'bg-white text-amber-900 shadow-sm shadow-slate-200/50'
+                                : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                    >
+                        Diccionarios Heredados del Sistema Anterior ({legacyCount})
+                    </button>
+                </div>
+            </div>
+
+            {/* Banner Informativo */}
+            {!showLegacy ? (
+                <div className="mb-6 p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>
+                            Estas <strong>{categories.length} categorías operativas</strong> y sus subcategorías son las que se utilizan para clasificar las atenciones y trámites en el formulario de visitas.
+                        </span>
+                    </div>
+                </div>
+            ) : (
+                <div className="mb-6 p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-900 text-xs flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                        <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>
+                            <strong>Diccionarios heredados del sistema anterior:</strong> En la plataforma anterior se usaba esta misma tabla para almacenar listados maestros (194 barrios, estratos, géneros). Están inactivos y archivados con fines históricos para no saturar los formularios operativos.
+                        </span>
+                    </div>
+                </div>
+            )}
 
             {/* Categorías Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

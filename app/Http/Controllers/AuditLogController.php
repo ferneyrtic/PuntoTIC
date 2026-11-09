@@ -17,6 +17,10 @@ class AuditLogController extends Controller
      */
     public function index(Request $request): Response
     {
+        if (! $request->user()?->isAdmin()) {
+            abort(403, 'Acceso denegado: El registro de actividad y auditoría está reservado exclusivamente para la administración.');
+        }
+
         $filters = $request->only(['modulo', 'accion', 'user_id', 'fecha_desde', 'fecha_hasta', 'search']);
 
         $query = AuditLog::with(['usuario.punto', 'usuario.roles']);

@@ -121,6 +121,14 @@ class Citizen extends Model
         $this->attributes['tipo_id'] = $value;
     }
 
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->where($field ?? $this->getRouteKeyName(), $value)
+            ->orWhere('id_form_pvd', $value)
+            ->orWhere('documento', (string) $value)
+            ->first();
+    }
+
     public function tipoDocumento(): BelongsTo
     {
         return $this->belongsTo(DocumentType::class, 'id_tipo', 'id_tipo');

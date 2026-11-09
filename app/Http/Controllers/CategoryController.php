@@ -12,15 +12,25 @@ use Inertia\Response;
 
 class CategoryController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $showLegacy = (bool) $request->boolean('legacy', false);
+
         $categories = Category::with(['subcategorias' => fn($q) => $q->withCount('visitas')])
             ->withCount('visitas')
+            ->when(! $showLegacy, fn($q) => $q->where('activo', true))
+            ->when($showLegacy, fn($q) => $q->where(fn($sq) => $sq->where('activo', false)->orWhereNull('activo')))
             ->orderBy('orden')
             ->get();
 
+        $activeCount = Category::where('activo', true)->count();
+        $legacyCount = Category::where(fn($sq) => $sq->where('activo', false)->orWhereNull('activo'))->count();
+
         return Inertia::render('Categories/Index', [
             'categories' => $categories,
+            'showLegacy' => $showLegacy,
+            'activeCount' => $activeCount,
+            'legacyCount' => $legacyCount,
         ]);
     }
 

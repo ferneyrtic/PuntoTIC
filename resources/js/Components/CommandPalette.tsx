@@ -36,6 +36,7 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
         userRoles.includes('Usuario') ||
         userRoles.includes('Ciudadano')
     );
+    const isAdmin = Boolean(auth?.is_admin || currentUser?.is_admin);
 
     const [query, setQuery] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -77,15 +78,19 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
             url: route('ciudadanos.index'),
             category: 'Operación',
         },
-        {
-            id: 'auditoria-index',
-            name: 'Registro de Auditoría y Trazabilidad',
-            description: 'Historial de eventos, cambios y gestores responsables',
-            icon: History,
-            url: route('auditoria.index'),
-            category: 'Seguridad',
-            badge: 'Nuevo',
-        },
+        ...(isAdmin
+            ? [
+                  {
+                      id: 'auditoria-index',
+                      name: 'Registro de Auditoría y Trazabilidad',
+                      description: 'Historial de eventos, cambios y gestores responsables',
+                      icon: History,
+                      url: route('auditoria.index'),
+                      category: 'Seguridad',
+                      badge: 'Nuevo',
+                  },
+              ]
+            : []),
         {
             id: 'prestamos-index',
             name: 'Préstamo de Salas',

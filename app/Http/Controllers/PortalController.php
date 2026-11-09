@@ -112,9 +112,9 @@ class PortalController extends Controller
             'selectedMonth' => $selectedMonth,
             'selectedPunto' => $selectedPunto ? (int) $selectedPunto : null,
             'soporte' => [
-                'telefono' => '(608) 656-9999',
-                'whatsapp' => '+57 320 123 4567',
-                'correo' => 'tic@acacias.gov.co',
+                'telefono' => 'XXX-XXXX',
+                'whatsapp' => '+57 321 361 8632',
+                'correo' => 'xxx@acacias.gov.co',
                 'horario' => 'Lunes a Viernes: 8:00 AM - 12:00 M y 2:00 PM - 6:00 PM',
                 'direccion' => 'Carrera 15 # 13-30, Alcaldía Municipal de Acacías, Meta',
             ],

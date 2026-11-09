@@ -252,7 +252,9 @@ class StatsService
         // Préstamos de salas en el período
         $prestamosQuery = RoomLoan::query();
         if ($targetPointIds) {
-            $prestamosQuery->whereIn('id_punto', $targetPointIds);
+            $prestamosQuery->where(function ($sub) use ($targetPointIds) {
+                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+            });
         }
         $prestamosPeriodo = (clone $prestamosQuery)
             ->whereBetween('fecha_prestamo', [$startDate->toDateString(), $endDate->toDateString()])
@@ -561,7 +563,9 @@ class StatsService
             ->whereBetween('fecha_prestamo', [$startDate->toDateString(), $endDate->toDateString()]);
 
         if ($targetPointIds) {
-            $query->whereIn('id_punto', $targetPointIds);
+            $query->where(function ($sub) use ($targetPointIds) {
+                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+            });
         }
 
         $totalEventos = (clone $query)->count();

@@ -13,11 +13,11 @@ class UpdateCitizenRequest extends FormRequest
 
     public function rules(): array
     {
-        $citizen = $this->route('citizen');
-        $citizenId = is_object($citizen) ? $citizen->id_form_pvd : $citizen;
+        $citizen = $this->route('ciudadano') ?? $this->route('citizen');
+        $citizenId = is_object($citizen) ? ($citizen->id ?? $citizen->id_form_pvd) : $citizen;
 
         return [
-            'documento' => ['required', 'string', 'max:50', 'unique:form_pvd,documento,' . $citizenId . ',id_form_pvd'],
+            'documento' => ['required', 'string', 'max:50', 'unique:form_pvd,documento,' . $citizenId . ',id'],
             'id_tipo' => ['required', 'exists:tipo_id,id_tipo'],
             'nombres' => ['required', 'string', 'max:100'],
             'apellidos' => ['required', 'string', 'max:100'],

@@ -685,137 +685,185 @@ export default function Dashboard({
                             </div>
                         </div>
 
-                        {/* Comparativa de Sedes (1 Columna) */}
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors duration-200">
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                                        Demanda por Sede
-                                    </h2>
-                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                        {comparativa_sedes.length} Sedes
-                                    </span>
-                                </div>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-4">
-                                    Participación de demanda en {periodo.label}
-                                </p>
+                        {/* Comparativa de Sedes (1 Columna si es Global, o Ficha de Sede si es local) */}
+                        {isGlobal && comparativa_sedes.length > 1 ? (
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors duration-200">
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                                            Demanda por Sede
+                                        </h2>
+                                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                            {comparativa_sedes.length} Sedes
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-4">
+                                        Participación de demanda en {periodo.label}
+                                    </p>
 
-                                <div className="space-y-4">
-                                    {comparativa_sedes.map((punto) => (
-                                        <div key={punto.id_punto} className="space-y-1.5">
-                                            <div className="flex items-center justify-between text-xs">
-                                                <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
-                                                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                                    <span className="truncate max-w-[140px]">{punto.nombre_punto}</span>
-                                                    <span
-                                                        className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                                                            punto.zona === 'Rural'
-                                                                ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                                                        }`}
-                                                    >
-                                                        {punto.zona}
+                                    <div className="space-y-4">
+                                        {comparativa_sedes.map((punto) => (
+                                            <div key={punto.id_punto} className="space-y-1.5">
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+                                                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                        <span className="truncate max-w-[140px]">{punto.nombre_punto}</span>
+                                                        <span
+                                                            className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                                                                punto.zona === 'Rural'
+                                                                    ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                                                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                                            }`}
+                                                        >
+                                                            {punto.zona}
+                                                        </span>
+                                                    </div>
+                                                    <span className="font-bold text-slate-700 dark:text-slate-300 tabular-nums">
+                                                        {punto.total_visitas.toLocaleString()} ({punto.porcentaje}%)
                                                     </span>
                                                 </div>
-                                                <span className="font-bold text-slate-700 dark:text-slate-300 tabular-nums">
-                                                    {punto.total_visitas.toLocaleString()} ({punto.porcentaje}%)
-                                                </span>
+                                                <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full bg-emerald-600 transition-all duration-500"
+                                                        style={{ width: `${Math.max(4, punto.porcentaje)}%` }}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                                <div
-                                                    className="h-full rounded-full bg-emerald-600 transition-all duration-500"
-                                                    style={{ width: `${Math.max(4, punto.porcentaje)}%` }}
-                                                />
-                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                                    <span>PVD Urbanos y Aulas Digitales</span>
+                                    <Link href={route('configuracion.index')} className="font-bold text-emerald-700 dark:text-emerald-400 hover:underline">
+                                        Configurar
+                                    </Link>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors duration-200">
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                                            Sede Asignada
+                                        </h2>
+                                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                                            Operativo
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-4">
+                                        Ámbito operativo exclusivo de gestión
+                                    </p>
+
+                                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                                        <div>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Punto / Sede</span>
+                                            <span className="text-sm font-black text-slate-900 dark:text-white block mt-0.5">
+                                                {scope.nombre}
+                                            </span>
                                         </div>
-                                    ))}
+                                        <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200/60 dark:border-slate-700">
+                                            <span className="text-slate-500">Zona Territorial:</span>
+                                            <span className="font-bold text-slate-800 dark:text-slate-200">{scope.zona || 'Urbana'}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs pt-1">
+                                            <span className="text-slate-500">Atenciones en {periodo.label}:</span>
+                                            <span className="font-bold text-emerald-600 dark:text-emerald-400">{kpis.visitas_periodo.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs pt-1">
+                                            <span className="text-slate-500">Préstamos de sala:</span>
+                                            <span className="font-bold text-slate-800 dark:text-slate-200">{kpis.prestamos_salas} ({kpis.asistentes_salas} pers.)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                                    <span>Gestión Operativa de Sede</span>
+                                    <Link href={route('visitas.create')} className="font-bold text-emerald-700 dark:text-emerald-400 hover:underline">
+                                        Registrar Visita →
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Tabla de Comparativa Multidimensional de Sedes (Exclusiva para Coordinador General y Administrador con alcance global) */}
+                    {isGlobal && comparativa_sedes.length > 1 && (
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
+                            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                                        Balance Operativo por Punto Digital y Aula Rural
+                                    </h2>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                        Desglose de atenciones, impresiones y salas congregadas por punto
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                                <span>PVD Urbanos y Aulas Digitales</span>
-                                <Link href={route('configuracion.index')} className="font-bold text-emerald-700 dark:text-emerald-400 hover:underline">
-                                    Configurar
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Tabla de Comparativa Multidimensional de Sedes */}
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
-                        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                                    Balance Operativo por Punto Digital y Aula Rural
-                                </h2>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                    Desglose de atenciones, impresiones y salas congregadas por punto
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 dark:bg-slate-800/60 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
-                                    <tr>
-                                        <th className="px-6 py-4">Sede / Aula Digital</th>
-                                        <th className="px-4 py-4">Zona</th>
-                                        <th className="px-4 py-4 text-center">Atenciones</th>
-                                        <th className="px-4 py-4 text-center">% Cobertura</th>
-                                        <th className="px-4 py-4 text-center">Hojas Impresas</th>
-                                        <th className="px-4 py-4 text-center">Préstamos Sala</th>
-                                        <th className="px-6 py-4 text-right">Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {comparativa_sedes.map((p) => (
-                                        <tr key={p.id_punto} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                                            <td className="px-6 py-4 font-bold text-slate-900 dark:text-white text-xs">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`w-2 h-2 rounded-full ${p.zona === 'Rural' ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
-                                                    <span>{p.nombre_punto}</span>
-                                                </div>
-                                                <div className="text-[10px] text-slate-400 font-mono mt-0.5">{p.codigo}</div>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <span
-                                                    className={`inline-block px-2 py-0.5 rounded-lg text-[10px] font-bold ${
-                                                        p.zona === 'Rural'
-                                                            ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60'
-                                                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'
-                                                    }`}
-                                                >
-                                                    {p.zona}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-4 text-center font-bold text-slate-800 dark:text-slate-200 text-xs tabular-nums">
-                                                {p.total_visitas.toLocaleString()}
-                                            </td>
-                                            <td className="px-4 py-4 text-center text-xs">
-                                                <span className="font-semibold text-slate-600 dark:text-slate-300">{p.porcentaje}%</span>
-                                            </td>
-                                            <td className="px-4 py-4 text-center text-xs text-amber-700 dark:text-amber-400 font-bold tabular-nums">
-                                                {p.total_hojas.toLocaleString()} págs
-                                            </td>
-                                            <td className="px-4 py-4 text-center text-xs text-slate-700 dark:text-slate-300 font-medium tabular-nums">
-                                                {p.total_prestamos} ({p.total_asistentes} pers.)
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => {
-                                                        router.get(route('dashboard'), { ...filters, id_punto: p.id_punto }, { preserveState: true });
-                                                    }}
-                                                    className="btn-tactile text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 transition-colors"
-                                                >
-                                                    Filtrar esta sede
-                                                </button>
-                                            </td>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50 dark:bg-slate-800/60 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                                        <tr>
+                                            <th className="px-6 py-4">Sede / Aula Digital</th>
+                                            <th className="px-4 py-4">Zona</th>
+                                            <th className="px-4 py-4 text-center">Atenciones</th>
+                                            <th className="px-4 py-4 text-center">% Cobertura</th>
+                                            <th className="px-4 py-4 text-center">Hojas Impresas</th>
+                                            <th className="px-4 py-4 text-center">Préstamos Sala</th>
+                                            <th className="px-6 py-4 text-right">Acción</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {comparativa_sedes.map((p) => (
+                                            <tr key={p.id_punto} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white text-xs">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`w-2 h-2 rounded-full ${p.zona === 'Rural' ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                                                        <span>{p.nombre_punto}</span>
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">{p.codigo}</div>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <span
+                                                        className={`inline-block px-2 py-0.5 rounded-lg text-[10px] font-bold ${
+                                                            p.zona === 'Rural'
+                                                                ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60'
+                                                                : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'
+                                                        }`}
+                                                    >
+                                                        {p.zona}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-4 text-center font-bold text-slate-800 dark:text-slate-200 text-xs tabular-nums">
+                                                    {p.total_visitas.toLocaleString()}
+                                                </td>
+                                                <td className="px-4 py-4 text-center text-xs">
+                                                    <span className="font-semibold text-slate-600 dark:text-slate-300">{p.porcentaje}%</span>
+                                                </td>
+                                                <td className="px-4 py-4 text-center text-xs text-amber-700 dark:text-amber-400 font-bold tabular-nums">
+                                                    {p.total_hojas.toLocaleString()} págs
+                                                </td>
+                                                <td className="px-4 py-4 text-center text-xs text-slate-700 dark:text-slate-300 font-medium tabular-nums">
+                                                    {p.total_prestamos} ({p.total_asistentes} pers.)
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <button
+                                                        onClick={() => {
+                                                            router.get(route('dashboard'), { ...filters, id_punto: p.id_punto }, { preserveState: true });
+                                                        }}
+                                                        className="btn-tactile text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 transition-colors"
+                                                    >
+                                                        Filtrar esta sede
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Flujo de Atenciones Recientes */}
                     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">

@@ -72,8 +72,9 @@ class CitizenController extends Controller
             ->with('success', 'Ciudadano registrado exitosamente.');
     }
 
-    public function show(Citizen $citizen): Response
+    public function show(Citizen $ciudadano): Response
     {
+        $citizen = $ciudadano;
         $citizen->load([
             'tipoDocumento',
             'punto',
@@ -91,8 +92,9 @@ class CitizenController extends Controller
         ]);
     }
 
-    public function edit(Citizen $citizen): Response
+    public function edit(Citizen $ciudadano): Response
     {
+        $citizen = $ciudadano;
         $citizen->load(['tipoDocumento', 'punto']);
         $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona']);
         $documentTypes = $this->getActiveDocumentTypes();
@@ -104,11 +106,12 @@ class CitizenController extends Controller
         ]);
     }
 
-    public function update(UpdateCitizenRequest $request, Citizen $citizen): RedirectResponse
+    public function update(UpdateCitizenRequest $request, Citizen $ciudadano): RedirectResponse
     {
+        $citizen = $ciudadano;
         $this->citizenService->updateCitizen($citizen, $request->validated());
 
-        return redirect()->route('ciudadanos.show', $citizen->id_form_pvd)
+        return redirect()->route('ciudadanos.show', $citizen->id_form_pvd ?: $citizen->id)
             ->with('success', 'Datos del ciudadano actualizados correctamente en todos sus campos.');
     }
 

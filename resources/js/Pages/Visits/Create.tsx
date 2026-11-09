@@ -19,6 +19,8 @@ import {
     MapPin,
     AlertCircle,
     Database,
+    ChevronDown,
+    ChevronUp,
 } from 'lucide-react';
 import axios from 'axios';
 import { addToOfflineQueue } from '@/services/pwaService';
@@ -87,6 +89,7 @@ export default function VisitCreate({
     );
     const [selectedTime, setSelectedTime] = useState(60);
     const [offlineSavedNotice, setOfflineSavedNotice] = useState(false);
+    const [showDemographics, setShowDemographics] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         id_form_pvd: initialCitizen?.id_form_pvd || null,
@@ -104,6 +107,16 @@ export default function VisitCreate({
         descripcion: '',
         duracion_minutos: initialMode === 'aula' ? 60 : 30,
         campos_dinamicos: {} as Record<number, any>,
+        // Caracterización demográfica de nuevo ciudadano
+        telefono: '',
+        correo: '',
+        fecha_nac: '',
+        genero: 'Femenino',
+        barrio: '',
+        zona: 'Urbana',
+        estrato: 1,
+        nivel_educativo: 'Bachillerato completo',
+        t_aseguramiento: 'Subsidiado',
     });
 
     const currentCategory = categories.find(
@@ -776,41 +789,193 @@ export default function VisitCreate({
 
                         {/* Quick Register Citizen Form if not found */}
                         {!citizenFound && documentInput.length >= 3 && !searching && (
-                            <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-amber-50/70 border border-amber-200 animate-scale-in">
-                                <div className="flex items-center gap-2 text-xs font-bold text-amber-900 mb-3">
-                                    <UserPlus className="w-4 h-4 text-amber-600" />
-                                    <span>
-                                        Ciudadano nuevo en la plataforma. Escriba nombres para registro automático:
-                                    </span>
+                            <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-amber-50/70 border border-amber-200 animate-scale-in space-y-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+                                        <UserPlus className="w-4 h-4 text-amber-600" />
+                                        <span>
+                                            Ciudadano nuevo en la plataforma. Escriba sus datos para registrarlo:
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDemographics(!showDemographics)}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold shadow-xs transition-all w-fit"
+                                    >
+                                        <span>{showDemographics ? 'Ocultar caracterización' : '+ Caracterización completa'}</span>
+                                        {showDemographics ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                    </button>
                                 </div>
+
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                                            Nombres *
+                                            Nombres <span className="text-rose-500">*</span>
                                         </label>
                                         <input
                                             type="text"
                                             value={data.nombres}
                                             onChange={(e) => setData('nombres', e.target.value)}
                                             placeholder="Nombres del ciudadano"
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none"
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
                                             required
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                                            Apellidos *
+                                            Apellidos <span className="text-rose-500">*</span>
                                         </label>
                                         <input
                                             type="text"
                                             value={data.apellidos}
                                             onChange={(e) => setData('apellidos', e.target.value)}
                                             placeholder="Apellidos del ciudadano"
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none"
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
                                             required
                                         />
                                     </div>
                                 </div>
+
+                                {/* Demographics Collapsible Section */}
+                                {showDemographics && (
+                                    <div className="pt-3 border-t border-amber-200/80 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Teléfono / Celular
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={data.telefono}
+                                                onChange={(e) => setData('telefono', e.target.value)}
+                                                placeholder="Ej: 3101234567"
+                                                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Correo Electrónico
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={data.correo}
+                                                onChange={(e) => setData('correo', e.target.value)}
+                                                placeholder="ejemplo@correo.com"
+                                                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Fecha de Nacimiento
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={data.fecha_nac}
+                                                onChange={(e) => setData('fecha_nac', e.target.value)}
+                                                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Género
+                                            </label>
+                                            <select
+                                                value={data.genero}
+                                                onChange={(e) => setData('genero', e.target.value)}
+                                                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
+                                            >
+                                                <option value="Femenino">Femenino</option>
+                                                <option value="Masculino">Masculino</option>
+                                                <option value="No binario">No binario</option>
+                                                <option value="Prefiere no responder">Prefiere no responder</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Barrio o Vereda
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={data.barrio}
+                                                onChange={(e) => setData('barrio', e.target.value)}
+                                                placeholder="Ej: Mancera, Centro, Dinamarca..."
+                                                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Zona
+                                            </label>
+                                            <select
+                                                value={data.zona}
+                                                onChange={(e) => setData('zona', e.target.value)}
+                                                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
+                                            >
+                                                <option value="Urbana">Urbana</option>
+                                                <option value="Rural">Rural</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Estrato
+                                            </label>
+                                            <select
+                                                value={data.estrato}
+                                                onChange={(e) => setData('estrato', parseInt(e.target.value))}
+                                                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
+                                            >
+                                                <option value={1}>Estrato 1</option>
+                                                <option value={2}>Estrato 2</option>
+                                                <option value={3}>Estrato 3</option>
+                                                <option value={4}>Estrato 4</option>
+                                                <option value={5}>Estrato 5</option>
+                                                <option value={6}>Estrato 6</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Nivel Educativo
+                                            </label>
+                                            <select
+                                                value={data.nivel_educativo}
+                                                onChange={(e) => setData('nivel_educativo', e.target.value)}
+                                                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white font-semibold text-emerald-800"
+                                            >
+                                                <option value="Primaria incompleta">Primaria incompleta</option>
+                                                <option value="Primaria completa">Primaria completa</option>
+                                                <option value="Bachillerato incompleto">Bachillerato incompleto</option>
+                                                <option value="Bachillerato completo">Bachillerato completo</option>
+                                                <option value="Técnico / Tecnológico">Técnico / Tecnológico</option>
+                                                <option value="Universitario">Universitario</option>
+                                                <option value="Posgrado">Posgrado</option>
+                                                <option value="Ninguno">Ninguno</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Régimen de Salud
+                                            </label>
+                                            <select
+                                                value={data.t_aseguramiento}
+                                                onChange={(e) => setData('t_aseguramiento', e.target.value)}
+                                                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
+                                            >
+                                                <option value="Subsidiado">Subsidiado (SISBEN)</option>
+                                                <option value="Contributivo">Contributivo (EPS)</option>
+                                                <option value="Especial">Especial (Magisterio / Militares)</option>
+                                                <option value="Vinculado">Vinculado</option>
+                                                <option value="Ninguno">Sin aseguramiento</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

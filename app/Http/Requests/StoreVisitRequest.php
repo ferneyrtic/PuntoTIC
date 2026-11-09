@@ -41,6 +41,16 @@ class StoreVisitRequest extends FormRequest
             'descripcion' => ['nullable', 'string', 'max:1000'],
             'duracion_minutos' => ['nullable', 'integer', 'min:1', 'max:480'],
             'campos_dinamicos' => ['nullable', 'array'],
+            // Caracterización demográfica de ciudadano nuevo
+            'telefono' => ['nullable', 'string', 'max:50'],
+            'correo' => ['nullable', 'email', 'max:150'],
+            'fecha_nac' => ['nullable', 'date'],
+            'genero' => ['nullable', 'string', 'max:30'],
+            'barrio' => ['nullable', 'string', 'max:100'],
+            'zona' => ['nullable', 'string', 'max:30'],
+            'estrato' => ['nullable', 'integer', 'min:1', 'max:6'],
+            'nivel_educativo' => ['nullable', 'string', 'max:100'],
+            't_aseguramiento' => ['nullable', 'string', 'max:100'],
         ];
     }
 

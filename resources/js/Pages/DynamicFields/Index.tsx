@@ -42,7 +42,9 @@ export default function DynamicFieldsIndex({ fields }: Props) {
 
     const handleDelete = (fieldId: number) => {
         if (confirm('¿Está seguro de eliminar este campo dinámico? Los datos previos se conservarán en el historial.')) {
-            router.delete(route('campos-dinamicos.destroy', fieldId));
+            router.post(route('campos-dinamicos.destroy', fieldId), {
+                _method: 'delete',
+            });
         }
     };
 
