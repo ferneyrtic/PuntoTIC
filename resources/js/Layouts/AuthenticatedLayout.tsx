@@ -259,11 +259,11 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     >
                         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                     </button>
-                    <div className="bg-white px-2.5 py-1 rounded-xl shadow-xs flex items-center justify-center">
+                    <div className="bg-white p-1 rounded-xl shadow-xs flex items-center justify-center">
                         <img
-                            src={asset('images/logo_alcaldia.png')}
-                            alt="Logo Alcaldía"
-                            className="h-8 w-auto max-w-[130px] object-contain"
+                            src={asset('images/logo_pvd.png')}
+                            alt="Puntos Vive Digital"
+                            className="h-8 w-8 object-contain"
                         />
                     </div>
                     <div>
@@ -322,11 +322,11 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                 {/* Brand Header - High Prominence Institutional Logo */}
                 <div className="p-4 border-b border-slate-800/60 bg-slate-950/40 shrink-0">
                     {/* Official Banner Card: Full-width container giving maximum visibility to the logo */}
-                    <div className="bg-white rounded-2xl px-3.5 py-3 shadow-md border border-white/10 flex items-center justify-center mb-3 group transition-all duration-200 hover:shadow-lg">
+                    <div className="bg-white rounded-2xl p-2.5 shadow-md border border-white/10 flex items-center justify-center mb-3 group transition-all duration-200 hover:shadow-lg">
                         <img
-                            src={asset('images/logo_alcaldia.png')}
-                            alt="Alcaldía de Acacías"
-                            className="h-11 w-full object-contain"
+                            src={asset('images/logo_pvd.png')}
+                            alt="Puntos Vive Digital para la gente"
+                            className="h-20 sm:h-24 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
                         />
                     </div>
 
