@@ -15,13 +15,76 @@ import {
 } from 'lucide-react';
 import { asset } from '@/utils/asset';
 
+const TEST_ROLES_GESTORES = [
+    {
+        id: 'admin',
+        name: 'Administrador TIC',
+        tag: 'Control Total',
+        badgeClass: 'bg-purple-100 text-purple-800 border-purple-200',
+        dotClass: 'bg-purple-600',
+        email: 'admin@acacias.gov.co',
+        pass: 'Acacias2026*',
+        desc: 'Auditoría, config y control total',
+    },
+    {
+        id: 'coord_general',
+        name: 'Coordinador General',
+        tag: 'Descarga General',
+        badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+        dotClass: 'bg-blue-600',
+        email: 'coordinador.general@acacias.gov.co',
+        pass: 'CoordGeneral2026*',
+        desc: 'Reportes y datos de todos los puntos',
+    },
+    {
+        id: 'pvd_tradicional',
+        name: 'Gestor PVD Tradicional',
+        tag: 'Solo Visita',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+        dotClass: 'bg-amber-600',
+        email: 'gestor.tradicional@acacias.gov.co',
+        pass: 'Tradicional2026*',
+        desc: 'Sede Tradicional · Solo Visita',
+    },
+    {
+        id: 'pvd_plus',
+        name: 'Gestor PVD PLUS',
+        tag: 'Solo Visita',
+        badgeClass: 'bg-orange-100 text-orange-800 border-orange-200',
+        dotClass: 'bg-orange-600',
+        email: 'gestor_plus@acacias.gov.co',
+        pass: 'Jd1122129218*',
+        desc: 'Sede PLUS · Solo Visita',
+    },
+    {
+        id: 'aula_chichimene',
+        name: 'Gestor Aula Chichimene',
+        tag: 'Niños + Visitas',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        dotClass: 'bg-emerald-600',
+        email: 'gestor.chichimene@acacias.gov.co',
+        pass: 'Chichimene2026*',
+        desc: 'Aula Chichimene · Ambos menús',
+    },
+    {
+        id: 'aula_dinamarca',
+        name: 'Gestor Aula Dinamarca',
+        tag: 'Niños + Visitas',
+        badgeClass: 'bg-teal-100 text-teal-800 border-teal-200',
+        dotClass: 'bg-teal-600',
+        email: 'gestor.dinamarca@acacias.gov.co',
+        pass: 'Dinamarca2026*',
+        desc: 'Aula Dinamarca · Ambos menús',
+    },
+];
+
 export default function Login({ status }: { status?: string }) {
     const [mode, setMode] = useState<'gestores' | 'ciudadanos'>('gestores');
     const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: 'gestor.dinamarca@acacias.gov.co',
-        password: 'Dinamarca2026*',
+        email: 'admin@acacias.gov.co',
+        password: 'Acacias2026*',
         remember: true,
     });
 
@@ -29,8 +92,8 @@ export default function Login({ status }: { status?: string }) {
         setMode(newMode);
         if (newMode === 'gestores') {
             setData({
-                email: 'gestor.dinamarca@acacias.gov.co',
-                password: 'Dinamarca2026*',
+                email: 'admin@acacias.gov.co',
+                password: 'Acacias2026*',
                 remember: true,
             });
         } else {
@@ -47,7 +110,10 @@ export default function Login({ status }: { status?: string }) {
         post(route('login'));
     };
 
-    const handleQuickSelect = (identifier: string, pass: string) => {
+    const handleQuickSelect = (identifier: string, pass: string, targetMode: 'gestores' | 'ciudadanos' = 'gestores') => {
+        if (mode !== targetMode) {
+            setMode(targetMode);
+        }
         setData((prev) => ({
             ...prev,
             email: identifier,
@@ -60,7 +126,7 @@ export default function Login({ status }: { status?: string }) {
             <Head title="Ingreso a PuntoTIC · Alcaldía de Acacías" />
 
             {/* COLUMNA IZQUIERDA: FORMULARIO DE ACCESO INSTITUCIONAL */}
-            <div className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16 bg-white shadow-xl z-10">
+            <div className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-8 lg:p-10 xl:p-12 bg-white shadow-xl z-10 overflow-y-auto max-h-screen">
                 {/* Header Superior */}
                 <div>
                     <div className="flex items-center gap-3 mb-6">
@@ -81,7 +147,7 @@ export default function Login({ status }: { status?: string }) {
                 </div>
 
                 {/* Contenido Central: Selector e Inputs */}
-                <div className="max-w-md w-full mx-auto my-auto py-4">
+                <div className="max-w-lg w-full mx-auto my-auto py-2">
                     <div className="text-center mb-6">
                         <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                             {mode === 'gestores' ? 'Ingreso Gestores' : 'Ingreso Ciudadanos'}
@@ -246,50 +312,93 @@ export default function Login({ status }: { status?: string }) {
                     </form>
 
                     {/* PILLS DE ACCESO RÁPIDO PARA PRUEBAS */}
-                    <div className="mt-6 pt-5 border-t border-slate-100">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                            <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                            <span>Cuentas de Prueba Disponibles</span>
+                    <div className="mt-5 pt-4 border-t border-slate-100">
+                        <div className="flex items-center justify-between mb-2.5">
+                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Accesos Rápidos por Rol (Pruebas)</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
+                                Clic para cargar credenciales
+                            </span>
                         </div>
 
                         {mode === 'gestores' ? (
-                            <div className="space-y-1.5">
-                                <button
-                                    type="button"
-                                    onClick={() => handleQuickSelect('gestor.dinamarca@acacias.gov.co', 'Dinamarca2026*')}
-                                    className="w-full p-2 rounded-xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200 text-left transition-all text-[11px] text-amber-950 flex items-center justify-between"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                                        <span className="font-bold">Gestor Aula Dinamarca</span>
-                                    </div>
-                                    <span className="font-mono text-[10px] text-amber-800">gestor.dinamarca@acacias.gov.co</span>
-                                </button>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {TEST_ROLES_GESTORES.map((role) => {
+                                    const isSelected = data.email === role.email;
+                                    return (
+                                        <button
+                                            key={role.id}
+                                            type="button"
+                                            onClick={() => handleQuickSelect(role.email, role.pass, 'gestores')}
+                                            className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between gap-1 group relative ${
+                                                isSelected
+                                                    ? 'border-emerald-600 bg-emerald-50/70 shadow-xs ring-1 ring-emerald-600/30'
+                                                    : 'border-slate-200/90 bg-slate-50/60 hover:bg-slate-100/90 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between gap-1.5 w-full">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <span className={`w-2 h-2 rounded-full shrink-0 ${role.dotClass}`}></span>
+                                                    <span className="font-bold text-[11px] text-slate-900 truncate">
+                                                        {role.name}
+                                                    </span>
+                                                </div>
+                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${role.badgeClass}`}>
+                                                    {role.tag}
+                                                </span>
+                                            </div>
 
-                                <button
-                                    type="button"
-                                    onClick={() => handleQuickSelect('gestor.global@acacias.gov.co', 'GestorGlobal2026*')}
-                                    className="w-full p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-left transition-all text-[11px] text-emerald-950 flex items-center justify-between"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-                                        <span className="font-bold">Gestor Global (Todas las sedes)</span>
-                                    </div>
-                                    <span className="font-mono text-[10px] text-emerald-800">gestor.global@acacias.gov.co</span>
-                                </button>
+                                            <p className="text-[10px] text-slate-500 font-medium leading-tight line-clamp-1">
+                                                {role.desc}
+                                            </p>
+
+                                            <div className="flex items-center justify-between gap-1 w-full pt-1 border-t border-slate-200/50 text-[9.5px]">
+                                                <span className="font-mono text-slate-400 group-hover:text-slate-600 truncate">
+                                                    {role.email}
+                                                </span>
+                                                {isSelected && (
+                                                    <span className="inline-flex items-center gap-0.5 text-emerald-700 font-black shrink-0">
+                                                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                                        <span>Listo</span>
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         ) : (
-                            <button
-                                type="button"
-                                onClick={() => handleQuickSelect('1121000999', 'Acacias2026*')}
-                                className="w-full p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100/80 border border-indigo-200 text-left transition-all text-[11px] text-indigo-950 flex items-center justify-between"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
-                                    <span className="font-bold">Ciudadano Prueba (Cédula)</span>
-                                </div>
-                                <span className="font-mono text-[10px] text-indigo-800">CC: 1121000999</span>
-                            </button>
+                            <div className="space-y-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handleQuickSelect('1121000999', 'Acacias2026*', 'ciudadanos')}
+                                    className={`w-full p-3 rounded-xl border text-left transition-all flex items-center justify-between gap-3 ${
+                                        data.email === '1121000999'
+                                            ? 'border-indigo-600 bg-indigo-50/80 shadow-xs ring-1 ring-indigo-600/30'
+                                            : 'border-indigo-200/80 bg-indigo-50/40 hover:bg-indigo-50'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-700 font-black text-xs">
+                                            CC
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-xs text-indigo-950">Ciudadano de Prueba</span>
+                                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-indigo-100 text-indigo-800 border-indigo-200">
+                                                    Préstamos de Salas
+                                                </span>
+                                            </div>
+                                            <span className="text-[10px] text-slate-500">Documento: 1121000999 · Clave: Acacias2026*</span>
+                                        </div>
+                                    </div>
+                                    {data.email === '1121000999' && (
+                                        <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />
+                                    )}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
