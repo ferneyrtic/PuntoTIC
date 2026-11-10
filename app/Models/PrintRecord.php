@@ -12,6 +12,7 @@ class PrintRecord extends Model
     use HasFactory;
 
     protected $table = 'registro_impresion';
+
     protected $primaryKey = 'id_impresion';
 
     protected $fillable = [
@@ -43,7 +44,7 @@ class PrintRecord extends Model
 
     public function ciudadano(): BelongsTo
     {
-        return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id');
+        return $this->belongsTo(Citizen::class, 'id_form_pvd');
     }
 
     public function punto(): BelongsTo
@@ -64,6 +65,7 @@ class PrintRecord extends Model
         if ($to) {
             $query->whereDate('created_at', '<=', $to);
         }
+
         return $query;
     }
 }

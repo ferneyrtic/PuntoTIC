@@ -4,12 +4,23 @@ namespace Tests\Feature;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use Database\Seeders\PuntosVdSeeder;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Database\Seeders\TipoIdSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AuditLogTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(PuntosVdSeeder::class);
+        $this->seed(TipoIdSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
+    }
 
     public function test_guest_is_redirected_from_audit_logs(): void
     {
@@ -20,6 +31,7 @@ class AuditLogTest extends TestCase
     public function test_authenticated_user_can_view_audit_logs(): void
     {
         $user = User::factory()->create();
+        $user->assignRole('Administrador');
 
         AuditLog::registrar(
             accion: 'REGISTRAR_VISITA',
@@ -43,6 +55,7 @@ class AuditLogTest extends TestCase
     public function test_audit_logs_can_be_filtered_by_module(): void
     {
         $user = User::factory()->create();
+        $user->assignRole('Administrador');
 
         AuditLog::registrar(accion: 'REGISTRAR_VISITA', modulo: 'visitas', registroId: '101');
         AuditLog::registrar(accion: 'PRESTAMO_SALA', modulo: 'prestamos', registroId: '202');

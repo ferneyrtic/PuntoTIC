@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -27,13 +28,35 @@ class User extends Authenticatable
         'activo',
     ];
 
+    public static function getTableColumns(): array
+    {
+        try {
+            return Schema::getColumnListing('users');
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
     protected static function booted(): void
     {
         static::saving(function ($user) {
-            if (!empty($user->name) && empty($user->names)) {
-                $user->names = $user->name;
-            } elseif (!empty($user->names) && empty($user->name)) {
-                $user->name = $user->names;
+            $cols = static::getTableColumns();
+            if (empty($cols)) {
+                return;
+            }
+
+            if (in_array('names', $cols, true)) {
+                if (! empty($user->name) && empty($user->names)) {
+                    $user->attributes['names'] = $user->name;
+                } elseif (! empty($user->names) && empty($user->name)) {
+                    $user->attributes['name'] = $user->names;
+                }
+            }
+
+            foreach ($user->attributes as $key => $val) {
+                if (! in_array($key, $cols, true)) {
+                    unset($user->attributes[$key]);
+                }
             }
         });
     }
@@ -141,7 +164,7 @@ class User extends Authenticatable
         }
 
         // Si es coordinador o gestor específico de PVD urbano, no accede a aula digital escolar
-        if ($this->hasRole(['Coordinador PVD', 'Gestor PVD']) && !$this->hasRole('Gestor Global')) {
+        if ($this->hasRole(['Coordinador PVD', 'Gestor PVD']) && ! $this->hasRole('Gestor Global')) {
             return false;
         }
 
@@ -175,7 +198,7 @@ class User extends Authenticatable
 
     public function ciudadano(): BelongsTo
     {
-        return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id');
+        return $this->belongsTo(Citizen::class, 'id_form_pvd');
     }
 
     /**
