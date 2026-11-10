@@ -440,6 +440,12 @@ export default function Dashboard({
                             {p.label}
                         </button>
                     ))}
+                    {periodo.key === 'custom' && (
+                        <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-xs whitespace-nowrap flex items-center gap-1.5 animate-fade-in">
+                            <Calendar className="w-3.5 h-3.5 text-emerald-200" />
+                            <span>{periodo.label}</span>
+                        </span>
+                    )}
                 </div>
             </div>
 

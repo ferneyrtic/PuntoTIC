@@ -26,9 +26,12 @@ class DashboardController extends Controller
 
         $rawPoint = $request->get('id_punto');
         $rawZona = $request->get('zona');
-        $periodo = $request->get('periodo', 'mes');
         $fechaDesde = $request->get('fecha_desde');
         $fechaHasta = $request->get('fecha_hasta');
+        $periodo = $request->get('periodo');
+        if (! $periodo) {
+            $periodo = ($fechaDesde || $fechaHasta) ? 'custom' : 'mes';
+        }
 
         $pointId = null;
         $zona = null;
