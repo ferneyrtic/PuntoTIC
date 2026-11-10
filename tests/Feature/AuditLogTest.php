@@ -34,7 +34,8 @@ class AuditLogTest extends TestCase
         $user->assignRole('Coordinador General');
 
         $response = $this->actingAs($user)->get('/auditoria');
-        $response->assertStatus(403);
+        $response->assertRedirect('/dashboard');
+        $response->assertSessionHas('warning');
     }
 
     public function test_coordinador_general_cannot_access_settings(): void
@@ -43,7 +44,18 @@ class AuditLogTest extends TestCase
         $user->assignRole('Coordinador General');
 
         $response = $this->actingAs($user)->get('/configuracion');
-        $response->assertStatus(403);
+        $response->assertRedirect('/dashboard');
+        $response->assertSessionHas('warning');
+    }
+
+    public function test_ciudadano_cannot_access_audit_logs_and_is_redirected_to_portal(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('Ciudadano');
+
+        $response = $this->actingAs($user)->get('/auditoria');
+        $response->assertRedirect('/portal');
+        $response->assertSessionHas('warning');
     }
 
     public function test_authenticated_user_can_view_audit_logs(): void

@@ -176,7 +176,7 @@ export default function Dashboard({
 
     const { auth } = usePage<any>().props;
     const isGlobal = Boolean(auth?.user?.tiene_alcance_global ?? canSelectScope ?? auth?.user?.is_admin);
-    const isAdmin = auth?.user?.is_admin || auth?.user?.roles_nombres?.includes('Administrador');
+    const isAdmin = Boolean(auth?.is_admin || auth?.user?.is_admin || auth?.user?.roles_nombres?.includes('Administrador'));
 
     // Pestaña activa del dashboard
     const [activeTab, setActiveTab] = useState<'general' | 'tramites' | 'formacion' | 'salas' | 'impresiones'>('general');
@@ -741,9 +741,11 @@ export default function Dashboard({
 
                                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
                                     <span>PVD Urbanos y Aulas Digitales</span>
-                                    <Link href={route('configuracion.index')} className="font-bold text-emerald-700 dark:text-emerald-400 hover:underline">
-                                        Configurar
-                                    </Link>
+                                    {isAdmin && (
+                                        <Link href={route('configuracion.index')} className="font-bold text-emerald-700 dark:text-emerald-400 hover:underline">
+                                            Configurar
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         ) : (
