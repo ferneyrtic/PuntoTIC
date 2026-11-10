@@ -12,9 +12,27 @@ use Inertia\Response;
 
 class DynamicFieldController extends Controller
 {
+    private function canManage(Request $request): bool
+    {
+        $user = $request->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->isAdmin() || $user->hasRole([
+            'Administrador',
+            'Super Administrador',
+            'Super Admin',
+            'Coordinador PVD',
+            'Coordinador General',
+            'Coordinador',
+            'Coordinador Aula Digital',
+        ]);
+    }
+
     public function index(Request $request): Response
     {
-        if (! $request->user()?->hasRole(['Administrador', 'Coordinador PVD'])) {
+        if (! $this->canManage($request)) {
             abort(403, 'Acceso denegado a campos dinámicos.');
         }
 
@@ -27,7 +45,7 @@ class DynamicFieldController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        if (! $request->user()?->hasRole(['Administrador', 'Coordinador PVD'])) {
+        if (! $this->canManage($request)) {
             abort(403, 'Acceso denegado a campos dinámicos.');
         }
 
@@ -53,7 +71,7 @@ class DynamicFieldController extends Controller
 
     public function destroy(Request $request, DynamicField $campo): RedirectResponse
     {
-        if (! $request->user()?->hasRole(['Administrador', 'Coordinador PVD'])) {
+        if (! $this->canManage($request)) {
             abort(403, 'Acceso denegado a campos dinámicos.');
         }
 
