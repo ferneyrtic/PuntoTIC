@@ -73,7 +73,15 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
         });
     };
     const user = auth?.user;
-    const isAdmin = auth?.is_admin ?? false;
+    const isAdmin = Boolean(
+        user?.is_admin ||
+        auth?.is_admin ||
+        user?.roles_nombres?.includes('Administrador')
+    );
+    const canManageFields = Boolean(
+        isAdmin ||
+        user?.roles_nombres?.includes('Coordinador PVD')
+    );
 
     const currentUrl = window.location.pathname;
 
@@ -216,12 +224,16 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                           icon: Layers,
                           active: currentUrl.startsWith('/categorias'),
                       },
-                      {
-                          name: 'Campos Dinámicos',
-                          href: route('campos-dinamicos.index'),
-                          icon: SlidersHorizontal,
-                          active: currentUrl.startsWith('/campos-dinamicos'),
-                      },
+                      ...(canManageFields
+                          ? [
+                                {
+                                    name: 'Campos Dinámicos',
+                                    href: route('campos-dinamicos.index'),
+                                    icon: SlidersHorizontal,
+                                    active: currentUrl.startsWith('/campos-dinamicos'),
+                                },
+                            ]
+                          : []),
                       ...(isAdmin
                           ? [
                                 {
@@ -374,20 +386,23 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                                         key={item.name}
                                         href={item.href}
                                         onClick={() => setSidebarOpen(false)}
-                                        className={`btn-tactile group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                                        className={`btn-tactile group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition-all duration-200 ${
                                             item.active
-                                                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/30'
-                                                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/70'
+                                                ? 'bg-white text-slate-950 font-black shadow-lg shadow-white/20 ring-2 ring-white/90 translate-x-1'
+                                                : 'text-slate-300 font-semibold hover:text-white hover:bg-white/10'
                                         }`}
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
                                             <Icon
                                                 className={`w-4 h-4 shrink-0 transition-transform duration-150 ${
-                                                    item.active ? 'text-white' : 'text-slate-400 group-hover:text-emerald-400'
+                                                    item.active ? 'text-emerald-700 stroke-[2.5]' : 'text-slate-400 group-hover:text-emerald-400'
                                                 }`}
                                             />
                                             <span className="truncate">{item.name}</span>
                                         </div>
+                                        {item.active && (
+                                            <span className="w-1.5 h-3.5 rounded-full bg-emerald-600 shadow-xs shrink-0" />
+                                        )}
                                     </Link>
                                 );
                             })}

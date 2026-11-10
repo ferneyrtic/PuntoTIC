@@ -28,6 +28,24 @@ class AuditLogTest extends TestCase
         $response->assertRedirect('/login');
     }
 
+    public function test_coordinador_general_cannot_access_audit_logs(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('Coordinador General');
+
+        $response = $this->actingAs($user)->get('/auditoria');
+        $response->assertStatus(403);
+    }
+
+    public function test_coordinador_general_cannot_access_settings(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('Coordinador General');
+
+        $response = $this->actingAs($user)->get('/configuracion');
+        $response->assertStatus(403);
+    }
+
     public function test_authenticated_user_can_view_audit_logs(): void
     {
         $user = User::factory()->create();

@@ -60,7 +60,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'exportar_reportes',
             'gestionar_categorias',
             'gestionar_campos_dinamicos',
-            'ver_auditoria',
         ]);
 
         // 3. Rol Gestor PVD (Operadores de ventanilla en PVD urbano)
@@ -120,7 +119,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'exportar_reportes',
             'gestionar_categorias',
             'gestionar_campos_dinamicos',
-            'ver_auditoria',
         ]);
 
         $legacyGestor = Role::firstOrCreate(['name' => 'Gestor', 'guard_name' => 'web']);
@@ -152,7 +150,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // 1. Administrador TIC (Preserva contraseña original de producción)
         $admin = User::firstWhere('email', 'admin@acacias.gov.co');
-        if (!$admin) {
+        if (! $admin) {
             $admin = User::create([
                 'name' => 'Administrador TIC',
                 'email' => 'admin@acacias.gov.co',

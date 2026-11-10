@@ -125,10 +125,9 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->hasRole(['Administrador', 'Coordinador General']) || in_array($this->email, [
+        return $this->hasRole('Administrador') || in_array($this->email, [
             'admin@acacias.gov.co',
             'davidmesa.cps.tic@gmail.com',
-            'coordinador.general@acacias.gov.co',
         ]);
     }
 

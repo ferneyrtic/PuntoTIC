@@ -12,7 +12,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoomLoanController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\VisitController;
+use App\Models\Citizen;
+use App\Models\Point;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 // Redirección inicial: Landing Page para visitantes, o Dashboard/Portal para usuarios autenticados
 Route::get('/', function () {
@@ -20,14 +23,15 @@ Route::get('/', function () {
         if (auth()->user()->hasRole(['Usuario', 'Ciudadano']) || auth()->user()->es_usuario_ciudadano) {
             return redirect()->route('portal.index');
         }
+
         return redirect()->route('dashboard');
     }
 
-    $points = \App\Models\Point::where('activo', true)
+    $points = Point::where('activo', true)
         ->whereNotIn('id_punto', [5, 6])
         ->get(['id_punto', 'nombre_punto', 'zona', 'direccion']);
 
-    return \Inertia\Inertia::render('Welcome', [
+    return Inertia::render('Welcome', [
         'points' => $points,
     ]);
 });
@@ -38,7 +42,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Gestión de Ciudadanos (Directorio, Búsqueda, Creación y Edición)
-    Route::model('ciudadano', \App\Models\Citizen::class);
+    Route::model('ciudadano', Citizen::class);
     Route::resource('ciudadanos', CitizenController::class)->except(['destroy']);
     Route::post('/api/ciudadanos/verificar', [CitizenController::class, 'verify'])
         ->middleware('throttle:60,1')
@@ -84,14 +88,10 @@ Route::middleware(['auth'])->group(function () {
             ->only(['index', 'store', 'destroy']);
     });
 
-    // Configuración del Sistema (Blindada: Exclusivo para Administrador)
+    // Configuración y Auditoría del Sistema (Blindada: Exclusivo para Administrador)
     Route::middleware(['role:Administrador'])->group(function () {
         Route::get('/configuracion', [SettingController::class, 'index'])->name('configuracion.index');
         Route::post('/configuracion', [SettingController::class, 'update'])->name('configuracion.update');
-    });
-
-    // Registro de Auditoría y Trazabilidad (Blindada: Exclusivo para Administrador)
-    Route::middleware(['role:Administrador|Coordinador General'])->group(function () {
         Route::get('/auditoria', [AuditLogController::class, 'index'])->name('auditoria.index');
     });
 

@@ -36,7 +36,11 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
         userRoles.includes('Usuario') ||
         userRoles.includes('Ciudadano')
     );
-    const isAdmin = Boolean(auth?.is_admin || currentUser?.is_admin);
+    const isAdmin = Boolean(
+        auth?.is_admin ||
+        currentUser?.is_admin ||
+        currentUser?.roles_nombres?.includes('Administrador')
+    );
 
     const [query, setQuery] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -89,6 +93,14 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
                       category: 'Seguridad',
                       badge: 'Nuevo',
                   },
+                  {
+                      id: 'configuracion-index',
+                      name: 'Configuración del Sistema',
+                      description: 'Ajustes globales del sistema y motor de IA predictivo',
+                      icon: Settings,
+                      url: route('configuracion.index'),
+                      category: 'Administración',
+                  },
               ]
             : []),
         {
@@ -114,14 +126,6 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
             icon: FileSpreadsheet,
             url: route('exportar.index'),
             category: 'Reportes',
-        },
-        {
-            id: 'configuracion-index',
-            name: 'Configuración del Sistema',
-            description: 'Ajustes globales del sistema y motor de IA predictivo',
-            icon: Settings,
-            url: route('configuracion.index'),
-            category: 'Administración',
         },
         {
             id: 'profile-edit',
