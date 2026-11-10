@@ -5,8 +5,6 @@ import {
     CalendarCheck,
     Search,
     Filter,
-    FileSpreadsheet,
-    FileCheck,
     UserPlus,
     X,
     Eye,
@@ -64,19 +62,6 @@ export default function VisitsIndex({ visits, filters, points, categories }: Pro
         router.get(route('visitas.index'));
     };
 
-    const handleDownloadAsistencia = () => {
-        const params = new URLSearchParams();
-        params.append('tipo', 'asistencia');
-        if (selectedPoint) params.append('id_punto', selectedPoint);
-        if (selectedCategory) params.append('id_categoria', selectedCategory);
-        if (dateFrom) params.append('fecha_desde', dateFrom);
-        if (dateTo) params.append('fecha_hasta', dateTo);
-        params.append('asistentes_unicos', '1');
-        params.append('incluir_firma', '1');
-
-        window.location.href = `${route('exportar.listado-asistencia')}?${params.toString()}`;
-    };
-
     const hasFilters = Boolean(
         searchTerm || selectedPoint || selectedCategory || dateFrom || dateTo
     );
@@ -100,24 +85,6 @@ export default function VisitsIndex({ visits, filters, points, categories }: Pro
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={handleDownloadAsistencia}
-                            title="Descargar Listado Oficial de Asistencia GTIC-F-16 V9 con los filtros actuales"
-                            className="btn-tactile inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold shadow-soft-xs transition-all"
-                        >
-                            <FileCheck className="w-3.5 h-3.5 text-amber-700" />
-                            <span className="hidden sm:inline">Formato GTIC-F-16</span>
-                            <span className="sm:hidden">GTIC-F-16</span>
-                        </button>
-                        <Link
-                            href={route('exportar.index', { tipo: 'visitas' })}
-                            className="btn-tactile inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-soft-xs transition-all"
-                        >
-                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                            <span className="hidden sm:inline">Exportar a Excel</span>
-                            <span className="sm:hidden">Excel</span>
-                        </Link>
                         <Link
                             href={route('visitas.create')}
                             className="btn-tactile inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-soft hover:shadow-soft-lg hover:shadow-emerald-600/30 transition-all"
