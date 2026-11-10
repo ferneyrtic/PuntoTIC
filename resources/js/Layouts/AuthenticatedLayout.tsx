@@ -74,6 +74,18 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
     };
     const user = auth?.user;
     const isAdmin = auth?.is_admin ?? false;
+    const isSuperAdmin =
+        user?.roles_nombres?.includes('Administrador') ||
+        user?.email === 'admin@acacias.gov.co' ||
+        user?.email === 'davidmesa.cps.tic@gmail.com';
+
+    const isCoordinatorOrAdmin =
+        isAdmin ||
+        isSuperAdmin ||
+        user?.tiene_alcance_global ||
+        user?.roles_nombres?.includes('Coordinador General') ||
+        user?.roles_nombres?.includes('Coordinador PVD') ||
+        user?.email === 'coordinador.general@acacias.gov.co';
 
     const currentUrl = window.location.pathname;
 
@@ -210,26 +222,30 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                           icon: FileSpreadsheet,
                           active: currentUrl.startsWith('/exportar'),
                       },
-                      {
-                          name: 'Categorías y Servicios',
-                          href: route('categorias.index'),
-                          icon: Layers,
-                          active: currentUrl.startsWith('/categorias'),
-                      },
-                      {
-                          name: 'Campos Dinámicos',
-                          href: route('campos-dinamicos.index'),
-                          icon: SlidersHorizontal,
-                          active: currentUrl.startsWith('/campos-dinamicos'),
-                      },
-                      ...(isAdmin
+                      ...(isCoordinatorOrAdmin
                           ? [
+                                {
+                                    name: 'Categorías y Servicios',
+                                    href: route('categorias.index'),
+                                    icon: Layers,
+                                    active: currentUrl.startsWith('/categorias'),
+                                },
+                                {
+                                    name: 'Campos Dinámicos',
+                                    href: route('campos-dinamicos.index'),
+                                    icon: SlidersHorizontal,
+                                    active: currentUrl.startsWith('/campos-dinamicos'),
+                                },
                                 {
                                     name: 'Registro de Actividad',
                                     href: route('auditoria.index'),
                                     icon: History,
                                     active: currentUrl.startsWith('/auditoria'),
                                 },
+                            ]
+                          : []),
+                      ...(isSuperAdmin
+                          ? [
                                 {
                                     name: 'Configuración y Auditoría',
                                     href: route('configuracion.index'),

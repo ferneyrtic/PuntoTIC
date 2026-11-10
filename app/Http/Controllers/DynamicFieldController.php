@@ -12,11 +12,24 @@ use Inertia\Response;
 
 class DynamicFieldController extends Controller
 {
+    protected function checkAuthorizedUser(Request $request): void
+    {
+        $user = $request->user();
+        $isAuthorized = $user && (
+            $user->tieneAlcanceGlobal() ||
+            $user->isAdmin() ||
+            $user->hasRole(['Administrador', 'Coordinador General', 'Coordinador PVD']) ||
+            in_array($user->email, ['admin@acacias.gov.co', 'coordinador.general@acacias.gov.co', 'davidmesa.cps.tic@gmail.com'])
+        );
+
+        if (! $isAuthorized) {
+            abort(403, 'Acceso denegado: La administración de campos dinámicos está reservada exclusivamente para la Coordinación General y Administración.');
+        }
+    }
+
     public function index(Request $request): Response
     {
-        if (! $request->user()?->hasRole(['Administrador', 'Coordinador PVD'])) {
-            abort(403, 'Acceso denegado a campos dinámicos.');
-        }
+        $this->checkAuthorizedUser($request);
 
         $fields = DynamicField::orderBy('modulo')->orderBy('orden')->get();
 
@@ -27,9 +40,7 @@ class DynamicFieldController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        if (! $request->user()?->hasRole(['Administrador', 'Coordinador PVD'])) {
-            abort(403, 'Acceso denegado a campos dinámicos.');
-        }
+        $this->checkAuthorizedUser($request);
 
         $validated = $request->validate([
             'modulo' => ['required', 'in:form_pvd,visitas,prestamo_sala,registro_impresion'],
@@ -53,9 +64,7 @@ class DynamicFieldController extends Controller
 
     public function destroy(Request $request, DynamicField $campo): RedirectResponse
     {
-        if (! $request->user()?->hasRole(['Administrador', 'Coordinador PVD'])) {
-            abort(403, 'Acceso denegado a campos dinámicos.');
-        }
+        $this->checkAuthorizedUser($request);
 
         AuditLog::registrar('ELIMINAR_CAMPO_DINAMICO', 'CamposDinamicos', (string) $campo->id_campo, $campo->toArray(), null);
 
