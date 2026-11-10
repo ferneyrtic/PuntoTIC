@@ -42,9 +42,15 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        // 1. Rol Administrador: control total del sistema
+        // 1. Rol Administrador y Super Administrador: control total del sistema
         $adminRole = Role::firstOrCreate(['name' => 'Administrador', 'guard_name' => 'web']);
         $adminRole->syncPermissions(Permission::all());
+
+        $superAdminRole = Role::firstOrCreate(['name' => 'Super Administrador', 'guard_name' => 'web']);
+        $superAdminRole->syncPermissions(Permission::all());
+
+        $superAdminShortRole = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+        $superAdminShortRole->syncPermissions(Permission::all());
 
         // 2. Rol Coordinador PVD (Sedes Urbanas: PLUS y Tradicional)
         // Solo PVD general, NO tiene acceso a aula digital

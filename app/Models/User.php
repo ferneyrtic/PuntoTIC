@@ -125,10 +125,26 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->hasRole('Administrador') || in_array($this->email, [
+        if ($this->hasRole(['Administrador', 'Super Administrador', 'Super Admin', 'SuperAdm', 'Admin'])) {
+            return true;
+        }
+
+        if (in_array(strtolower($this->email), [
             'admin@acacias.gov.co',
             'davidmesa.cps.tic@gmail.com',
-        ]);
+        ])) {
+            return true;
+        }
+
+        if ($this->cargo && (
+            str_contains(mb_strtolower($this->cargo), 'super administrador') ||
+            str_contains(mb_strtolower($this->cargo), 'super admin') ||
+            str_contains(mb_strtolower($this->cargo), 'super adm')
+        )) {
+            return true;
+        }
+
+        return false;
     }
 
     public function getIsAdminAttribute(): bool

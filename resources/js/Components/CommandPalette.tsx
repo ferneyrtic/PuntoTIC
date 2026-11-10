@@ -39,7 +39,9 @@ export default function CommandPalette({ isOpen, onClose }: Props) {
     const isAdmin = Boolean(
         auth?.is_admin ||
         currentUser?.is_admin ||
-        currentUser?.roles_nombres?.includes('Administrador')
+        currentUser?.roles_nombres?.some((r: string) =>
+            ['Administrador', 'Super Administrador', 'Super Admin', 'SuperAdm', 'Admin'].includes(r)
+        )
     );
 
     const [query, setQuery] = useState('');

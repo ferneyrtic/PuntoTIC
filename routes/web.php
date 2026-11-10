@@ -88,8 +88,8 @@ Route::middleware(['auth'])->group(function () {
             ->only(['index', 'store', 'destroy']);
     });
 
-    // Configuración y Auditoría del Sistema (Blindada: Exclusivo para Administrador)
-    Route::middleware(['role:Administrador'])->group(function () {
+    // Configuración y Auditoría del Sistema (Blindada: Exclusivo para Administrador / Super Admin)
+    Route::middleware(['role:Administrador|Super Administrador|Super Admin'])->group(function () {
         Route::get('/configuracion', [SettingController::class, 'index'])->name('configuracion.index');
         Route::post('/configuracion', [SettingController::class, 'update'])->name('configuracion.update');
         Route::get('/auditoria', [AuditLogController::class, 'index'])->name('auditoria.index');

@@ -58,6 +58,15 @@ class AuditLogTest extends TestCase
         $response->assertSessionHas('warning');
     }
 
+    public function test_super_admin_can_view_audit_logs(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('Super Administrador');
+
+        $response = $this->actingAs($user)->get('/auditoria');
+        $response->assertStatus(200);
+    }
+
     public function test_authenticated_user_can_view_audit_logs(): void
     {
         $user = User::factory()->create();

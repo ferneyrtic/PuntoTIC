@@ -76,7 +76,9 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
     const isAdmin = Boolean(
         user?.is_admin ||
         auth?.is_admin ||
-        user?.roles_nombres?.includes('Administrador')
+        user?.roles_nombres?.some((r: string) =>
+            ['Administrador', 'Super Administrador', 'Super Admin', 'SuperAdm', 'Admin'].includes(r)
+        )
     );
     const canManageFields = Boolean(
         isAdmin ||
@@ -243,7 +245,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                                     active: currentUrl.startsWith('/auditoria'),
                                 },
                                 {
-                                    name: 'Configuración y Auditoría',
+                                    name: 'Configuración del Sistema',
                                     href: route('configuracion.index'),
                                     icon: Settings,
                                     active: currentUrl.startsWith('/configuracion'),

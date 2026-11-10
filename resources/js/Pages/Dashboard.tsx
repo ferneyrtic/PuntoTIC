@@ -176,7 +176,13 @@ export default function Dashboard({
 
     const { auth } = usePage<any>().props;
     const isGlobal = Boolean(auth?.user?.tiene_alcance_global ?? canSelectScope ?? auth?.user?.is_admin);
-    const isAdmin = Boolean(auth?.is_admin || auth?.user?.is_admin || auth?.user?.roles_nombres?.includes('Administrador'));
+    const isAdmin = Boolean(
+        auth?.is_admin ||
+        auth?.user?.is_admin ||
+        auth?.user?.roles_nombres?.some((r: string) =>
+            ['Administrador', 'Super Administrador', 'Super Admin', 'SuperAdm', 'Admin'].includes(r)
+        )
+    );
 
     // Pestaña activa del dashboard
     const [activeTab, setActiveTab] = useState<'general' | 'tramites' | 'formacion' | 'salas' | 'impresiones'>('general');
