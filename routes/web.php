@@ -39,7 +39,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Gestión de Ciudadanos (Directorio, Búsqueda, Creación y Edición)
     Route::model('ciudadano', \App\Models\Citizen::class);
-    Route::resource('ciudadanos', CitizenController::class);
+    Route::resource('ciudadanos', CitizenController::class)->except(['destroy']);
     Route::post('/api/ciudadanos/verificar', [CitizenController::class, 'verify'])
         ->middleware('throttle:60,1')
         ->name('ciudadanos.verify');
@@ -48,17 +48,17 @@ Route::middleware(['auth'])->group(function () {
         ->name('ciudadanos.buscar-estudiantes');
 
     // Registro y Listado de Visitas
-    Route::resource('visitas', VisitController::class);
+    Route::resource('visitas', VisitController::class)->only(['index', 'create', 'store']);
     Route::post('/api/visitas/clasificar-nlp', [VisitController::class, 'classifyNlp'])
         ->middleware('throttle:30,1')
         ->name('visitas.classify-nlp');
 
     // Préstamos de Salas
-    Route::resource('prestamos', RoomLoanController::class);
+    Route::resource('prestamos', RoomLoanController::class)->only(['index', 'store', 'update']);
     Route::post('prestamos/{prestamo}', [RoomLoanController::class, 'update'])->name('prestamos.update.post');
 
     // Registro de Impresiones
-    Route::resource('impresiones', PrintRecordController::class);
+    Route::resource('impresiones', PrintRecordController::class)->only(['index', 'store']);
 
     // Exportaciones Avanzadas (Protegidas con rate limiting contra DoS)
     Route::get('/exportar', [ExportController::class, 'index'])->name('exportar.index');
@@ -79,7 +79,9 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/subcategorias/{subcategoria}', [CategoryController::class, 'deleteSubcategory'])->name('categorias.subcategorias.destroy');
 
         // Campos Dinámicos (Solo Administrador y Coordinador PVD)
-        Route::resource('campos-dinamicos', DynamicFieldController::class)->only(['index', 'store', 'destroy']);
+        Route::resource('campos-dinamicos', DynamicFieldController::class)
+            ->parameters(['campos-dinamicos' => 'campo'])
+            ->only(['index', 'store', 'destroy']);
     });
 
     // Configuración del Sistema (Blindada: Exclusivo para Administrador)

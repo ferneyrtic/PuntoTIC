@@ -58,9 +58,9 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
     const [christmasMode, setChristmasMode] = useState<boolean>(() => {
         if (typeof window !== 'undefined') {
             const stored = localStorage.getItem('pvd_christmas_mode');
-            return stored === 'true';
+            return stored !== 'false';
         }
-        return false;
+        return true;
     });
 
     const toggleChristmasMode = () => {
@@ -679,7 +679,11 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
             <ChristmasSnow enabled={christmasMode} />
 
             {/* Christmas Pixel Art Tree & Gifts */}
-            <ChristmasPixelTree enabled={christmasMode} />
+            <ChristmasPixelTree
+                enabled={christmasMode}
+                isCitizen={Boolean(isCitizen)}
+                userName={user?.name}
+            />
 
             {/* Global Command Palette */}
             <CommandPalette

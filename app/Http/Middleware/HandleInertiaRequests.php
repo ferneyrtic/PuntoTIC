@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Point;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -37,6 +38,14 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
                 'is_admin' => $user ? $user->is_admin : false,
                 'roles' => $user ? $user->getRoleNames() : [],
+            ],
+            'points' => fn () => Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona']),
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'warning' => fn () => $request->session()->get('warning'),
+                'info' => fn () => $request->session()->get('info'),
+                'status' => fn () => $request->session()->get('status'),
             ],
         ];
     }
