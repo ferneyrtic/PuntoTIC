@@ -499,18 +499,31 @@ class StatsService
             ->pluck('id_form_pvd')
             ->toArray();
 
-        $citizens = Citizen::whereIn('id_form_pvd', $citizenIds)->get();
+        $citizens = Citizen::where(function ($q) use ($citizenIds) {
+            $q->whereIn('id', $citizenIds)->orWhereIn('id_form_pvd', $citizenIds);
+        })->get();
+
         $totalCitizens = $citizens->count() ?: 1;
 
-        // 1. Demografía por Género
-        $generoCounts = $citizens->groupBy('genero')->map->count();
+        // 1. Demografía por Género (Normalización robusta insensible a mayúsculas/minúsculas)
         $generoStats = [
-            'femenino' => $generoCounts['Femenino'] ?? 0,
-            'masculino' => $generoCounts['Masculino'] ?? 0,
-            'otro' => ($generoCounts['Otro'] ?? 0) + ($generoCounts['No especificado'] ?? 0),
+            'femenino' => 0,
+            'masculino' => 0,
+            'otro' => 0,
         ];
 
-        // 2. Demografía por Grupos Etarios
+        foreach ($citizens as $c) {
+            $gen = mb_strtoupper(trim($c->genero ?? ''));
+            if ($gen === 'FEMENINO' || str_starts_with($gen, 'FEM')) {
+                $generoStats['femenino']++;
+            } elseif ($gen === 'MASCULINO' || str_starts_with($gen, 'MASC')) {
+                $generoStats['masculino']++;
+            } else {
+                $generoStats['otro']++;
+            }
+        }
+
+        // 2. Demografía por Grupos Etarios (Cálculo por campo edad o fecha_nac)
         $etarios = [
             'jovenes' => 0,      // 14 - 28 años
             'adultos' => 0,      // 29 - 59 años
@@ -519,15 +532,27 @@ class StatsService
         ];
 
         foreach ($citizens as $c) {
-            $edad = (int) $c->edad;
-            if ($edad <= 13) {
-                $etarios['ninos']++;
-            } elseif ($edad <= 28) {
-                $etarios['jovenes']++;
-            } elseif ($edad <= 59) {
-                $etarios['adultos']++;
-            } else {
-                $etarios['adulto_mayor']++;
+            $edad = null;
+            if (is_numeric($c->edad) && (int) $c->edad > 0) {
+                $edad = (int) $c->edad;
+            } elseif ($c->fecha_nac) {
+                try {
+                    $edad = Carbon::parse($c->fecha_nac)->age;
+                } catch (\Exception $e) {
+                    $edad = null;
+                }
+            }
+
+            if ($edad !== null) {
+                if ($edad <= 13) {
+                    $etarios['ninos']++;
+                } elseif ($edad <= 28) {
+                    $etarios['jovenes']++;
+                } elseif ($edad <= 59) {
+                    $etarios['adultos']++;
+                } else {
+                    $etarios['adulto_mayor']++;
+                }
             }
         }
 
@@ -538,11 +563,20 @@ class StatsService
             ->take(5)
             ->toArray();
 
-        // 4. Demografía por Zona de Origen
+        // 4. Demografía por Zona de Origen (Normalización insensible a URBANO/RURAL)
         $zonaOrigen = [
-            'urbana' => $citizens->where('zona', 'Urbana')->count(),
-            'rural' => $citizens->where('zona', 'Rural')->count(),
+            'urbana' => 0,
+            'rural' => 0,
         ];
+
+        foreach ($citizens as $c) {
+            $z = mb_strtoupper(trim($c->zona ?? ''));
+            if (str_contains($z, 'RURAL')) {
+                $zonaOrigen['rural']++;
+            } else {
+                $zonaOrigen['urbana']++;
+            }
+        }
 
         return [
             'total_formacion_visitas' => $formacionVisitas,
