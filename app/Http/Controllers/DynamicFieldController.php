@@ -15,22 +15,8 @@ class DynamicFieldController extends Controller
     private function canManage(Request $request): bool
     {
         $user = $request->user();
-        if (! $user) {
-            return false;
-        }
 
-        return $user->isAdmin() ||
-            $user->tieneAlcanceGlobal() ||
-            $user->hasRole([
-                'Administrador',
-                'Super Administrador',
-                'Super Admin',
-                'Coordinador PVD',
-                'Coordinador General',
-                'Coordinador',
-                'Coordinador Aula Digital',
-            ]) ||
-            in_array($user->email, ['admin@acacias.gov.co', 'coordinador.general@acacias.gov.co', 'davidmesa.cps.tic@gmail.com']);
+        return $user && $user->canManageTaxonomy();
     }
 
     public function index(Request $request): Response

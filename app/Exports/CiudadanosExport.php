@@ -55,6 +55,8 @@ class CiudadanosExport implements FromCollection, WithHeadings, WithMapping, Wit
     {
         return Citizen::with(['tipoDocumento', 'punto'])
             ->withCount('visitas')
+            ->when(! empty($this->filters['fecha_desde']), fn ($q) => $q->whereDate('created_at', '>=', $this->filters['fecha_desde']))
+            ->when(! empty($this->filters['fecha_hasta']), fn ($q) => $q->whereDate('created_at', '<=', $this->filters['fecha_hasta']))
             ->search($this->filters['search'] ?? null)
             ->filterByPoint($this->filters['id_punto'] ?? null)
             ->filterByZone($this->filters['zona'] ?? null)

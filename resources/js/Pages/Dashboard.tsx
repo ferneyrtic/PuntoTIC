@@ -206,19 +206,43 @@ export default function Dashboard({
     const [activeTab, setActiveTab] = useState<'general' | 'tramites' | 'formacion' | 'salas' | 'impresiones'>('general');
     const [isModalReporteOpen, setIsModalReporteOpen] = useState(false);
 
-    // Manejador para exportar gráficas en PDF
+    // Manejador para abrir el generador de gráficas e informe oficial en PDF
     const handlePrintPdf = () => {
         setIsModalReporteOpen(true);
     };
 
-    // Auto-activación de diálogo de reporte/PDF si viene con parámetro en la URL
+    // Auto-activación del modal de reporte gráfico en PDF si viene con parámetro en la URL y soporte claro para Ctrl+P
     useEffect(() => {
+        let wasDark = false;
+
+        const handleBeforePrint = () => {
+            if (document.documentElement.classList.contains('dark')) {
+                wasDark = true;
+                document.documentElement.classList.remove('dark');
+            }
+        };
+
+        const handleAfterPrint = () => {
+            if (wasDark) {
+                document.documentElement.classList.add('dark');
+                wasDark = false;
+            }
+        };
+
+        window.addEventListener('beforeprint', handleBeforePrint);
+        window.addEventListener('afterprint', handleAfterPrint);
+
         if (typeof window !== 'undefined') {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('print') === 'true' || urlParams.get('pdf') === 'true') {
                 setIsModalReporteOpen(true);
             }
         }
+
+        return () => {
+            window.removeEventListener('beforeprint', handleBeforePrint);
+            window.removeEventListener('afterprint', handleAfterPrint);
+        };
     }, []);
 
     // Manejador del cambio de ámbito (Sede individual o Consolidado)
@@ -349,20 +373,20 @@ export default function Dashboard({
                         <button
                             type="button"
                             onClick={handlePrintPdf}
-                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-bold shadow-xs hover:shadow transition-all shrink-0"
+                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white dark:bg-emerald-950/70 dark:hover:bg-emerald-900/90 dark:text-emerald-300 dark:border dark:border-emerald-700/60 text-xs font-bold shadow-xs transition-all shrink-0 active:scale-95"
                             title="Generar y descargar informe oficial en PDF con todas las gráficas estadísticas filtradas"
                         >
-                            <Download className="w-3.5 h-3.5 text-emerald-200" />
+                            <Download className="w-3.5 h-3.5 text-emerald-200 dark:text-emerald-400" />
                             <span>Descargar Gráficas (PDF)</span>
                         </button>
 
                         {/* Botón de Exportar Datos Tabulares */}
                         <Link
                             href={route('exportar.index')}
-                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
+                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 dark:border dark:border-slate-700 text-xs font-bold shadow-xs transition-all shrink-0 active:scale-95"
                             title="Exportar tablas y bases de datos en Excel / CSV"
                         >
-                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 dark:text-white" />
+                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400" />
                             <span>Exportar Datos</span>
                         </Link>
                     </div>
@@ -471,151 +495,153 @@ export default function Dashboard({
                 </div>
             </div>
 
-            {/* Tarjetas Principales de KPIs (Grid Bento) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Tarjetas Principales de KPIs (Grid Bento Uniforme) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 items-stretch">
                 {/* KPI 1: Atenciones del Período */}
-                <RevealOnScroll delay={0}>
-                <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-[#0F1E36] text-white p-5 sm:p-6 rounded-3xl border border-slate-800 shadow-md flex flex-col justify-between hover:shadow-xl hover:shadow-slate-900/20 hover:scale-[1.015] transition-all duration-200 cursor-default">
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-300 flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                Atenciones en el Período
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-medium">{periodo.label}</span>
+                <RevealOnScroll delay={0} className="h-full flex flex-col">
+                    <div className="h-full bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md hover:scale-[1.015] transition-all duration-200 cursor-default">
+                        <div>
+                            <div className="flex items-center justify-between mb-2 min-h-[32px]">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                                    <span className="truncate">Atenciones en el Período</span>
+                                </span>
+                                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                                    <Activity className="w-4 h-4" />
+                                </div>
+                            </div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums mt-1">
+                                {kpis.visitas_periodo.toLocaleString()}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 line-clamp-2 min-h-[32px]">
+                                Atenciones y servicios ciudadanos registrados
+                            </p>
                         </div>
-                        <div className="text-4xl sm:text-5xl font-black tracking-tight tabular-nums mt-1 text-white">
-                            {kpis.visitas_periodo.toLocaleString()}
-                        </div>
-                        <p className="text-xs text-slate-300 font-medium mt-1">
-                            Atenciones y servicios ciudadanos registrados
-                        </p>
-                    </div>
 
-                    <div className="pt-3 border-t border-slate-800/80 mt-4 flex items-center justify-between text-xs">
-                        <span className="text-slate-400">
-                            Hoy: <strong className="text-white">{kpis.visitas_hoy}</strong>
-                        </span>
-                        <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg font-bold text-[11px] ${
-                                kpis.delta_visitas_hoy >= 0
-                                    ? 'bg-emerald-500/20 text-emerald-300'
-                                    : 'bg-slate-800 text-slate-400'
-                            }`}
-                        >
-                            {kpis.delta_visitas_hoy >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                            {kpis.delta_visitas_hoy >= 0 ? `+${kpis.delta_visitas_hoy}%` : `${kpis.delta_visitas_hoy}%`}
-                        </span>
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
+                            <span className="text-slate-400 dark:text-slate-500">
+                                Hoy: <strong className="text-slate-800 dark:text-slate-200">{kpis.visitas_hoy}</strong>
+                            </span>
+                            <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg font-bold text-[11px] ${
+                                    kpis.delta_visitas_hoy >= 0
+                                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                                }`}
+                            >
+                                {kpis.delta_visitas_hoy >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                                {kpis.delta_visitas_hoy >= 0 ? `+${kpis.delta_visitas_hoy}%` : `${kpis.delta_visitas_hoy}%`}
+                            </span>
+                        </div>
                     </div>
-                </div>
                 </RevealOnScroll>
 
                 {/* KPI 2: Ciudadanos Únicos */}
-                <RevealOnScroll delay={80}>
-                <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md hover:scale-[1.015] transition-all duration-200 cursor-default">
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Ciudadanos Beneficiados
-                            </span>
-                            <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center">
-                                <Users className="w-4 h-4" />
+                <RevealOnScroll delay={80} className="h-full flex flex-col">
+                    <div className="h-full bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md hover:scale-[1.015] transition-all duration-200 cursor-default">
+                        <div>
+                            <div className="flex items-center justify-between mb-2 min-h-[32px]">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                                    Ciudadanos Beneficiados
+                                </span>
+                                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0">
+                                    <Users className="w-4 h-4" />
+                                </div>
                             </div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums mt-1">
+                                {kpis.ciudadanos_unicos.toLocaleString()}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 line-clamp-2 min-h-[32px]">
+                                Usuarios únicos atendidos en este período
+                            </p>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums mt-1">
-                            {kpis.ciudadanos_unicos.toLocaleString()}
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-                            Usuarios únicos atendidos en este período
-                        </p>
-                    </div>
 
-                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
-                        <span className="text-slate-400 dark:text-slate-500">
-                            Padrón total: <strong className="text-slate-800 dark:text-slate-200">{kpis.total_ciudadanos.toLocaleString()}</strong>
-                        </span>
-                        <Link
-                            href={route('ciudadanos.index')}
-                            className="font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-0.5"
-                        >
-                            <span>Ver</span>
-                            <ArrowRight className="w-3 h-3" />
-                        </Link>
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
+                            <span className="text-slate-400 dark:text-slate-500 truncate mr-2">
+                                Padrón: <strong className="text-slate-800 dark:text-slate-200">{kpis.total_ciudadanos.toLocaleString()}</strong>
+                            </span>
+                            <Link
+                                href={route('ciudadanos.index')}
+                                className="font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-0.5 shrink-0"
+                            >
+                                <span>Ver</span>
+                                <ArrowRight className="w-3 h-3" />
+                            </Link>
+                        </div>
                     </div>
-                </div>
                 </RevealOnScroll>
 
                 {/* KPI 3: Impresiones y Digitalización */}
-                <RevealOnScroll delay={160}>
-                <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md hover:scale-[1.015] transition-all duration-200 cursor-default">
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Hojas de Impresión / Copias
-                            </span>
-                            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center">
-                                <Printer className="w-4 h-4" />
+                <RevealOnScroll delay={160} className="h-full flex flex-col">
+                    <div className="h-full bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md hover:scale-[1.015] transition-all duration-200 cursor-default">
+                        <div>
+                            <div className="flex items-center justify-between mb-2 min-h-[32px]">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                                    Hojas de Impresión / Copias
+                                </span>
+                                <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+                                    <Printer className="w-4 h-4" />
+                                </div>
                             </div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums mt-1">
+                                {kpis.impresiones_hojas.toLocaleString()}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 line-clamp-2 min-h-[32px]">
+                                Hojas procesadas y consumibles controlados
+                            </p>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums mt-1">
-                            {kpis.impresiones_hojas.toLocaleString()}
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-                            Hojas procesadas y consumibles controlados
-                        </p>
-                    </div>
 
-                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
-                        <span className="text-slate-400 dark:text-slate-500">
-                            Hoy: <strong className="text-slate-800 dark:text-slate-200">{kpis.impresiones_hoy_hojas} hojas</strong>
-                        </span>
-                        <Link
-                            href={route('impresiones.index')}
-                            className="font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 flex items-center gap-0.5"
-                        >
-                            <span>Detalle</span>
-                            <ArrowRight className="w-3 h-3" />
-                        </Link>
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
+                            <span className="text-slate-400 dark:text-slate-500 truncate mr-2">
+                                Hoy: <strong className="text-slate-800 dark:text-slate-200">{kpis.impresiones_hoy_hojas} hojas</strong>
+                            </span>
+                            <Link
+                                href={route('impresiones.index')}
+                                className="font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 flex items-center gap-0.5 shrink-0"
+                            >
+                                <span>Detalle</span>
+                                <ArrowRight className="w-3 h-3" />
+                            </Link>
+                        </div>
                     </div>
-                </div>
                 </RevealOnScroll>
 
                 {/* KPI 4: Préstamos de Salas y Asistentes */}
-                <RevealOnScroll delay={240}>
-                <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md hover:scale-[1.015] transition-all duration-200 cursor-default">
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Salas & Espacios Comunitarios
-                            </span>
-                            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
-                                <DoorOpen className="w-4 h-4" />
+                <RevealOnScroll delay={240} className="h-full flex flex-col">
+                    <div className="h-full bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md hover:scale-[1.015] transition-all duration-200 cursor-default">
+                        <div>
+                            <div className="flex items-center justify-between mb-2 min-h-[32px]">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                                    Salas & Espacios Comunitarios
+                                </span>
+                                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                                    <DoorOpen className="w-4 h-4" />
+                                </div>
                             </div>
+                            <div className="flex items-baseline gap-2 mt-1">
+                                <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
+                                    {kpis.prestamos_salas}
+                                </span>
+                                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">eventos</span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1 line-clamp-2 min-h-[32px]">
+                                <strong className="text-emerald-700 dark:text-emerald-400 font-bold mr-1">{kpis.asistentes_salas.toLocaleString()}</strong> asistentes congregados
+                            </p>
                         </div>
-                        <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums">
-                                {kpis.prestamos_salas}
-                            </span>
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">eventos</span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-                            <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{kpis.asistentes_salas.toLocaleString()}</strong> asistentes congregados
-                        </p>
-                    </div>
 
-                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
-                        <span className="text-slate-400 dark:text-slate-500">
-                            Hoy: <strong className="text-slate-800 dark:text-slate-200">{kpis.prestamos_hoy} en curso</strong>
-                        </span>
-                        <Link
-                            href={route('prestamos.index')}
-                            className="font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-0.5"
-                        >
-                            <span>Agenda</span>
-                            <ArrowRight className="w-3 h-3" />
-                        </Link>
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between text-xs">
+                            <span className="text-slate-400 dark:text-slate-500 truncate mr-2">
+                                Hoy: <strong className="text-slate-800 dark:text-slate-200">{kpis.prestamos_hoy} en curso</strong>
+                            </span>
+                            <Link
+                                href={route('prestamos.index')}
+                                className="font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-0.5 shrink-0"
+                            >
+                                <span>Agenda</span>
+                                <ArrowRight className="w-3 h-3" />
+                            </Link>
+                        </div>
                     </div>
-                </div>
                 </RevealOnScroll>
             </div>
 

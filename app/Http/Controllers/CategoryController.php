@@ -15,14 +15,8 @@ class CategoryController extends Controller
     protected function checkAuthorizedUser(Request $request): void
     {
         $user = $request->user();
-        $isAuthorized = $user && (
-            $user->tieneAlcanceGlobal() ||
-            $user->isAdmin() ||
-            $user->hasRole(['Administrador', 'Coordinador General', 'Coordinador PVD']) ||
-            in_array($user->email, ['admin@acacias.gov.co', 'coordinador.general@acacias.gov.co', 'davidmesa.cps.tic@gmail.com'])
-        );
 
-        if (! $isAuthorized) {
+        if (! $user || ! $user->canManageTaxonomy()) {
             abort(403, 'Acceso denegado: La administración de la taxonomía de categorías y servicios está reservada exclusivamente para la Coordinación General y Administración.');
         }
     }
@@ -33,15 +27,15 @@ class CategoryController extends Controller
 
         $showLegacy = (bool) $request->boolean('legacy', false);
 
-        $categories = Category::with(['subcategorias' => fn($q) => $q->withCount('visitas')])
+        $categories = Category::with(['subcategorias' => fn ($q) => $q->withCount('visitas')])
             ->withCount('visitas')
-            ->when(! $showLegacy, fn($q) => $q->where('activo', true))
-            ->when($showLegacy, fn($q) => $q->where(fn($sq) => $sq->where('activo', false)->orWhereNull('activo')))
+            ->when(! $showLegacy, fn ($q) => $q->where('activo', true))
+            ->when($showLegacy, fn ($q) => $q->where(fn ($sq) => $sq->where('activo', false)->orWhereNull('activo')))
             ->orderBy('orden')
             ->get();
 
         $activeCount = Category::where('activo', true)->count();
-        $legacyCount = Category::where(fn($sq) => $sq->where('activo', false)->orWhereNull('activo'))->count();
+        $legacyCount = Category::where(fn ($sq) => $sq->where('activo', false)->orWhereNull('activo'))->count();
 
         return Inertia::render('Categories/Index', [
             'categories' => $categories,

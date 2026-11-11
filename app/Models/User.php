@@ -92,6 +92,7 @@ class User extends Authenticatable
         'puede_exportar_todas_sedes',
         'roles_nombres',
         'tiene_alcance_global',
+        'puede_gestionar_taxonomia',
     ];
 
     public function tieneAlcanceGlobal(): bool
@@ -122,6 +123,38 @@ class User extends Authenticatable
     public function getTieneAlcanceGlobalAttribute(): bool
     {
         return $this->tieneAlcanceGlobal();
+    }
+
+    public function canManageTaxonomy(): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        if (in_array(strtolower($this->email), [
+            'admin@acacias.gov.co',
+            'coordinador.general@acacias.gov.co',
+            'davidmesa.cps.tic@gmail.com',
+        ])) {
+            return true;
+        }
+
+        return $this->hasRole([
+            'Administrador',
+            'Super Administrador',
+            'Super Admin',
+            'SuperAdm',
+            'Admin',
+            'Coordinador General',
+            'Coordinador PVD',
+            'Coordinador Aula Digital',
+            'Coordinador',
+        ]);
+    }
+
+    public function getPuedeGestionarTaxonomiaAttribute(): bool
+    {
+        return $this->canManageTaxonomy();
     }
 
     public function getEsUsuarioCiudadanoAttribute(): bool
