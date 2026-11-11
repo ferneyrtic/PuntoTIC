@@ -38,7 +38,9 @@ class StatsService
             $filters = $params;
         }
 
-        $pointId = ! empty($filters['point_id']) ? (int) $filters['point_id'] : null;
+        $pointId = ! empty($filters['point_id'])
+            ? (int) $filters['point_id']
+            : (! empty($filters['id_punto']) ? (int) $filters['id_punto'] : null);
         $zona = ! empty($filters['zona']) && in_array($filters['zona'], ['Urbana', 'Rural']) ? $filters['zona'] : null;
 
         // Si se selecciona un punto específico, la zona queda implícita por ese punto
@@ -403,21 +405,35 @@ class StatsService
         $allPoints = $pointsQuery->get();
 
         // Visitas por punto en el período
-        $visitsByPoint = Visit::whereBetween('created_at', [$startDate, $endDate])
+        $visitsQuery = Visit::whereBetween('created_at', [$startDate, $endDate]);
+        if ($targetPointIds && count($targetPointIds) > 0) {
+            $visitsQuery->whereIn('id_punto', $targetPointIds);
+        }
+        $visitsByPoint = $visitsQuery
             ->select('id_punto', DB::raw('count(*) as total'))
             ->groupBy('id_punto')
             ->pluck('total', 'id_punto')
             ->toArray();
 
         // Impresiones por punto en el período
-        $printsByPoint = PrintRecord::whereBetween('created_at', [$startDate, $endDate])
+        $printsQuery = PrintRecord::whereBetween('created_at', [$startDate, $endDate]);
+        if ($targetPointIds && count($targetPointIds) > 0) {
+            $printsQuery->whereIn('id_punto', $targetPointIds);
+        }
+        $printsByPoint = $printsQuery
             ->select('id_punto', DB::raw('sum(numero_hojas) as total'))
             ->groupBy('id_punto')
             ->pluck('total', 'id_punto')
             ->toArray();
 
         // Préstamos por punto en el período
-        $loansByPoint = RoomLoan::whereBetween('fecha_prestamo', [$startDate->toDateString(), $endDate->toDateString()])
+        $loansQuery = RoomLoan::whereBetween('fecha_prestamo', [$startDate->toDateString(), $endDate->toDateString()]);
+        if ($targetPointIds && count($targetPointIds) > 0) {
+            $loansQuery->where(function ($sub) use ($targetPointIds) {
+                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+            });
+        }
+        $loansByPoint = $loansQuery
             ->select('id_punto', DB::raw('count(*) as total_prestamos, sum(num_asistentes) as total_asistentes'))
             ->groupBy('id_punto')
             ->get()
@@ -546,24 +562,20 @@ class StatsService
             ->count();
 
         // Obtenemos los ciudadanos únicos atendidos en este período para la analítica demográfica
-        $citizenIds = (clone $visitsQuery)
-            ->whereNotNull('id_form_pvd')
-            ->distinct('id_form_pvd')
-            ->pluck('id_form_pvd')
-            ->toArray();
+        $cols = Citizen::getTableColumns();
+        $pkColumn = in_array('id', $cols, true) ? 'id' : 'id_form_pvd';
 
-        $citizens = collect();
-        if (! empty($citizenIds)) {
-            $cols = Citizen::getTableColumns();
-            $pkColumn = in_array('id', $cols, true) ? 'id' : 'id_form_pvd';
-            foreach (array_chunk($citizenIds, 1000) as $chunk) {
-                $rows = DB::table('form_pvd')
-                    ->whereIn($pkColumn, $chunk)
-                    ->select(['genero', 'edad', 'fecha_nac', 'nivel_educativo', 'zona'])
-                    ->get();
-                $citizens = $citizens->concat($rows);
-            }
-        }
+        $citizensSubQuery = (clone $visitsQuery)
+            ->whereNotNull('id_form_pvd')
+            ->select('id_form_pvd')
+            ->distinct();
+
+        $citizens = DB::table('form_pvd')
+            ->joinSub($citizensSubQuery, 'unique_visitors', function ($join) use ($pkColumn) {
+                $join->on("form_pvd.{$pkColumn}", '=', 'unique_visitors.id_form_pvd');
+            })
+            ->select(['genero', 'edad', 'fecha_nac', 'nivel_educativo', 'zona'])
+            ->get();
 
         $totalCitizens = $citizens->count() ?: 1;
 

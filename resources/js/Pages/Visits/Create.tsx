@@ -461,40 +461,6 @@ export default function VisitCreate({
                     onSubmit={handleSubmit}
                     className="max-w-2xl mx-auto space-y-6 animate-fade-in-up"
                 >
-                    <div className="bg-gradient-to-br from-emerald-950 via-slate-900 to-teal-950 p-6 sm:p-7 rounded-3xl text-white shadow-soft-xl border border-emerald-500/30 relative overflow-hidden">
-                        <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-48 h-48 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none" />
-
-                        <div className="flex items-center gap-3.5 mb-2 relative z-10">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shadow-inner">
-                                <Laptop className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                    Corregimientos Acacías
-                                </span>
-                                <h2 className="text-xl font-black text-white tracking-tight">
-                                    Ingreso Rápido al Computador
-                                </h2>
-                            </div>
-                        </div>
-
-                        <p className="text-xs text-slate-300 leading-relaxed mt-2 relative z-10">
-                            En las aulas rurales de <strong>Dinamarca y Chichimene</strong> no se exige cédula ni dirección a los niños.
-                            Solo digite el <strong>nombre del estudiante</strong> para asignarle equipo.
-                        </p>
-
-                        {/* Sede asignada Aula Digital */}
-                        <div className="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
-                            <span className="text-xs font-bold text-slate-300">
-                                Sede del Aula Digital:
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/15 text-white border border-white/20">
-                                <Building2 className="w-3.5 h-3.5 text-emerald-300" />
-                                {currentPoint?.nombre_punto || 'Sede asignada'}
-                            </span>
-                        </div>
-                    </div>
-
                     {/* Input Card */}
                     <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-soft space-y-6">
                         <div>

@@ -21,6 +21,7 @@ import {
     Building2,
     User,
     BarChart3,
+    Calendar,
 } from 'lucide-react';
 
 interface Props {
@@ -62,6 +63,75 @@ export default function ExportsIndex({
     const [selectedCategory, setSelectedCategory] = useState(searchParams?.get('id_categoria') || '');
     const [dateFrom, setDateFrom] = useState(searchParams?.get('fecha_desde') || '');
     const [dateTo, setDateTo] = useState(searchParams?.get('fecha_hasta') || '');
+    const [activePreset, setActivePreset] = useState<string>(() => {
+        if (!searchParams?.get('fecha_desde') && !searchParams?.get('fecha_hasta')) return 'todo';
+        return 'custom';
+    });
+
+    const applyDatePreset = (presetKey: string) => {
+        setActivePreset(presetKey);
+        const now = new Date();
+        const toISO = (d: Date) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        if (presetKey === 'todo') {
+            setDateFrom('');
+            setDateTo('');
+            return;
+        }
+
+        if (presetKey === 'hoy') {
+            const todayStr = toISO(now);
+            setDateFrom(todayStr);
+            setDateTo(todayStr);
+            return;
+        }
+
+        if (presetKey === '7d') {
+            const past = new Date(now);
+            past.setDate(past.getDate() - 6);
+            setDateFrom(toISO(past));
+            setDateTo(toISO(now));
+            return;
+        }
+
+        if (presetKey === 'mes') {
+            const start = new Date(now.getFullYear(), now.getMonth(), 1);
+            const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            setDateFrom(toISO(start));
+            setDateTo(toISO(end));
+            return;
+        }
+
+        if (presetKey === 'mes_anterior') {
+            const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const end = new Date(now.getFullYear(), now.getMonth(), 0);
+            setDateFrom(toISO(start));
+            setDateTo(toISO(end));
+            return;
+        }
+
+        if (presetKey === 'trimestre') {
+            const q = Math.floor(now.getMonth() / 3);
+            const start = new Date(now.getFullYear(), q * 3, 1);
+            const end = new Date(now.getFullYear(), (q + 1) * 3, 0);
+            setDateFrom(toISO(start));
+            setDateTo(toISO(end));
+            return;
+        }
+
+        if (presetKey === 'ano') {
+            const start = new Date(now.getFullYear(), 0, 1);
+            const end = new Date(now.getFullYear(), 11, 31);
+            setDateFrom(toISO(start));
+            setDateTo(toISO(end));
+            return;
+        }
+    };
 
     // Parámetros específicos para Listado Oficial de Asistencia GTIC-F-16 V9
     const [eventoTema, setEventoTema] = useState('Usuarios registrados en la plataforma REGISTROS PVD');
@@ -307,13 +377,74 @@ export default function ExportsIndex({
                         </h2>
                     </div>
 
+                    {/* Accesos Rápidos de Período (Presets) */}
+                    <div className="mb-5 p-3.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <Calendar className="w-4 h-4 text-emerald-600" />
+                                Períodos Rápidos (1 clic):
+                            </span>
+                            {dateFrom || dateTo ? (
+                                <button
+                                    type="button"
+                                    onClick={() => applyDatePreset('todo')}
+                                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 underline self-start sm:self-auto"
+                                >
+                                    Restablecer a Todo el Histórico
+                                </button>
+                            ) : (
+                                <span className="text-[11px] font-semibold text-slate-400">
+                                    Generando con todo el histórico (sin restricción de fechas)
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {[
+                                { key: 'todo', label: 'Todo el Histórico' },
+                                { key: 'hoy', label: 'Hoy' },
+                                { key: '7d', label: 'Últimos 7 días' },
+                                { key: 'mes', label: 'Mes Actual' },
+                                { key: 'mes_anterior', label: 'Mes Anterior' },
+                                { key: 'trimestre', label: 'Trimestre Actual' },
+                                { key: 'ano', label: 'Año Actual' },
+                                { key: 'custom', label: 'Personalizado' },
+                            ].map((preset) => {
+                                const isActive = activePreset === preset.key;
+                                return (
+                                    <button
+                                        key={preset.key}
+                                        type="button"
+                                        onClick={() => {
+                                            if (preset.key === 'custom') {
+                                                setActivePreset('custom');
+                                            } else {
+                                                applyDatePreset(preset.key);
+                                            }
+                                        }}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                            isActive
+                                                ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/30'
+                                                : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/90'
+                                        }`}
+                                    >
+                                        {preset.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                         <div>
                             <label className="block text-xs font-bold text-slate-700 mb-1">Fecha Inicial</label>
                             <input
                                 type="date"
                                 value={dateFrom}
-                                onChange={(e) => setDateFrom(e.target.value)}
+                                onChange={(e) => {
+                                    setDateFrom(e.target.value);
+                                    setActivePreset('custom');
+                                }}
                                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green outline-none"
                             />
                         </div>
@@ -323,7 +454,10 @@ export default function ExportsIndex({
                             <input
                                 type="date"
                                 value={dateTo}
-                                onChange={(e) => setDateTo(e.target.value)}
+                                onChange={(e) => {
+                                    setDateTo(e.target.value);
+                                    setActivePreset('custom');
+                                }}
                                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green outline-none"
                             />
                         </div>
