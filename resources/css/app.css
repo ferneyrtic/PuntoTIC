@@ -139,6 +139,12 @@
     .stagger-child:nth-child(6) { animation-delay: 300ms; }
 }
 
+/* ==========================================================================
+   Estilos Oficiales de Impresión y Exportación a PDF de Gráficas y Métricas
+   ========================================================================== */
+.print-only {
+    display: none;
+}
 
 @media print {
     @page {
@@ -171,6 +177,11 @@
         font-size: 9.5pt !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+    }
+
+    /* Encabezado y elementos exclusivos para impresión */
+    .print-only {
+        display: block !important;
     }
 
     /* Evitar quiebres de página indeseados dentro de tarjetas y gráficas */
