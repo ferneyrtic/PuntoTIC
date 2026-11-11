@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CitizenController;
+use App\Http\Controllers\ChristmasTreeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DynamicFieldController;
 use App\Http\Controllers\ExportController;
@@ -56,6 +57,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/exportar/listado-asistencia', [ExportController::class, 'listadoAsistencia'])
         ->middleware('throttle:20,1')
         ->name('exportar.listado-asistencia');
+
+    // Juego Navideño: Decoración de Árboles para Gestores
+    Route::get('/api/navidad/arboles', [ChristmasTreeController::class, 'index'])->name('navidad.arboles.index');
+    Route::post('/api/navidad/arbol', [ChristmasTreeController::class, 'store'])->name('navidad.arboles.store');
+    Route::post('/api/navidad/arbol/{id}/reaccionar', [ChristmasTreeController::class, 'reaccionar'])->name('navidad.arboles.reaccionar');
 
     // Gestión de Categorías y Subcategorías (Exclusivo para Coordinación General y Administración)
     Route::middleware(['role:Administrador|Super Administrador|Super Admin|Coordinador General|Coordinador PVD|Coordinador Aula Digital|Coordinador'])->group(function () {

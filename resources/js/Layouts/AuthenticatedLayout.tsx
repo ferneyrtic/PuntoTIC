@@ -761,6 +761,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                 enabled={christmasMode}
                 isCitizen={Boolean(isCitizen)}
                 userName={user?.name}
+                userPoint={user?.point?.nombre_punto || (points && points.find((p: any) => p.id_punto === user?.id_punto)?.nombre_punto)}
             />
 
             {/* Global Command Palette */}

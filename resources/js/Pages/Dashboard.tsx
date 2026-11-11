@@ -51,6 +51,12 @@ const SEDE_COLORS = ['#059669', '#2563eb', '#d97706', '#0d9488', '#6366f1'];
 const GENERO_COLORS = ['#ec4899', '#3b82f6', '#8b5cf6'];
 const EDAD_COLORS = ['#10b981', '#06b6d4', '#3b82f6', '#f59e0b'];
 
+const renderAgeCustomTickDashboard = ({ x, y, payload }: any) => (
+    <text x={x} y={y + 12} textAnchor="middle" fill="#64748B" fontSize={10} fontWeight={600}>
+        {payload.value}
+    </text>
+);
+
 interface Props {
     stats: {
         scope: {
@@ -1217,7 +1223,7 @@ export default function Dashboard({
                                         margin={{ top: 5, right: 18, left: -16, bottom: 5 }}
                                     >
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.5} />
-                                        <XAxis dataKey="name" interval={0} stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} />
+                                        <XAxis dataKey="name" interval={0} tick={renderAgeCustomTickDashboard} tickLine={false} axisLine={false} />
                                         <YAxis stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
                                         <Tooltip formatter={(value: any) => [`${value} beneficiarios`, 'Cantidad']} />
                                         <Bar dataKey="value" radius={[5, 5, 0, 0]}>

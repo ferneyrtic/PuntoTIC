@@ -34,6 +34,12 @@ const SEDE_COLORS = ['#059669', '#2563eb', '#d97706', '#0d9488', '#6366f1'];
 const GENERO_COLORS = ['#ec4899', '#3b82f6', '#8b5cf6'];
 const EDAD_COLORS = ['#10b981', '#06b6d4', '#3b82f6', '#f59e0b'];
 
+const renderAgeCustomTick = ({ x, y, payload }: any) => (
+    <text x={x} y={y + 14} textAnchor="middle" fill="#334155" fontSize={10} fontWeight={600}>
+        {payload.value}
+    </text>
+);
+
 export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Props) {
     const reportRef = useRef<HTMLDivElement>(null);
     const [mounted, setMounted] = useState(false);
@@ -573,7 +579,7 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                     margin={{ top: 8, right: 15, left: -15, bottom: 5 }}
                                 >
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                    <XAxis dataKey="name" interval={0} fontSize={9.5} stroke="#334155" tickLine={false} dy={4} />
+                                    <XAxis dataKey="name" interval={0} tick={renderAgeCustomTick} tickLine={false} />
                                     <YAxis fontSize={9.5} stroke="#64748B" allowDecimals={false} />
                                     <Tooltip formatter={(val: any) => [`${val} ciudadanos`, 'Población']} />
                                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
