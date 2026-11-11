@@ -6,7 +6,7 @@ use App\Models\DynamicField;
 use App\Models\Visit;
 use Illuminate\Support\Enumerable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -17,8 +17,74 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class VisitasExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithEvents
+class VisitasExport implements FromCollection, WithHeadings, WithMapping, WithColumnWidths, WithStyles, WithEvents
 {
+    public const DEFAULT_COLUMNS = [
+        'documento', 'nombres', 'apellidos', 'edad', 'genero',
+        'telefono', 'correo', 'barrio', 'zona', 'estrato',
+        'nivel_educativo', 'grupo_etnico', 't_aseguramiento',
+        'punto', 'categoria', 'subcategoria', 'descripcion',
+        'duracion', 'gestor', 'fecha_visita',
+    ];
+
+    public const HEADER_MAP = [
+        'documento' => 'N° Documento',
+        'tipo_doc' => 'Tipo Documento',
+        'nombres' => 'Nombres',
+        'apellidos' => 'Apellidos',
+        'nombre_completo' => 'Nombre Completo',
+        'edad' => 'Edad',
+        'genero' => 'Género',
+        'telefono' => 'Teléfono',
+        'correo' => 'Correo Electrónico',
+        'direccion' => 'Dirección',
+        'barrio' => 'Barrio / Vereda',
+        'zona' => 'Zona',
+        'estrato' => 'Estrato',
+        'nivel_educativo' => 'Nivel Educativo',
+        'ocupacion' => 'Ocupación',
+        'grupo_etnico' => 'Grupo Étnico',
+        'g_poblacional' => 'Grupo Poblacional',
+        't_aseguramiento' => 'Tipo Aseguramiento',
+        'punto' => 'Punto Vive Digital',
+        'categoria' => 'Categoría Servicio',
+        'subcategoria' => 'Subcategoría',
+        'descripcion' => 'Descripción Visita',
+        'duracion' => 'Duración (Minutos)',
+        'gestor' => 'Gestor Responsable',
+        'fecha_visita' => 'Fecha y Hora Visita',
+    ];
+
+    public const COLUMN_WIDTHS = [
+        'documento' => 18,
+        'tipo_doc' => 16,
+        'nombres' => 24,
+        'apellidos' => 24,
+        'nombre_completo' => 32,
+        'edad' => 10,
+        'genero' => 14,
+        'telefono' => 16,
+        'correo' => 28,
+        'direccion' => 30,
+        'barrio' => 26,
+        'zona' => 14,
+        'estrato' => 10,
+        'nivel_educativo' => 22,
+        'ocupacion' => 22,
+        'grupo_etnico' => 20,
+        'g_poblacional' => 24,
+        't_aseguramiento' => 22,
+        'punto' => 28,
+        'categoria' => 30,
+        'subcategoria' => 28,
+        'descripcion' => 42,
+        'duracion' => 18,
+        'gestor' => 26,
+        'fecha_visita' => 22,
+    ];
+
+    public const NUMERIC_COLUMNS = ['edad', 'estrato', 'duracion'];
+
     protected array $selectedColumns;
     protected $dynamicFields;
 
@@ -26,13 +92,9 @@ class VisitasExport implements FromCollection, WithHeadings, WithMapping, Should
         protected array $filters = [],
         ?array $selectedColumns = null
     ) {
-        $this->selectedColumns = $selectedColumns ?? [
-            'documento', 'nombres', 'apellidos', 'edad', 'genero',
-            'telefono', 'correo', 'barrio', 'zona', 'estrato',
-            'nivel_educativo', 'grupo_etnico', 't_aseguramiento',
-            'punto', 'categoria', 'subcategoria', 'descripcion',
-            'duracion', 'gestor', 'fecha_visita',
-        ];
+        $this->selectedColumns = ! empty($selectedColumns)
+            ? array_values($selectedColumns)
+            : self::DEFAULT_COLUMNS;
 
         $this->dynamicFields = DynamicField::where('modulo', 'visitas')->where('activo', true)->get();
     }
@@ -58,36 +120,8 @@ class VisitasExport implements FromCollection, WithHeadings, WithMapping, Should
     public function headings(): array
     {
         $headers = [];
-        $map = [
-            'documento' => 'N° Documento',
-            'tipo_doc' => 'Tipo Documento',
-            'nombres' => 'Nombres',
-            'apellidos' => 'Apellidos',
-            'nombre_completo' => 'Nombre Completo',
-            'edad' => 'Edad',
-            'genero' => 'Género',
-            'telefono' => 'Teléfono',
-            'correo' => 'Correo Electrónico',
-            'direccion' => 'Dirección',
-            'barrio' => 'Barrio / Vereda',
-            'zona' => 'Zona',
-            'estrato' => 'Estrato',
-            'nivel_educativo' => 'Nivel Educativo',
-            'ocupacion' => 'Ocupación',
-            'grupo_etnico' => 'Grupo Étnico',
-            'g_poblacional' => 'Grupo Poblacional',
-            't_aseguramiento' => 'Tipo Aseguramiento',
-            'punto' => 'Punto Vive Digital',
-            'categoria' => 'Categoría Servicio',
-            'subcategoria' => 'Subcategoría',
-            'descripcion' => 'Descripción Visita',
-            'duracion' => 'Duración (Minutos)',
-            'gestor' => 'Gestor Responsable',
-            'fecha_visita' => 'Fecha y Hora Visita',
-        ];
-
         foreach ($this->selectedColumns as $col) {
-            $headers[] = $map[$col] ?? ucfirst($col);
+            $headers[] = self::HEADER_MAP[$col] ?? ucfirst($col);
         }
 
         foreach ($this->dynamicFields as $df) {
@@ -95,6 +129,34 @@ class VisitasExport implements FromCollection, WithHeadings, WithMapping, Should
         }
 
         return $headers;
+    }
+
+    public function columnWidths(): array
+    {
+        $widths = [];
+        $index = 1;
+        foreach ($this->selectedColumns as $col) {
+            $widths[$this->columnLetter($index)] = self::COLUMN_WIDTHS[$col] ?? 20;
+            $index++;
+        }
+        foreach ($this->dynamicFields as $df) {
+            $widths[$this->columnLetter($index)] = 24;
+            $index++;
+        }
+
+        return $widths;
+    }
+
+    private function columnLetter(int $oneBasedIndex): string
+    {
+        $letter = '';
+        while ($oneBasedIndex > 0) {
+            $mod = ($oneBasedIndex - 1) % 26;
+            $letter = chr(65 + $mod) . $letter;
+            $oneBasedIndex = intdiv($oneBasedIndex - $mod - 1, 26);
+        }
+
+        return $letter;
     }
 
     public function map($visit): array
@@ -161,11 +223,10 @@ class VisitasExport implements FromCollection, WithHeadings, WithMapping, Should
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 $sheet->freezePane('A2'); // Inmovilizar fila de encabezados
-                $highestRow = $sheet->getHighestRow();
                 $highestColumn = $sheet->getHighestColumn();
 
-                // Bordes elegantes para toda la tabla
-                $sheet->getStyle("A1:{$highestColumn}{$highestRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFE5E7EB');
+                // Aplicar bordes solo al encabezado (evita iterar millones de celdas en reportes masivos)
+                $sheet->getStyle("A1:{$highestColumn}1")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFE5E7EB');
 
                 // Fila de encabezado con altura adecuada
                 $sheet->getRowDimension(1)->setRowHeight(28);

@@ -5,7 +5,7 @@ namespace App\Exports;
 use App\Models\Citizen;
 use Illuminate\Support\Enumerable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -16,8 +16,39 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class CiudadanosExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithEvents
+class CiudadanosExport implements FromCollection, WithHeadings, WithMapping, WithColumnWidths, WithStyles, WithEvents
 {
+    public const HEADINGS = [
+        'ID',
+        'Tipo Documento',
+        'N° Documento',
+        'Nombres',
+        'Apellidos',
+        'Fecha Nacimiento',
+        'Edad',
+        'Género',
+        'Correo Electrónico',
+        'Teléfono',
+        'Dirección',
+        'Barrio / Vereda',
+        'Zona',
+        'Unidad Poblacional / Comuna',
+        'Estrato',
+        'Nivel Educativo',
+        'Ocupación',
+        'Grupo Étnico',
+        'Grupo Poblacional',
+        'Tipo Aseguramiento',
+        'Punto Registro',
+        'Total Visitas',
+        'Fecha Registro',
+    ];
+
+    public const COLUMN_WIDTHS = [
+        12, 16, 18, 24, 24, 18, 10, 14, 28, 16, 30, 26,
+        14, 26, 10, 22, 22, 20, 24, 22, 28, 14, 22,
+    ];
+
     public function __construct(protected array $filters = []) {}
 
     public function collection(): Enumerable
@@ -33,30 +64,16 @@ class CiudadanosExport implements FromCollection, WithHeadings, WithMapping, Sho
 
     public function headings(): array
     {
+        return self::HEADINGS;
+    }
+
+    public function columnWidths(): array
+    {
         return [
-            'ID',
-            'Tipo Documento',
-            'N° Documento',
-            'Nombres',
-            'Apellidos',
-            'Fecha Nacimiento',
-            'Edad',
-            'Género',
-            'Correo Electrónico',
-            'Teléfono',
-            'Dirección',
-            'Barrio / Vereda',
-            'Zona',
-            'Unidad Poblacional / Comuna',
-            'Estrato',
-            'Nivel Educativo',
-            'Ocupación',
-            'Grupo Étnico',
-            'Grupo Poblacional',
-            'Tipo Aseguramiento',
-            'Punto Registro',
-            'Total Visitas',
-            'Fecha Registro',
+            'A' => 12, 'B' => 16, 'C' => 18, 'D' => 24, 'E' => 24, 'F' => 18,
+            'G' => 10, 'H' => 14, 'I' => 28, 'J' => 16, 'K' => 30, 'L' => 26,
+            'M' => 14, 'N' => 26, 'O' => 10, 'P' => 22, 'Q' => 22, 'R' => 20,
+            'S' => 24, 'T' => 22, 'U' => 28, 'V' => 14, 'W' => 22,
         ];
     }
 
@@ -106,9 +123,8 @@ class CiudadanosExport implements FromCollection, WithHeadings, WithMapping, Sho
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 $sheet->freezePane('A2');
-                $highestRow = $sheet->getHighestRow();
                 $highestColumn = $sheet->getHighestColumn();
-                $sheet->getStyle("A1:{$highestColumn}{$highestRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFE5E7EB');
+                $sheet->getStyle("A1:{$highestColumn}1")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFE5E7EB');
                 $sheet->getRowDimension(1)->setRowHeight(28);
             },
         ];

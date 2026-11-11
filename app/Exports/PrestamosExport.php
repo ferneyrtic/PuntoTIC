@@ -5,7 +5,7 @@ namespace App\Exports;
 use App\Models\RoomLoan;
 use Illuminate\Support\Enumerable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -16,7 +16,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class PrestamosExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithEvents
+class PrestamosExport implements FromCollection, WithHeadings, WithMapping, WithColumnWidths, WithStyles, WithEvents
 {
     public function __construct(protected array $filters = []) {}
 
@@ -27,6 +27,15 @@ class PrestamosExport implements FromCollection, WithHeadings, WithMapping, Shou
             ->when($this->filters['id_punto'] ?? null, fn($q, $p) => $q->where('id_punto', $p))
             ->latest('fecha_prestamo')
             ->get();
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 14, 'B' => 30, 'C' => 18, 'D' => 16, 'E' => 28,
+            'F' => 28, 'G' => 14, 'H' => 16, 'I' => 14, 'J' => 14,
+            'K' => 16, 'L' => 38, 'M' => 26, 'N' => 22,
+        ];
     }
 
     public function headings(): array
@@ -86,9 +95,8 @@ class PrestamosExport implements FromCollection, WithHeadings, WithMapping, Shou
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 $sheet->freezePane('A2');
-                $highestRow = $sheet->getHighestRow();
                 $highestColumn = $sheet->getHighestColumn();
-                $sheet->getStyle("A1:{$highestColumn}{$highestRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFE5E7EB');
+                $sheet->getStyle("A1:{$highestColumn}1")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFE5E7EB');
                 $sheet->getRowDimension(1)->setRowHeight(28);
             },
         ];

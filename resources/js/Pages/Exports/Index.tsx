@@ -118,7 +118,7 @@ export default function ExportsIndex({
 
     const handleDownload = () => {
         const params = new URLSearchParams();
-        const activePoint = !isAdmin && userPointId ? String(userPointId) : selectedPoint;
+        const activePoint = !canSelectAnyPoint && userPointId ? String(userPointId) : selectedPoint;
 
         if (reportType === 'graficas_pdf') {
             params.append('print', 'true');
