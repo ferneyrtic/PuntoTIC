@@ -124,12 +124,12 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
 
     const isAdmin = Boolean(user?.is_admin || auth?.is_admin || isSuperAdmin);
 
-    const isCoordinatorOrAdmin = Boolean(
+    const canManageTaxonomy = Boolean(
+        user?.puede_gestionar_taxonomia ||
         isAdmin ||
-        user?.tiene_alcance_global ||
         user?.email === 'coordinador.general@acacias.gov.co' ||
         userRoles.some((r: string) =>
-            ['Coordinador PVD', 'Coordinador General', 'Coordinador', 'Coordinador Aula Digital', 'Gestor Global'].includes(r)
+            ['Coordinador General', 'Coordinador PVD', 'Coordinador Aula Digital', 'Coordinador'].includes(r)
         )
     );
 
@@ -271,7 +271,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                                   icon: FileSpreadsheet,
                                   active: currentUrl.startsWith('/exportar'),
                               },
-                              ...(isCoordinatorOrAdmin
+                              ...(canManageTaxonomy
                                   ? [
                                         {
                                             name: 'Categorías y Servicios',
@@ -306,7 +306,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                           ],
                       },
                   ],
-        [isCitizen, isAdmin, isCoordinatorOrAdmin, currentUrl, pendingHref]
+        [isCitizen, isAdmin, canManageTaxonomy, currentUrl, pendingHref]
     );
 
     const currentPointName =

@@ -74,7 +74,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('exportar.listado-asistencia');
 
     // Gestión de Categorías y Subcategorías (Exclusivo para Coordinación General y Administración)
-    Route::middleware(['role:Administrador|Coordinador General|Coordinador PVD'])->group(function () {
+    Route::middleware(['role:Administrador|Super Administrador|Super Admin|Coordinador General|Coordinador PVD|Coordinador Aula Digital|Coordinador'])->group(function () {
         Route::get('categorias', [CategoryController::class, 'index'])->name('categorias.index');
         Route::post('categorias', [CategoryController::class, 'store'])->name('categorias.store');
         Route::put('categorias/{categoria}', [CategoryController::class, 'update'])->name('categorias.update');
