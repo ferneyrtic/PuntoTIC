@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 
 class Visit extends Model
 {
     use HasFactory;
 
     protected $table = 'visitas';
+
     protected $primaryKey = 'id_visitas';
 
     protected $fillable = [
@@ -36,16 +38,43 @@ class Visit extends Model
 
     protected $appends = ['id_visita', 'servicio_texto'];
 
+    public static function getTableColumns(): array
+    {
+        try {
+            return Schema::getColumnListing('visitas');
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    public function getKeyName()
+    {
+        $cols = static::getTableColumns();
+
+        return in_array('id_visitas', $cols, true) ? 'id_visitas' : 'id_visita';
+    }
+
     protected static function booted(): void
     {
         static::saving(function ($visit) {
-            if (empty($visit->servicio)) {
+            $cols = static::getTableColumns();
+            if (empty($cols)) {
+                return;
+            }
+
+            if (in_array('servicio', $cols, true) && empty($visit->servicio)) {
                 $sub = $visit->subcategoria?->nombre;
                 $cat = $visit->categoria?->nombre;
-                $visit->servicio = $sub ?: ($cat ?: ($visit->servicio_texto ?: 'Atención PuntoTIC'));
+                $visit->attributes['servicio'] = $sub ?: ($cat ?: ($visit->servicio_texto ?: 'Atención PuntoTIC'));
             }
-            if (empty($visit->servicio_texto)) {
-                $visit->servicio_texto = $visit->servicio;
+            if (in_array('servicio_texto', $cols, true) && empty($visit->servicio_texto)) {
+                $visit->attributes['servicio_texto'] = $visit->attributes['servicio'] ?? 'Atención PuntoTIC';
+            }
+
+            foreach ($visit->attributes as $key => $val) {
+                if (! in_array($key, $cols, true)) {
+                    unset($visit->attributes[$key]);
+                }
             }
         });
     }
@@ -78,7 +107,7 @@ class Visit extends Model
 
     public function ciudadano(): BelongsTo
     {
-        return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id');
+        return $this->belongsTo(Citizen::class, 'id_form_pvd');
     }
 
     public function punto(): BelongsTo
@@ -116,6 +145,7 @@ class Visit extends Model
         if ($to) {
             $query->whereDate('created_at', '<=', $to);
         }
+
         return $query;
     }
 

@@ -134,7 +134,8 @@ class StatsService
      */
     protected function resolveDateRange(array $filters): array
     {
-        $periodo = $filters['periodo'] ?? 'mes';
+        $hasCustomDates = ! empty($filters['fecha_desde']) || ! empty($filters['fecha_hasta']);
+        $periodo = $hasCustomDates ? 'custom' : ($filters['periodo'] ?? 'mes');
         $now = Carbon::now();
 
         switch ($periodo) {
@@ -319,8 +320,9 @@ class StatsService
             return $series;
         }
 
-        // Si es 'ano' o 'trimestre', agrupamos por mes
-        if ($periodoKey === 'ano' || $periodoKey === 'trimestre') {
+        // Si es 'ano' o 'trimestre', o 'custom' con más de 45 días, agrupamos por mes
+        $diffDays = $startDate->diffInDays($endDate);
+        if ($periodoKey === 'ano' || $periodoKey === 'trimestre' || ($periodoKey === 'custom' && $diffDays > 45)) {
             $rawMonthly = (clone $query)
                 ->selectRaw('substr(created_at, 1, 7) as mes, count(*) as total')
                 ->groupBy(DB::raw('substr(created_at, 1, 7)'))
@@ -352,10 +354,6 @@ class StatsService
 
         $series = [];
         $cursor = $startDate->copy()->startOfDay();
-        // Limitamos a máximo 31 días en el gráfico diario para evitar saturación
-        if ($cursor->diffInDays($endDate) > 31) {
-            $cursor = $endDate->copy()->subDays(30)->startOfDay();
-        }
 
         while ($cursor->lte($endDate)) {
             $dateStr = $cursor->toDateString();

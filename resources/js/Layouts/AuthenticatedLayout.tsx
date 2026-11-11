@@ -1,4 +1,4 @@
-import React, { useState, useEffect, PropsWithChildren, ReactNode } from 'react';
+import React, { useState, useEffect, useRef, useMemo, PropsWithChildren, ReactNode } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { asset } from '@/utils/asset';
 import {
@@ -42,13 +42,52 @@ interface Props {
 export default function AuthenticatedLayout({ header, children }: PropsWithChildren<Props>) {
     const { auth, flash, points, selectedPointId } = usePage<any>().props;
     const [pageLoading, setPageLoading] = useState(false);
+    const [pendingHref, setPendingHref] = useState<string | null>(null);
+    const navRef = useRef<HTMLElement>(null);
 
-    // Track Inertia navigation for subtle content fade
+    // Track Inertia navigation for subtle content fade and instant active state feedback
     useEffect(() => {
-        const start = router.on('start', () => setPageLoading(true));
-        const finish = router.on('finish', () => setTimeout(() => setPageLoading(false), 200));
-        return () => { start(); finish(); };
+        const start = router.on('start', (e: any) => {
+            setPageLoading(true);
+            const targetUrl = e.detail?.visit?.url?.pathname;
+            if (targetUrl) {
+                setPendingHref(targetUrl);
+            }
+        });
+        const finish = router.on('finish', () => {
+            setPendingHref(null);
+            setTimeout(() => setPageLoading(false), 150);
+        });
+        return () => {
+            start();
+            finish();
+        };
     }, []);
+
+    // Save and restore sidebar scroll position across Inertia visits so options NEVER get cut off
+    useEffect(() => {
+        const savedScroll = sessionStorage.getItem('pvd_sidebar_scroll');
+        if (savedScroll && navRef.current) {
+            navRef.current.scrollTop = parseInt(savedScroll, 10);
+        }
+
+        const handleScroll = () => {
+            if (navRef.current) {
+                sessionStorage.setItem('pvd_sidebar_scroll', String(navRef.current.scrollTop));
+            }
+        };
+
+        const navEl = navRef.current;
+        if (navEl) {
+            navEl.addEventListener('scroll', handleScroll, { passive: true });
+        }
+        return () => {
+            if (navEl) {
+                navEl.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, []);
+
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dismissFlash, setDismissFlash] = useState(false);
     const [quickSearch, setQuickSearch] = useState('');
@@ -73,19 +112,26 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
         });
     };
     const user = auth?.user;
-    const isAdmin = auth?.is_admin ?? false;
-    const isSuperAdmin =
-        user?.roles_nombres?.includes('Administrador') ||
-        user?.email === 'admin@acacias.gov.co' ||
-        user?.email === 'davidmesa.cps.tic@gmail.com';
+    const userRoles: string[] = auth?.roles || user?.roles_nombres || [];
 
-    const isCoordinatorOrAdmin =
+    const isSuperAdmin = Boolean(
+        user?.email === 'admin@acacias.gov.co' ||
+        user?.email === 'davidmesa.cps.tic@gmail.com' ||
+        userRoles.some((r: string) =>
+            ['Administrador', 'Super Administrador', 'Super Admin', 'SuperAdm', 'Admin'].includes(r)
+        )
+    );
+
+    const isAdmin = Boolean(user?.is_admin || auth?.is_admin || isSuperAdmin);
+
+    const isCoordinatorOrAdmin = Boolean(
         isAdmin ||
-        isSuperAdmin ||
         user?.tiene_alcance_global ||
-        user?.roles_nombres?.includes('Coordinador General') ||
-        user?.roles_nombres?.includes('Coordinador PVD') ||
-        user?.email === 'coordinador.general@acacias.gov.co';
+        user?.email === 'coordinador.general@acacias.gov.co' ||
+        userRoles.some((r: string) =>
+            ['Coordinador PVD', 'Coordinador General', 'Coordinador', 'Coordinador Aula Digital', 'Gestor Global'].includes(r)
+        )
+    );
 
     const currentUrl = window.location.pathname;
 
@@ -141,122 +187,127 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
         year: 'numeric',
     }).format(new Date());
 
-    const isCitizen =
+    const isCitizen = Boolean(
         user?.es_usuario_ciudadano ||
-        user?.roles_nombres?.includes('Usuario') ||
-        user?.roles_nombres?.includes('Ciudadano');
+        userRoles.includes('Usuario') ||
+        userRoles.includes('Ciudadano')
+    );
 
-    const navSections = isCitizen
-        ? [
-              {
-                  title: 'Portal Ciudadano',
-                  items: [
+    const navSections = useMemo(
+        () =>
+            isCitizen
+                ? [
                       {
-                          name: 'Portal de Bienvenida',
-                          href: route('portal.index'),
-                          icon: Home,
-                          active: currentUrl === '/portal',
+                          title: 'Portal Ciudadano',
+                          items: [
+                              {
+                                  name: 'Portal de Bienvenida',
+                                  href: route('portal.index'),
+                                  icon: Home,
+                                  active: currentUrl === '/portal',
+                              },
+                              {
+                                  name: 'Mi Perfil Ciudadano',
+                                  href: route('profile.edit'),
+                                  icon: User,
+                                  active: currentUrl === '/profile',
+                              },
+                          ],
+                      },
+                  ]
+                : [
+                      {
+                          title: 'Operación Principal',
+                          items: [
+                              {
+                                  name: 'Panel de Control',
+                                  href: route('dashboard'),
+                                  icon: LayoutDashboard,
+                                  active: currentUrl === '/dashboard' || currentUrl === '/',
+                              },
+                              {
+                                  name: 'Registrar Visita',
+                                  href: route('visitas.create'),
+                                  icon: UserPlus,
+                                  active: currentUrl === '/visitas/create',
+                              },
+                              {
+                                  name: 'Historial de Visitas',
+                                  href: route('visitas.index'),
+                                  icon: CalendarCheck,
+                                  active: currentUrl === '/visitas' || (currentUrl.startsWith('/visitas') && currentUrl !== '/visitas/create'),
+                              },
+                              {
+                                  name: 'Directorio Ciudadano',
+                                  href: route('ciudadanos.index'),
+                                  icon: Users,
+                                  active: currentUrl.startsWith('/ciudadanos'),
+                              },
+                          ],
                       },
                       {
-                          name: 'Mi Perfil Ciudadano',
-                          href: route('profile.edit'),
-                          icon: User,
-                          active: currentUrl === '/profile',
+                          title: 'Servicios en Sala',
+                          items: [
+                              {
+                                  name: 'Préstamo de Salas',
+                                  href: route('prestamos.index'),
+                                  icon: DoorOpen,
+                                  active: currentUrl.startsWith('/prestamos'),
+                              },
+                              {
+                                  name: 'Impresiones y Copias',
+                                  href: route('impresiones.index'),
+                                  icon: Printer,
+                                  active: currentUrl.startsWith('/impresiones'),
+                              },
+                          ],
+                      },
+                      {
+                          title: 'Administración y Datos',
+                          items: [
+                              {
+                                  name: 'Exportar Reportes',
+                                  href: route('exportar.index'),
+                                  icon: FileSpreadsheet,
+                                  active: currentUrl.startsWith('/exportar'),
+                              },
+                              ...(isCoordinatorOrAdmin
+                                  ? [
+                                        {
+                                            name: 'Categorías y Servicios',
+                                            href: route('categorias.index'),
+                                            icon: Layers,
+                                            active: currentUrl.startsWith('/categorias'),
+                                        },
+                                        {
+                                            name: 'Campos Dinámicos',
+                                            href: route('campos-dinamicos.index'),
+                                            icon: SlidersHorizontal,
+                                            active: currentUrl.startsWith('/campos-dinamicos'),
+                                        },
+                                    ]
+                                  : []),
+                              ...(isAdmin
+                                  ? [
+                                        {
+                                            name: 'Registro de Actividad',
+                                            href: route('auditoria.index'),
+                                            icon: History,
+                                            active: currentUrl.startsWith('/auditoria'),
+                                        },
+                                        {
+                                            name: 'Configuración del Sistema',
+                                            href: route('configuracion.index'),
+                                            icon: Settings,
+                                            active: currentUrl.startsWith('/configuracion'),
+                                        },
+                                    ]
+                                  : []),
+                          ],
                       },
                   ],
-              },
-          ]
-        : [
-              {
-                  title: 'Operación Principal',
-                  items: [
-                      {
-                          name: 'Panel de Control',
-                          href: route('dashboard'),
-                          icon: LayoutDashboard,
-                          active: currentUrl === '/dashboard' || currentUrl === '/',
-                      },
-                      {
-                          name: 'Registrar Visita',
-                          href: route('visitas.create'),
-                          icon: UserPlus,
-                          active: currentUrl === '/visitas/create',
-                      },
-                      {
-                          name: 'Historial de Visitas',
-                          href: route('visitas.index'),
-                          icon: CalendarCheck,
-                          active: currentUrl === '/visitas' || (currentUrl.startsWith('/visitas') && currentUrl !== '/visitas/create'),
-                      },
-                      {
-                          name: 'Directorio Ciudadano',
-                          href: route('ciudadanos.index'),
-                          icon: Users,
-                          active: currentUrl.startsWith('/ciudadanos'),
-                      },
-                  ],
-              },
-              {
-                  title: 'Servicios en Sala',
-                  items: [
-                      {
-                          name: 'Préstamo de Salas',
-                          href: route('prestamos.index'),
-                          icon: DoorOpen,
-                          active: currentUrl.startsWith('/prestamos'),
-                      },
-                      {
-                          name: 'Impresiones y Copias',
-                          href: route('impresiones.index'),
-                          icon: Printer,
-                          active: currentUrl.startsWith('/impresiones'),
-                      },
-                  ],
-              },
-              {
-                  title: 'Administración y Datos',
-                  items: [
-                      {
-                          name: 'Exportar Reportes',
-                          href: route('exportar.index'),
-                          icon: FileSpreadsheet,
-                          active: currentUrl.startsWith('/exportar'),
-                      },
-                      ...(isCoordinatorOrAdmin
-                          ? [
-                                {
-                                    name: 'Categorías y Servicios',
-                                    href: route('categorias.index'),
-                                    icon: Layers,
-                                    active: currentUrl.startsWith('/categorias'),
-                                },
-                                {
-                                    name: 'Campos Dinámicos',
-                                    href: route('campos-dinamicos.index'),
-                                    icon: SlidersHorizontal,
-                                    active: currentUrl.startsWith('/campos-dinamicos'),
-                                },
-                                {
-                                    name: 'Registro de Actividad',
-                                    href: route('auditoria.index'),
-                                    icon: History,
-                                    active: currentUrl.startsWith('/auditoria'),
-                                },
-                            ]
-                          : []),
-                      ...(isSuperAdmin
-                          ? [
-                                {
-                                    name: 'Configuración y Auditoría',
-                                    href: route('configuracion.index'),
-                                    icon: Settings,
-                                    active: currentUrl.startsWith('/configuracion'),
-                                },
-                            ]
-                          : []),
-                  ],
-              },
-          ];
+        [isCitizen, isAdmin, isCoordinatorOrAdmin, currentUrl, pendingHref]
+    );
 
     const currentPointName =
         points?.find((p: any) => p.id_punto === (selectedPointId || user?.id_punto))?.nombre_punto ||
@@ -335,31 +386,31 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
                 }`}
             >
-                {/* Brand Header - High Prominence Institutional Logo */}
-                <div className="p-4 border-b border-slate-800/60 bg-slate-950/40 shrink-0">
-                    {/* Official Banner Card: Full-width container giving maximum visibility to the logo */}
-                    <div className="bg-white rounded-2xl p-2.5 shadow-md border border-white/10 flex items-center justify-center mb-3 group transition-all duration-200 hover:shadow-lg">
+                {/* Brand Header - Proportional Institutional Logo */}
+                <div className="px-4 py-3 border-b border-slate-800/60 bg-slate-950/40 shrink-0">
+                    {/* Official Banner Card */}
+                    <div className="bg-white rounded-xl py-1.5 px-3 shadow-xs border border-white/10 flex items-center justify-center mb-2.5 group transition-all duration-300 hover:shadow-md">
                         <img
                             src={asset('images/logo_pvd.png')}
                             alt="Puntos Vive Digital para la gente"
-                            className="h-20 sm:h-24 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                            className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                         />
                     </div>
 
-                    <div className="flex items-center justify-between px-1">
-                        <div>
-                            <div className="text-base font-black text-white tracking-tight flex items-center gap-1.5 leading-tight">
+                    <div className="flex items-center justify-between px-0.5">
+                        <div className="min-w-0">
+                            <div className="text-sm font-black text-white tracking-tight flex items-center gap-1.5 leading-tight">
                                 <span>PuntoTIC</span>
                                 {christmasMode && (
-                                    <span className="text-xs" title="¡Feliz Navidad en Acacías!">
+                                    <span className="text-xs animate-bounce" title="¡Feliz Navidad en Acacías!">
                                         🎅
                                     </span>
                                 )}
-                                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
+                                <span className="text-[9px] font-extrabold text-amber-400 uppercase tracking-wider bg-amber-400/10 px-1.5 py-0.5 rounded-md border border-amber-400/20">
                                     Acacías
                                 </span>
                             </div>
-                            <div className="text-[11px] text-slate-400 font-medium truncate mt-1 flex items-center gap-1">
+                            <div className="text-[10px] text-slate-400 font-medium truncate mt-0.5 flex items-center gap-1">
                                 {christmasMode && <span className="text-emerald-400">🎄</span>}
                                 <span>Red de Puntos Vive Digital</span>
                             </div>
@@ -376,33 +427,65 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     </div>
                 </div>
 
-                {/* Navigation Sections */}
-                <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+                {/* Navigation Sections with Scroll Preservation and Smooth Scrollbar */}
+                <nav
+                    ref={navRef}
+                    className="flex-1 px-3 py-2.5 space-y-2.5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700/60 scrollbar-track-transparent hover:scrollbar-thumb-slate-600 transition-colors"
+                >
                     {navSections.map((section) => (
-                        <div key={section.title} className="space-y-1">
-                            <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <div key={section.title} className="space-y-0.5">
+                            <div className="px-3 pb-1 text-[9px] font-extrabold uppercase tracking-wider text-slate-400/90 select-none">
                                 {section.title}
                             </div>
                             {section.items.map((item) => {
                                 const Icon = item.icon;
+                                const isTargetPending = pendingHref
+                                    ? item.href.endsWith(pendingHref) ||
+                                      (pendingHref !== '/' && new URL(item.href, window.location.origin).pathname === pendingHref)
+                                    : false;
+                                const isActive = pendingHref ? isTargetPending : item.active;
+
                                 return (
                                     <Link
                                         key={item.name}
                                         href={item.href}
-                                        onClick={() => setSidebarOpen(false)}
-                                        className={`btn-tactile group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
-                                            item.active
-                                                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/30'
-                                                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/70'
+                                        data-active={isActive ? 'true' : 'false'}
+                                        onClick={() => {
+                                            try {
+                                                setPendingHref(new URL(item.href, window.location.origin).pathname);
+                                            } catch {
+                                                setPendingHref(item.href);
+                                            }
+                                            setSidebarOpen(false);
+                                        }}
+                                        className={`group relative flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ease-out select-none active:scale-[0.98] ${
+                                            isActive
+                                                ? 'bg-white text-slate-950 font-black shadow-lg shadow-white/20 ring-1 ring-white/60 translate-x-1'
+                                                : 'text-slate-300 font-semibold hover:text-white hover:bg-white/10 hover:translate-x-0.5'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <Icon
-                                                className={`w-4 h-4 shrink-0 transition-transform duration-150 ${
-                                                    item.active ? 'text-white' : 'text-slate-400 group-hover:text-emerald-400'
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div
+                                                className={`p-1 rounded-lg transition-all duration-300 ease-out ${
+                                                    isActive
+                                                        ? 'bg-emerald-500/15 text-emerald-700'
+                                                        : 'text-slate-400 group-hover:text-emerald-400 group-hover:bg-white/5'
+                                                }`}
+                                            >
+                                                <Icon
+                                                    className={`w-4 h-4 shrink-0 transition-transform duration-300 ease-out ${
+                                                        isActive ? 'scale-110 stroke-[2.5]' : 'group-hover:scale-105'
+                                                    }`}
+                                                />
+                                            </div>
+                                            <span className="truncate tracking-wide">{item.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <span
+                                                className={`w-1.5 h-3.5 rounded-full bg-emerald-600 shadow-xs transition-all duration-300 ease-out ${
+                                                    isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
                                                 }`}
                                             />
-                                            <span className="truncate">{item.name}</span>
                                         </div>
                                     </Link>
                                 );
@@ -584,8 +667,8 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     </div>
                 )}
 
-                {/* Page Content Container */}
-                <main className={`flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6 transition-opacity duration-200 ${pageLoading ? 'opacity-60' : 'opacity-100'}`}>
+                {/* Page Content Container with Smooth Fade & Scale Transition */}
+                <main className={`flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6 transition-all duration-300 ease-out ${pageLoading ? 'opacity-40 scale-[0.997]' : 'opacity-100 scale-100'}`}>
                     {header && (
                         <div className="animate-fade-in">
                             {header}

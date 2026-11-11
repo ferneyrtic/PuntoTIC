@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Point;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,10 +16,15 @@ class AuditLogController extends Controller
     /**
      * Muestra el panel completo de Trazabilidad, Auditoría y Notificaciones del Sistema.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
         if (! $request->user()?->isAdmin()) {
-            abort(403, 'Acceso denegado: El registro de actividad y auditoría está reservado exclusivamente para la administración.');
+            $user = $request->user();
+            $target = ($user && ($user->hasRole(['Usuario', 'Ciudadano']) || $user->es_usuario_ciudadano))
+                ? 'portal.index'
+                : 'dashboard';
+
+            return redirect()->route($target)->with('warning', 'No tienes permisos para acceder al registro de actividad.');
         }
 
         $filters = $request->only(['modulo', 'accion', 'user_id', 'fecha_desde', 'fecha_hasta', 'search']);

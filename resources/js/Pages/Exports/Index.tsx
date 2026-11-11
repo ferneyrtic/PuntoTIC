@@ -123,8 +123,11 @@ export default function ExportsIndex({
         if (reportType === 'graficas_pdf') {
             params.append('print', 'true');
             if (activePoint) params.append('id_punto', activePoint);
-            if (dateFrom) params.append('fecha_desde', dateFrom);
-            if (dateTo) params.append('fecha_hasta', dateTo);
+            if (dateFrom || dateTo) {
+                params.append('periodo', 'custom');
+                if (dateFrom) params.append('fecha_desde', dateFrom);
+                if (dateTo) params.append('fecha_hasta', dateTo);
+            }
 
             window.location.href = `${route('dashboard')}?${params.toString()}`;
             return;

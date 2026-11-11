@@ -9,33 +9,64 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 
 class Citizen extends Model
 {
     use HasFactory;
 
     protected $table = 'form_pvd';
-    protected $primaryKey = 'id';
-    public $incrementing = false;
+
+    public static function getTableColumns(): array
+    {
+        try {
+            return Schema::getColumnListing('form_pvd');
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    public function getKeyName()
+    {
+        $cols = static::getTableColumns();
+
+        return in_array('id', $cols, true) ? 'id' : 'id_form_pvd';
+    }
+
+    public function getIncrementing()
+    {
+        $cols = static::getTableColumns();
+
+        return ! in_array('id', $cols, true);
+    }
 
     protected static function booted(): void
     {
         static::saving(function ($citizen) {
-            if (empty($citizen->id) && !empty($citizen->documento)) {
-                $num = preg_replace('/\D/', '', (string)$citizen->documento);
-                $citizen->id = !empty($num) ? (int)$num : (int)(substr((string)time(), -8) . rand(10, 99));
+            $cols = static::getTableColumns();
+            if (empty($cols)) {
+                return;
             }
-            if (empty($citizen->id_form_pvd)) {
-                $citizen->id_form_pvd = $citizen->id;
+
+            if (in_array('id', $cols, true) && empty($citizen->id) && ! empty($citizen->documento)) {
+                $num = preg_replace('/\D/', '', (string) $citizen->documento);
+                $citizen->attributes['id'] = ! empty($num) ? (int) $num : (int) (substr((string) time(), -8).rand(10, 99));
             }
-            if (empty($citizen->tipo_id) && !empty($citizen->id_tipo)) {
-                $citizen->tipo_id = $citizen->id_tipo;
-            } elseif (empty($citizen->id_tipo) && !empty($citizen->tipo_id)) {
-                $citizen->id_tipo = $citizen->tipo_id;
+            if (in_array('id_form_pvd', $cols, true) && empty($citizen->id_form_pvd)) {
+                $citizen->attributes['id_form_pvd'] = $citizen->attributes['id'] ?? null;
             }
-            if (empty($citizen->tipo_id)) {
-                $citizen->tipo_id = 1;
-                $citizen->id_tipo = 1;
+
+            if (in_array('tipo_id', $cols, true) && empty($citizen->tipo_id) && ! empty($citizen->id_tipo)) {
+                $citizen->attributes['tipo_id'] = $citizen->id_tipo;
+            }
+            if (in_array('id_tipo', $cols, true) && empty($citizen->id_tipo)) {
+                $citizen->attributes['id_tipo'] = $citizen->attributes['tipo_id'] ?? 1;
+            }
+
+            foreach ($citizen->attributes as $key => $val) {
+                if (! in_array($key, $cols, true)) {
+                    unset($citizen->attributes[$key]);
+                }
             }
         });
     }
@@ -91,7 +122,7 @@ class Citizen extends Model
 
     public function getDocumentoAttribute()
     {
-        return $this->attributes['documento'] ?? (isset($this->attributes['id']) ? (string)$this->attributes['id'] : '');
+        return $this->attributes['documento'] ?? (isset($this->attributes['id']) ? (string) $this->attributes['id'] : '');
     }
 
     public function getIdTipoAttribute()
@@ -101,13 +132,13 @@ class Citizen extends Model
 
     public function setDocumentoAttribute($value)
     {
-        $this->attributes['documento'] = (string)$value;
+        $this->attributes['documento'] = (string) $value;
         if (! isset($this->attributes['id']) || empty($this->attributes['id'])) {
-            $num = preg_replace('/\D/', '', (string)$value);
-            if (!empty($num)) {
-                $this->attributes['id'] = (int)$num;
+            $num = preg_replace('/\D/', '', (string) $value);
+            if (! empty($num)) {
+                $this->attributes['id'] = (int) $num;
             } else {
-                $this->attributes['id'] = (int)(substr((string)time(), -7) . rand(100, 999));
+                $this->attributes['id'] = (int) (substr((string) time(), -7).rand(100, 999));
             }
         }
         if (! isset($this->attributes['id_form_pvd']) || empty($this->attributes['id_form_pvd'])) {
@@ -174,11 +205,11 @@ class Citizen extends Model
 
         return $query->where(function (Builder $q) use ($term) {
             $q->where('documento', 'like', "%{$term}%")
-              ->orWhere('id', 'like', "%{$term}%")
-              ->orWhere('nombres', 'like', "%{$term}%")
-              ->orWhere('apellidos', 'like', "%{$term}%")
-              ->orWhere('correo', 'like', "%{$term}%")
-              ->orWhere('telefono', 'like', "%{$term}%");
+                ->orWhere('id', 'like', "%{$term}%")
+                ->orWhere('nombres', 'like', "%{$term}%")
+                ->orWhere('apellidos', 'like', "%{$term}%")
+                ->orWhere('correo', 'like', "%{$term}%")
+                ->orWhere('telefono', 'like', "%{$term}%");
         });
     }
 
@@ -195,6 +226,7 @@ class Citizen extends Model
     public function scopeInactiveLongerThan(Builder $query, int $days = 60): Builder
     {
         $threshold = Carbon::now()->subDays($days);
+
         return $query->whereDoesntHave('visitas', function (Builder $q) use ($threshold) {
             $q->where('created_at', '>=', $threshold);
         });

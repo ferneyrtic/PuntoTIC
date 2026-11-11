@@ -42,9 +42,15 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        // 1. Rol Administrador: control total del sistema
+        // 1. Rol Administrador y Super Administrador: control total del sistema
         $adminRole = Role::firstOrCreate(['name' => 'Administrador', 'guard_name' => 'web']);
         $adminRole->syncPermissions(Permission::all());
+
+        $superAdminRole = Role::firstOrCreate(['name' => 'Super Administrador', 'guard_name' => 'web']);
+        $superAdminRole->syncPermissions(Permission::all());
+
+        $superAdminShortRole = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+        $superAdminShortRole->syncPermissions(Permission::all());
 
         // 2. Rol Coordinador PVD (Sedes Urbanas: PLUS y Tradicional)
         // Solo PVD general, NO tiene acceso a aula digital
@@ -60,7 +66,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'exportar_reportes',
             'gestionar_categorias',
             'gestionar_campos_dinamicos',
-            'ver_auditoria',
         ]);
 
         // 3. Rol Gestor PVD (Operadores de ventanilla en PVD urbano)
@@ -120,7 +125,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'exportar_reportes',
             'gestionar_categorias',
             'gestionar_campos_dinamicos',
-            'ver_auditoria',
         ]);
 
         $legacyGestor = Role::firstOrCreate(['name' => 'Gestor', 'guard_name' => 'web']);
@@ -152,7 +156,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // 1. Administrador TIC (Preserva contraseña original de producción)
         $admin = User::firstWhere('email', 'admin@acacias.gov.co');
-        if (!$admin) {
+        if (! $admin) {
             $admin = User::create([
                 'name' => 'Administrador TIC',
                 'email' => 'admin@acacias.gov.co',

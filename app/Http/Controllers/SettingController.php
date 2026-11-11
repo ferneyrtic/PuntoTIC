@@ -11,10 +11,15 @@ use Inertia\Response;
 
 class SettingController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
-        if (! $request->user()?->hasRole('Administrador')) {
-            abort(403, 'Acceso denegado: Se requieren privilegios de Administrador.');
+        if (! $request->user()?->isAdmin() && ! $request->user()?->hasRole('Administrador')) {
+            $user = $request->user();
+            $target = ($user && ($user->hasRole(['Usuario', 'Ciudadano']) || $user->es_usuario_ciudadano))
+                ? 'portal.index'
+                : 'dashboard';
+
+            return redirect()->route($target)->with('warning', 'No tienes permisos para acceder a la configuración del sistema.');
         }
 
         $settings = Setting::all();
@@ -26,8 +31,13 @@ class SettingController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        if (! $request->user()?->hasRole('Administrador')) {
-            abort(403, 'Acceso denegado: Se requieren privilegios de Administrador.');
+        if (! $request->user()?->isAdmin() && ! $request->user()?->hasRole('Administrador')) {
+            $user = $request->user();
+            $target = ($user && ($user->hasRole(['Usuario', 'Ciudadano']) || $user->es_usuario_ciudadano))
+                ? 'portal.index'
+                : 'dashboard';
+
+            return redirect()->route($target)->with('warning', 'No tienes permisos para modificar la configuración.');
         }
 
         $data = $request->validate([

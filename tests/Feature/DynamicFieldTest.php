@@ -38,7 +38,8 @@ class DynamicFieldTest extends TestCase
         $user->assignRole('Usuario');
 
         $response = $this->actingAs($user)->get('/campos-dinamicos');
-        $response->assertStatus(403);
+        $response->assertRedirect('/portal');
+        $response->assertSessionHas('warning');
     }
 
     public function test_admin_can_create_and_delete_dynamic_field(): void

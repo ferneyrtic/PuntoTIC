@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use Database\Seeders\PuntosVdSeeder;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Database\Seeders\TipoIdSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -11,15 +14,63 @@ class AuditLogTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(PuntosVdSeeder::class);
+        $this->seed(TipoIdSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
+    }
+
     public function test_guest_is_redirected_from_audit_logs(): void
     {
         $response = $this->get('/auditoria');
         $response->assertRedirect('/login');
     }
 
+    public function test_coordinador_general_cannot_access_audit_logs(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('Coordinador General');
+
+        $response = $this->actingAs($user)->get('/auditoria');
+        $response->assertRedirect('/dashboard');
+        $response->assertSessionHas('warning');
+    }
+
+    public function test_coordinador_general_cannot_access_settings(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('Coordinador General');
+
+        $response = $this->actingAs($user)->get('/configuracion');
+        $response->assertRedirect('/dashboard');
+        $response->assertSessionHas('warning');
+    }
+
+    public function test_ciudadano_cannot_access_audit_logs_and_is_redirected_to_portal(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('Ciudadano');
+
+        $response = $this->actingAs($user)->get('/auditoria');
+        $response->assertRedirect('/portal');
+        $response->assertSessionHas('warning');
+    }
+
+    public function test_super_admin_can_view_audit_logs(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('Super Administrador');
+
+        $response = $this->actingAs($user)->get('/auditoria');
+        $response->assertStatus(200);
+    }
+
     public function test_authenticated_user_can_view_audit_logs(): void
     {
         $user = User::factory()->create();
+        $user->assignRole('Administrador');
 
         AuditLog::registrar(
             accion: 'REGISTRAR_VISITA',
@@ -43,6 +94,7 @@ class AuditLogTest extends TestCase
     public function test_audit_logs_can_be_filtered_by_module(): void
     {
         $user = User::factory()->create();
+        $user->assignRole('Administrador');
 
         AuditLog::registrar(accion: 'REGISTRAR_VISITA', modulo: 'visitas', registroId: '101');
         AuditLog::registrar(accion: 'PRESTAMO_SALA', modulo: 'prestamos', registroId: '202');

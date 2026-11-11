@@ -6,43 +6,70 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Schema;
 
 class RoomLoan extends Model
 {
     use HasFactory;
 
     protected $table = 'prestamo_sala';
-    protected $primaryKey = 'id';
+
+    public static function getTableColumns(): array
+    {
+        try {
+            return Schema::getColumnListing('prestamo_sala');
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    public function getKeyName()
+    {
+        $cols = static::getTableColumns();
+
+        return in_array('id', $cols, true) ? 'id' : 'id_prestamo';
+    }
 
     protected static function booted(): void
     {
         static::saving(function ($loan) {
-            if (empty($loan->nombre)) {
-                $loan->nombre = $loan->nombre_responsable_texto ?: 'Ciudadano';
+            $cols = static::getTableColumns();
+            if (empty($cols)) {
+                return;
             }
-            if (empty($loan->nombre_responsable_texto)) {
-                $loan->nombre_responsable_texto = $loan->nombre;
+
+            if (in_array('nombre', $cols, true) && empty($loan->nombre)) {
+                $loan->attributes['nombre'] = $loan->nombre_responsable_texto ?: 'Ciudadano';
             }
-            if (empty($loan->telefono)) {
-                $loan->telefono = '3000000000';
+            if (in_array('nombre_responsable_texto', $cols, true) && empty($loan->nombre_responsable_texto)) {
+                $loan->attributes['nombre_responsable_texto'] = $loan->attributes['nombre'] ?? 'Ciudadano';
             }
-            if (empty($loan->id_puntos)) {
-                $loan->id_puntos = $loan->id_punto ?: 1;
+            if (in_array('telefono', $cols, true) && empty($loan->telefono)) {
+                $loan->attributes['telefono'] = '3000000000';
             }
-            if (empty($loan->id_punto)) {
-                $loan->id_punto = $loan->id_puntos;
+            if (in_array('id_puntos', $cols, true) && empty($loan->id_puntos)) {
+                $loan->attributes['id_puntos'] = $loan->id_punto ?: 1;
             }
-            if (empty($loan->tipo_prestamo)) {
-                $loan->tipo_prestamo = $loan->tipo_actividad ?: 'Reunión comunitaria';
+            if (in_array('id_punto', $cols, true) && empty($loan->id_punto)) {
+                $loan->attributes['id_punto'] = $loan->attributes['id_puntos'] ?? 1;
             }
-            if (empty($loan->tipo_actividad)) {
-                $loan->tipo_actividad = $loan->tipo_prestamo;
+            if (in_array('tipo_prestamo', $cols, true) && empty($loan->tipo_prestamo)) {
+                $loan->attributes['tipo_prestamo'] = $loan->tipo_actividad ?: 'Reunión comunitaria';
             }
-            if (empty($loan->id_gestores) && !empty($loan->id_gestor)) {
-                $loan->id_gestores = $loan->id_gestor;
+            if (in_array('tipo_actividad', $cols, true) && empty($loan->tipo_actividad)) {
+                $loan->attributes['tipo_actividad'] = $loan->attributes['tipo_prestamo'] ?? 'Reunión comunitaria';
             }
-            if (empty($loan->fecha_prestamo)) {
-                $loan->fecha_prestamo = now()->toDateString();
+            if (in_array('id_gestores', $cols, true) && empty($loan->id_gestores) && ! empty($loan->id_gestor)) {
+                $loan->attributes['id_gestores'] = $loan->id_gestor;
+            }
+            if (in_array('fecha_prestamo', $cols, true) && empty($loan->fecha_prestamo)) {
+                $loan->attributes['fecha_prestamo'] = now()->toDateString();
+            }
+
+            foreach ($loan->attributes as $key => $val) {
+                if (! in_array($key, $cols, true)) {
+                    unset($loan->attributes[$key]);
+                }
             }
         });
     }
@@ -91,7 +118,7 @@ class RoomLoan extends Model
 
     public function ciudadano(): BelongsTo
     {
-        return $this->belongsTo(Citizen::class, 'id_form_pvd', 'id');
+        return $this->belongsTo(Citizen::class, 'id_form_pvd');
     }
 
     public function punto(): BelongsTo
@@ -112,6 +139,7 @@ class RoomLoan extends Model
         if ($to) {
             $query->whereDate('fecha_prestamo', '<=', $to);
         }
+
         return $query;
     }
 }
