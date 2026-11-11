@@ -204,22 +204,58 @@ export default function Dashboard({
     // Pestaña activa del dashboard
     const [activeTab, setActiveTab] = useState<'general' | 'tramites' | 'formacion' | 'salas' | 'impresiones'>('general');
 
-    // Manejador para exportar o imprimir gráficas en PDF
+    // Manejador para exportar o imprimir gráficas en PDF garantizando modo claro institucional
     const handlePrintPdf = () => {
-        window.print();
+        const isDark = document.documentElement.classList.contains('dark');
+        if (isDark) {
+            document.documentElement.classList.remove('dark');
+        }
+
+        setTimeout(() => {
+            window.print();
+            if (isDark) {
+                setTimeout(() => {
+                    document.documentElement.classList.add('dark');
+                }, 150);
+            }
+        }, 80);
     };
 
-    // Auto-activación de diálogo de impresión/PDF si viene con parámetro en la URL
+    // Auto-activación de diálogo de impresión/PDF y listeners para asegurar tema claro en impresión
     useEffect(() => {
+        let wasDark = false;
+
+        const handleBeforePrint = () => {
+            if (document.documentElement.classList.contains('dark')) {
+                wasDark = true;
+                document.documentElement.classList.remove('dark');
+            }
+        };
+
+        const handleAfterPrint = () => {
+            if (wasDark) {
+                document.documentElement.classList.add('dark');
+                wasDark = false;
+            }
+        };
+
+        window.addEventListener('beforeprint', handleBeforePrint);
+        window.addEventListener('afterprint', handleAfterPrint);
+
         if (typeof window !== 'undefined') {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('print') === 'true' || urlParams.get('pdf') === 'true') {
                 const timer = setTimeout(() => {
-                    window.print();
+                    handlePrintPdf();
                 }, 600);
                 return () => clearTimeout(timer);
             }
         }
+
+        return () => {
+            window.removeEventListener('beforeprint', handleBeforePrint);
+            window.removeEventListener('afterprint', handleAfterPrint);
+        };
     }, []);
 
     // Manejador del cambio de ámbito (Sede individual o Consolidado)
@@ -350,20 +386,20 @@ export default function Dashboard({
                         <button
                             type="button"
                             onClick={handlePrintPdf}
-                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
+                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white dark:bg-emerald-950/70 dark:hover:bg-emerald-900/90 dark:text-emerald-300 dark:border dark:border-emerald-700/60 text-xs font-bold shadow-xs transition-all shrink-0 active:scale-95"
                             title="Descargar o imprimir las gráficas y estadísticas filtradas en formato PDF oficial"
                         >
-                            <Printer className="w-3.5 h-3.5 text-emerald-200 dark:text-white" />
+                            <Printer className="w-3.5 h-3.5 text-emerald-200 dark:text-emerald-400" />
                             <span>Descargar Gráficas (PDF)</span>
                         </button>
 
                         {/* Botón de Exportar Datos Tabulares */}
                         <Link
                             href={route('exportar.index')}
-                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
+                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 dark:border dark:border-slate-700 text-xs font-bold shadow-xs transition-all shrink-0 active:scale-95"
                             title="Exportar tablas y bases de datos en Excel / CSV"
                         >
-                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 dark:text-white" />
+                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400" />
                             <span>Exportar Datos</span>
                         </Link>
                     </div>
