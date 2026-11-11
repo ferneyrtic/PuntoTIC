@@ -193,11 +193,24 @@ export default function ExportsIndex({
         if (reportType === 'graficas_pdf') {
             params.append('print', 'true');
             if (activePoint) params.append('id_punto', activePoint);
-            if (dateFrom || dateTo) {
+
+            if (activePreset && activePreset !== 'custom' && activePreset !== 'todo') {
+                const mapPeriodo: Record<string, string> = {
+                    hoy: 'hoy',
+                    '7d': 'semana',
+                    mes: 'mes',
+                    trimestre: 'trimestre',
+                    ano: 'ano',
+                };
+                if (mapPeriodo[activePreset]) {
+                    params.append('periodo', mapPeriodo[activePreset]);
+                }
+            } else if (dateFrom || dateTo) {
                 params.append('periodo', 'custom');
-                if (dateFrom) params.append('fecha_desde', dateFrom);
-                if (dateTo) params.append('fecha_hasta', dateTo);
             }
+
+            if (dateFrom) params.append('fecha_desde', dateFrom);
+            if (dateTo) params.append('fecha_hasta', dateTo);
 
             window.location.href = `${route('dashboard')}?${params.toString()}`;
             return;

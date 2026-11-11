@@ -3,18 +3,9 @@ import {
     X,
     Download,
     Printer,
-    Sparkles,
-    Calendar,
-    MapPin,
-    Users,
-    DoorOpen,
-    FileText,
     BarChart3,
     CheckCircle2,
-    Building2,
-    ShieldCheck,
 } from 'lucide-react';
-import { asset } from '@/utils/asset';
 import {
     BarChart,
     Bar,
@@ -82,29 +73,23 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
     }));
 
     const dataCategorias = (distribucion_categorias || []).slice(0, 6).map((c: any) => ({
-        name: c.nombre.length > 22 ? c.nombre.substring(0, 20) + '...' : c.nombre,
+        name: c.nombre && c.nombre.length > 34 ? c.nombre.substring(0, 32) + '...' : c.nombre,
         fullName: c.nombre,
         visitas: c.total_visitas,
         color: c.color || '#059669',
     }));
 
-    const dataTramites = (dependencia_tramites?.top_tramites || []).slice(0, 5).map((t: any) => ({
-        name: t.nombre.length > 22 ? t.nombre.substring(0, 20) + '...' : t.nombre,
+    const dataTramites = (dependencia_tramites?.top_tramites || []).slice(0, 6).map((t: any) => ({
+        name: t.nombre && t.nombre.length > 34 ? t.nombre.substring(0, 32) + '...' : t.nombre,
         fullName: t.nombre,
         total: t.total,
     }));
 
-    const dataSalas = (dependencia_salas?.actividades || []).slice(0, 5).map((a: any) => ({
-        name: a.tipo.length > 22 ? a.tipo.substring(0, 20) + '...' : a.tipo,
+    const dataSalas = (dependencia_salas?.actividades || []).slice(0, 6).map((a: any) => ({
+        name: a.tipo && a.tipo.length > 30 ? a.tipo.substring(0, 28) + '...' : a.tipo,
         fullName: a.tipo,
         eventos: a.eventos,
         asistentes: a.asistentes,
-    }));
-
-    const dataImpresiones = (dependencia_impresiones?.tipos || []).slice(0, 5).map((t: any) => ({
-        name: t.tipo.length > 22 ? t.tipo.substring(0, 20) + '...' : t.tipo,
-        fullName: t.tipo,
-        hojas: t.hojas,
     }));
 
     const handleDownloadPdf = async () => {
@@ -113,7 +98,7 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
         setDownloadSuccess(false);
 
         try {
-            // Renderizado de canvas de alta resolución (scale 2 para calidad de impresión 300 DPI)
+            // Renderizado de canvas de alta resolución para calidad nítida
             const canvas = await html2canvas(reportRef.current, {
                 scale: 2,
                 useCORS: true,
@@ -135,7 +120,7 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
             pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
             heightLeft -= pdfHeight;
 
-            // Páginas subsecuentes si el reporte se extiende
+            // Páginas subsecuentes continuas
             while (heightLeft > 0) {
                 position = heightLeft - imgHeight;
                 pdf.addPage();
@@ -144,8 +129,8 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
             }
 
             const cleanScopeName = (scope?.nombre || 'General').replace(/[^a-zA-Z0-9]/g, '_');
-            const cleanPeriodName = (periodo?.key || 'mes').replace(/[^a-zA-Z0-9]/g, '_');
-            const fileName = `Informe_Grafico_PuntoTIC_${cleanScopeName}_${cleanPeriodName}.pdf`;
+            const cleanPeriodName = (periodo?.key || 'periodo').replace(/[^a-zA-Z0-9]/g, '_');
+            const fileName = `Reporte_Grafico_${cleanScopeName}_${cleanPeriodName}.pdf`;
 
             pdf.save(fileName);
             setDownloadSuccess(true);
@@ -171,14 +156,14 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                         <div className="flex items-center gap-2">
                             <BarChart3 className="w-5 h-5 text-emerald-600" />
                             <h2 className="text-base font-black text-slate-900">
-                                Reporte Gráfico Oficial de Gestión
+                                Reporte Gráfico de Estadísticas
                             </h2>
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                PDF Alta Resolución
+                                Formato Amplio (1 por fila)
                             </span>
                         </div>
                         <p className="text-xs text-slate-500 font-medium mt-0.5">
-                            Visualización consolidada de gráficas para informes mensuales de gestión
+                            Visualización de gráficas con espacio extendido para lectura clara de etiquetas y datos
                         </p>
                     </div>
 
@@ -222,52 +207,35 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                     </div>
                 )}
 
-                {/* VISTA PREVIA DEL DOCUMENTO OFICIAL IMPRIMIBLE */}
+                {/* VISTA PREVIA DEL DOCUMENTO IMPRIMIBLE */}
                 <div className="p-4 sm:p-6 overflow-y-auto flex justify-center bg-slate-200/80">
                     <div
                         ref={reportRef}
                         id="reporte-grafico-content"
                         className="bg-white w-[820px] p-8 rounded-2xl shadow-lg border border-slate-300 text-slate-900 font-sans"
-                        style={{ minHeight: '1100px' }}
                     >
-                        {/* ENCABEZADO INSTITUCIONAL DE ALCALDÍA */}
-                        <div className="border-b-2 border-emerald-700 pb-4 mb-5">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <img
-                                        src={asset('images/logo_alcaldia.png')}
-                                        alt="Alcaldía de Acacías"
-                                        className="h-14 w-auto object-contain"
-                                    />
-                                    <div className="border-l-2 border-slate-300 pl-3">
-                                        <h1 className="text-sm font-black tracking-tight text-slate-900 uppercase">
-                                            Alcaldía Municipal de Acacías
-                                        </h1>
-                                        <p className="text-[11px] font-bold text-emerald-800">
-                                            Secretaría de las Tecnologías de la Información y las Comunicaciones
-                                        </p>
-                                        <p className="text-[10px] text-slate-500 font-medium">
-                                            Red de Puntos Vive Digital y Aulas Digitales Rurales
-                                        </p>
-                                    </div>
+                        {/* ENCABEZADO SIMPLE Y DIRECTO (SIN LOGOS NI TEXTOS INSTITUCIONALES) */}
+                        <div className="border-b border-slate-200 pb-4 mb-5">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div>
+                                    <h1 className="text-xl font-black tracking-tight text-slate-900">
+                                        Reporte de Estadísticas y Gráficas
+                                    </h1>
+                                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                        Visualización gráfica de operaciones y demanda
+                                    </p>
                                 </div>
-
-                                <div className="text-right">
-                                    <span className="inline-block px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
-                                        Informe Gráfico Oficial
-                                    </span>
-                                    <div className="text-[10px] text-slate-500 mt-1">
-                                        Fecha: {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                    </div>
+                                <div className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 shrink-0">
+                                    Generado: {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })}
                                 </div>
                             </div>
 
                             {/* BARRA DE METADATOS DEL REPORTE */}
-                            <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
                                 <div>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase block">Ámbito / Sede:</span>
                                     <span className="font-black text-slate-800 text-[11px] block truncate">
-                                        {scope?.nombre} ({scope?.zona || 'Urbana'})
+                                        {scope?.nombre} {scope?.zona ? `(${scope.zona})` : ''}
                                     </span>
                                 </div>
                                 <div>
@@ -277,9 +245,9 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Generado por:</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Usuario:</span>
                                     <span className="font-bold text-slate-800 text-[11px] block truncate">
-                                        {user?.name || 'Gestor TIC'} ({user?.rol_principal || 'Operativo'})
+                                        {user?.name || 'Gestor'} ({user?.rol_principal || 'Gestor PVD'})
                                     </span>
                                 </div>
                             </div>
@@ -314,51 +282,54 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                             </div>
                         </div>
 
-                        {/* SECCIÓN 1: AFLUENCIA TEMPORAL Y SEDES */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        {/* ========================================================= */}
+                        {/* GRÁFICAS AMPLIAS: DISPUESTAS UNA DEBAJO DE LA OTRA (FULL)  */}
+                        {/* ========================================================= */}
+                        <div className="space-y-6 mb-6">
                             {/* Gráfico 1: Afluencia Temporal */}
-                            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/40">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight">
+                            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">
                                         1. Afluencia y Demanda Temporal
                                     </h3>
-                                    <span className="text-[9px] font-bold text-slate-500">
-                                        {chart_serie?.length || 0} registros
+                                    <span className="text-xs font-bold text-slate-500">
+                                        {chart_serie?.length || 0} puntos en el período
                                     </span>
                                 </div>
-                                <div className="h-44 w-full flex items-center justify-center">
-                                    <BarChart width={340} height={170} data={chart_serie} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                                <div className="h-64 w-full flex items-center justify-center">
+                                    <BarChart width={740} height={250} data={chart_serie} margin={{ top: 10, right: 15, left: -15, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                        <XAxis dataKey="dia" stroke="#64748B" fontSize={9} tickLine={false} />
-                                        <YAxis stroke="#64748B" fontSize={9} tickLine={false} allowDecimals={false} />
+                                        <XAxis dataKey="dia" stroke="#64748B" fontSize={10} tickLine={false} />
+                                        <YAxis stroke="#64748B" fontSize={10} tickLine={false} allowDecimals={false} />
+                                        <Tooltip formatter={(value: any) => [`${value} atenciones`, 'Visitas']} />
                                         <Bar dataKey="visitas" fill="#059669" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </div>
                             </div>
 
                             {/* Gráfico 2: Demanda por Sedes (Multi-sede) o Género (Sede única) */}
-                            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/40">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight">
+                            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">
                                         {dataSedesPie.length > 1 ? '2. Participación por Sede' : '2. Distribución por Género'}
                                     </h3>
-                                    <span className="text-[9px] font-bold text-slate-500">
+                                    <span className="text-xs font-bold text-slate-500">
                                         {dataSedesPie.length > 1
                                             ? `${dataSedesPie.length} Sedes`
                                             : `${dependencia_formacion?.total_ciudadanos_analizados || 0} ciudadanos`}
                                     </span>
                                 </div>
-                                <div className="h-44 w-full flex items-center justify-center">
+                                <div className="h-64 w-full flex items-center justify-center">
                                     {dataSedesPie.length > 1 ? (
-                                        <PieChart width={340} height={170}>
+                                        <PieChart width={740} height={250}>
                                             <Pie
                                                 data={dataSedesPie}
                                                 dataKey="value"
                                                 nameKey="name"
                                                 cx="50%"
                                                 cy="50%"
-                                                innerRadius={35}
-                                                outerRadius={65}
+                                                innerRadius={50}
+                                                outerRadius={85}
                                                 paddingAngle={3}
                                             >
                                                 {dataSedesPie.map((entry: any, index: number) => (
@@ -366,18 +337,18 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                                 ))}
                                             </Pie>
                                             <Tooltip formatter={(value: any, name: any) => [`${value} visitas`, name]} />
-                                            <Legend wrapperStyle={{ fontSize: '9px' }} />
+                                            <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                                         </PieChart>
                                     ) : dataGenero.length > 0 ? (
-                                        <PieChart width={340} height={170}>
+                                        <PieChart width={740} height={250}>
                                             <Pie
                                                 data={dataGenero}
                                                 dataKey="value"
                                                 nameKey="name"
                                                 cx="50%"
                                                 cy="50%"
-                                                innerRadius={35}
-                                                outerRadius={65}
+                                                innerRadius={50}
+                                                outerRadius={85}
                                                 paddingAngle={3}
                                             >
                                                 {dataGenero.map((_: any, index: number) => (
@@ -385,34 +356,37 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                                 ))}
                                             </Pie>
                                             <Tooltip formatter={(value: any, name: any) => [`${value} ciudadanos`, name]} />
-                                            <Legend wrapperStyle={{ fontSize: '9px' }} />
+                                            <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                                         </PieChart>
                                     ) : (
-                                        <div className="text-xs text-slate-400">Sin datos en el período</div>
+                                        <div className="text-xs text-slate-400">Sin datos registrados en el período</div>
                                     )}
                                 </div>
                             </div>
-                        </div>
 
-                        {/* SECCIÓN 2: CATEGORÍAS Y TRÁMITES MÁS SOLICITADOS */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
                             {/* Gráfico 3: Categorías */}
-                            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/40">
-                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight mb-2">
-                                    3. Categorías de Atención
-                                </h3>
-                                <div className="h-44 w-full flex items-center justify-center">
+                            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                                        3. Categorías de Atención
+                                    </h3>
+                                    <span className="text-xs font-bold text-slate-500">
+                                        {dataCategorias.reduce((acc: number, c: any) => acc + (c.visitas || 0), 0)} visitas clasificadas
+                                    </span>
+                                </div>
+                                <div className="h-64 w-full flex items-center justify-center">
                                     {dataCategorias.length > 0 ? (
                                         <BarChart
-                                            width={340}
-                                            height={170}
+                                            width={740}
+                                            height={250}
                                             data={dataCategorias}
                                             layout="vertical"
-                                            margin={{ top: 5, right: 15, left: 5, bottom: 0 }}
+                                            margin={{ top: 10, right: 30, left: 15, bottom: 5 }}
                                         >
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
-                                            <XAxis type="number" fontSize={9} stroke="#64748B" allowDecimals={false} />
-                                            <YAxis dataKey="name" type="category" fontSize={8} stroke="#64748B" width={110} tickLine={false} />
+                                            <XAxis type="number" fontSize={10} stroke="#64748B" allowDecimals={false} />
+                                            <YAxis dataKey="name" type="category" fontSize={10} stroke="#475569" width={220} tickLine={false} />
+                                            <Tooltip formatter={(val: any) => [`${val} visitas`, 'Total']} />
                                             <Bar dataKey="visitas" radius={[0, 4, 4, 0]}>
                                                 {dataCategorias.map((entry: any, idx: number) => (
                                                     <Cell key={`cell-cat-${idx}`} fill={entry.color || '#0d9488'} />
@@ -426,49 +400,58 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                             </div>
 
                             {/* Gráfico 4: Trámites y Servicios más Demandados */}
-                            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/40">
-                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight mb-2">
-                                    4. Ranking de Servicios y Trámites
-                                </h3>
-                                <div className="h-44 w-full flex items-center justify-center">
+                            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                                        4. Ranking de Servicios y Trámites
+                                    </h3>
+                                    <span className="text-xs font-bold text-slate-500">
+                                        Top trámites
+                                    </span>
+                                </div>
+                                <div className="h-64 w-full flex items-center justify-center">
                                     {dataTramites.length > 0 ? (
                                         <BarChart
-                                            width={340}
-                                            height={170}
+                                            width={740}
+                                            height={250}
                                             data={dataTramites}
                                             layout="vertical"
-                                            margin={{ top: 5, right: 15, left: 5, bottom: 0 }}
+                                            margin={{ top: 10, right: 30, left: 15, bottom: 5 }}
                                         >
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
-                                            <XAxis type="number" fontSize={9} stroke="#64748B" allowDecimals={false} />
-                                            <YAxis dataKey="name" type="category" fontSize={8} stroke="#64748B" width={115} tickLine={false} />
+                                            <XAxis type="number" fontSize={10} stroke="#64748B" allowDecimals={false} />
+                                            <YAxis dataKey="name" type="category" fontSize={10} stroke="#475569" width={220} tickLine={false} />
+                                            <Tooltip formatter={(val: any) => [`${val} atenciones`, 'Total']} />
                                             <Bar dataKey="total" fill="#2563eb" radius={[0, 4, 4, 0]} />
                                         </BarChart>
                                     ) : (
-                                        <div className="text-xs text-slate-400">Sin datos de trámites</div>
+                                        <div className="text-xs text-slate-400">Sin trámites registrados en el período</div>
                                     )}
                                 </div>
                             </div>
-                        </div>
 
-                        {/* SECCIÓN 3: SALAS E INFRAESTRUCTURA + DEMOGRAFÍA */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
                             {/* Gráfico 5: Salas e Infraestructura */}
-                            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/40">
-                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight mb-2">
-                                    5. Préstamo de Salas (Aforo por Actividad)
-                                </h3>
-                                <div className="h-44 w-full flex items-center justify-center">
+                            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                                        5. Préstamo de Salas (Aforo por Actividad)
+                                    </h3>
+                                    <span className="text-xs font-bold text-slate-500">
+                                        {dependencia_salas?.total_eventos || 0} eventos
+                                    </span>
+                                </div>
+                                <div className="h-64 w-full flex items-center justify-center">
                                     {dataSalas.length > 0 ? (
                                         <BarChart
-                                            width={340}
-                                            height={170}
+                                            width={740}
+                                            height={250}
                                             data={dataSalas}
-                                            margin={{ top: 8, right: 15, left: -16, bottom: 5 }}
+                                            margin={{ top: 10, right: 20, left: -10, bottom: 5 }}
                                         >
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                            <XAxis dataKey="name" interval={0} fontSize={8.5} stroke="#64748B" tickLine={false} />
-                                            <YAxis fontSize={9} stroke="#64748B" allowDecimals={false} />
+                                            <XAxis dataKey="name" interval={0} fontSize={10} stroke="#475569" tickLine={false} />
+                                            <YAxis fontSize={10} stroke="#64748B" allowDecimals={false} />
+                                            <Tooltip formatter={(val: any) => [`${val} asistentes`, 'Asistencia']} />
                                             <Bar dataKey="asistentes" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                                         </BarChart>
                                     ) : (
@@ -478,20 +461,26 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                             </div>
 
                             {/* Gráfico 6: Demografía por Edad */}
-                            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/40">
-                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight mb-2">
-                                    6. Perfil Demográfico (Grupos de Edad)
-                                </h3>
-                                <div className="h-44 w-full flex items-center justify-center">
+                            <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                                        6. Perfil Demográfico (Grupos de Edad)
+                                    </h3>
+                                    <span className="text-xs font-bold text-slate-500">
+                                        {dependencia_formacion?.total_ciudadanos_analizados || 0} ciudadanos
+                                    </span>
+                                </div>
+                                <div className="h-64 w-full flex items-center justify-center">
                                     <BarChart
-                                        width={340}
-                                        height={170}
+                                        width={740}
+                                        height={250}
                                         data={dataEdades}
-                                        margin={{ top: 8, right: 18, left: -16, bottom: 6 }}
+                                        margin={{ top: 10, right: 20, left: -10, bottom: 10 }}
                                     >
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                        <XAxis dataKey="name" interval={0} fontSize={8} stroke="#64748B" tickLine={false} dy={4} />
-                                        <YAxis fontSize={9} stroke="#64748B" allowDecimals={false} />
+                                        <XAxis dataKey="name" interval={0} fontSize={10} stroke="#334155" tickLine={false} dy={5} />
+                                        <YAxis fontSize={10} stroke="#64748B" allowDecimals={false} />
+                                        <Tooltip formatter={(val: any) => [`${val} ciudadanos`, 'Población']} />
                                         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                                             {dataEdades.map((_, idx) => (
                                                 <Cell key={`cell-edad-${idx}`} fill={EDAD_COLORS[idx % EDAD_COLORS.length]} />
@@ -502,17 +491,9 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                             </div>
                         </div>
 
-                        {/* PIE DE PÁGINA INSTITUCIONAL DE VALIDACIÓN */}
-                        <div className="mt-8 pt-4 border-t border-slate-300 flex items-center justify-between text-[10px] text-slate-500">
-                            <div className="flex items-center gap-2">
-                                <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                                <span>
-                                    Certificado de autenticidad · Plataforma PuntoTIC · Alcaldía Municipal de Acacías
-                                </span>
-                            </div>
-                            <span className="font-mono text-slate-400">
-                                GTIC-INF-GRAFICO · {new Date().getFullYear()}
-                            </span>
+                        {/* PIE DE PÁGINA SIMPLE */}
+                        <div className="mt-6 pt-3 border-t border-slate-200 text-center text-[10px] text-slate-400">
+                            PuntoTIC · Reporte Gráfico de Estadísticas
                         </div>
                     </div>
                 </div>

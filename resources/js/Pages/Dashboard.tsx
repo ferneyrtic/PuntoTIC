@@ -19,7 +19,6 @@ import {
     GraduationCap,
     BarChart3,
     Layers,
-    FileSpreadsheet,
     Calendar,
     Phone,
     CheckCircle2,
@@ -32,7 +31,6 @@ import {
     Share2,
     Award,
     X,
-    Download,
 } from 'lucide-react';
 import {
     ResponsiveContainer,
@@ -368,80 +366,11 @@ export default function Dashboard({
                                 </div>
                             )}
                         </div>
-
-                        {/* Botón Descargar Gráficas (PDF) */}
-                        <button
-                            type="button"
-                            onClick={handlePrintPdf}
-                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white dark:bg-emerald-950/70 dark:hover:bg-emerald-900/90 dark:text-emerald-300 dark:border dark:border-emerald-700/60 text-xs font-bold shadow-xs transition-all shrink-0 active:scale-95"
-                            title="Generar y descargar informe oficial en PDF con todas las gráficas estadísticas filtradas"
-                        >
-                            <Download className="w-3.5 h-3.5 text-emerald-200 dark:text-emerald-400" />
-                            <span>Descargar Gráficas (PDF)</span>
-                        </button>
-
-                        {/* Botón de Exportar Datos Tabulares */}
-                        <Link
-                            href={route('exportar.index')}
-                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 dark:border dark:border-slate-700 text-xs font-bold shadow-xs transition-all shrink-0 active:scale-95"
-                            title="Exportar tablas y bases de datos en Excel / CSV"
-                        >
-                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400" />
-                            <span>Exportar Datos</span>
-                        </Link>
                     </div>
                 </div>
             }
         >
             <Head title="Centro de Mando & Analítica · PuntoTIC" />
-
-            {/* Encabezado Oficial Institucional Exclusivo para Exportación / Impresión a PDF */}
-            <div className="print-only mb-6 border-b-2 border-emerald-800 pb-4">
-                <div className="flex items-center justify-between gap-4 mb-3">
-                    <div className="flex items-center gap-3">
-                        <img
-                            src="/images/escudo_acacias.png"
-                            alt="Escudo Alcaldía de Acacías"
-                            className="h-16 w-auto object-contain"
-                        />
-                        <div>
-                            <h1 className="text-lg font-black text-slate-900 tracking-tight uppercase leading-tight">
-                                Alcaldía Municipal de Acacías
-                            </h1>
-                            <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                                Secretaría de las Tecnologías de la Información y las Comunicaciones (TIC)
-                            </p>
-                            <p className="text-[11px] font-semibold text-slate-600">
-                                Red Municipal de Puntos Vive Digital y Aulas Digitales
-                            </p>
-                        </div>
-                    </div>
-                    <img
-                        src="/images/logo_alcaldia.png"
-                        alt="Logo Alcaldía de Acacías"
-                        className="h-12 w-auto object-contain"
-                    />
-                </div>
-
-                <div className="bg-slate-50 rounded-xl p-3 border border-slate-300 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                    <div>
-                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Documento</span>
-                        <span className="font-black text-slate-900">Informe Gráfico & Analítica Visual</span>
-                    </div>
-                    <div>
-                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Sede / Ámbito</span>
-                        <span className="font-black text-emerald-800">{scope.nombre}</span>
-                    </div>
-                    <div>
-                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Período Analizado</span>
-                        <span className="font-semibold text-slate-900">{periodo.label} ({periodo.fecha_desde} al {periodo.fecha_hasta})</span>
-                    </div>
-                    <div>
-                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Fecha de Expedición</span>
-                        <span className="font-semibold text-slate-800">{new Date().toLocaleString('es-CO')}</span>
-                    </div>
-                </div>
-            </div>
 
             {/* Barra de Ámbito y Período Activo */}
             <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-colors duration-200">
@@ -1518,7 +1447,15 @@ export default function Dashboard({
             {/* Modal de Generación y Descarga de Reporte Gráfico Oficial */}
             <ReporteGraficoModal
                 isOpen={isModalReporteOpen}
-                onClose={() => setIsModalReporteOpen(false)}
+                onClose={() => {
+                    setIsModalReporteOpen(false);
+                    if (typeof window !== 'undefined' && (window.location.search.includes('print=') || window.location.search.includes('pdf='))) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('print');
+                        url.searchParams.delete('pdf');
+                        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+                    }
+                }}
                 stats={stats}
                 user={auth?.user}
             />
