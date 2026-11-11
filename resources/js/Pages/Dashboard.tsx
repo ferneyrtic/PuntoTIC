@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { RevealOnScroll } from '@/Components/ui/Skeleton';
@@ -187,24 +187,6 @@ export default function Dashboard({
     // Pestaña activa del dashboard
     const [activeTab, setActiveTab] = useState<'general' | 'tramites' | 'formacion' | 'salas' | 'impresiones'>('general');
 
-    // Manejador para exportar o imprimir gráficas en PDF
-    const handlePrintPdf = () => {
-        window.print();
-    };
-
-    // Auto-activación de diálogo de impresión/PDF si viene con parámetro en la URL
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('print') === 'true' || urlParams.get('pdf') === 'true') {
-                const timer = setTimeout(() => {
-                    window.print();
-                }, 600);
-                return () => clearTimeout(timer);
-            }
-        }
-    }, []);
-
     // Manejador del cambio de ámbito (Sede individual o Consolidado)
     const handleScopeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const val = e.target.value;
@@ -329,17 +311,6 @@ export default function Dashboard({
                             )}
                         </div>
 
-                        {/* Botón Descargar Gráficas (PDF) */}
-                        <button
-                            type="button"
-                            onClick={handlePrintPdf}
-                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
-                            title="Descargar o imprimir las gráficas y estadísticas filtradas en formato PDF oficial"
-                        >
-                            <Printer className="w-3.5 h-3.5 text-emerald-200" />
-                            <span>Descargar Gráficas (PDF)</span>
-                        </button>
-
                         {/* Botón de Exportar Datos Tabulares */}
                         <Link
                             href={route('exportar.index')}
@@ -354,54 +325,6 @@ export default function Dashboard({
             }
         >
             <Head title="Centro de Mando & Analítica · PuntoTIC" />
-
-            {/* Encabezado Oficial Institucional Exclusivo para Exportación / Impresión a PDF */}
-            <div className="print-only mb-6 border-b-2 border-emerald-800 pb-4">
-                <div className="flex items-center justify-between gap-4 mb-3">
-                    <div className="flex items-center gap-3">
-                        <img
-                            src="/images/escudo_acacias.png"
-                            alt="Escudo Alcaldía de Acacías"
-                            className="h-16 w-auto object-contain"
-                        />
-                        <div>
-                            <h1 className="text-lg font-black text-slate-900 tracking-tight uppercase leading-tight">
-                                Alcaldía Municipal de Acacías
-                            </h1>
-                            <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                                Secretaría de las Tecnologías de la Información y las Comunicaciones (TIC)
-                            </p>
-                            <p className="text-[11px] font-semibold text-slate-600">
-                                Red Municipal de Puntos Vive Digital y Aulas Digitales
-                            </p>
-                        </div>
-                    </div>
-                    <img
-                        src="/images/logo_alcaldia.png"
-                        alt="Logo Alcaldía de Acacías"
-                        className="h-12 w-auto object-contain"
-                    />
-                </div>
-
-                <div className="bg-slate-50 rounded-xl p-3 border border-slate-300 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                    <div>
-                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Documento</span>
-                        <span className="font-black text-slate-900">Informe Gráfico & Analítica Visual</span>
-                    </div>
-                    <div>
-                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Sede / Ámbito</span>
-                        <span className="font-black text-emerald-800">{scope.nombre}</span>
-                    </div>
-                    <div>
-                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Período Analizado</span>
-                        <span className="font-semibold text-slate-900">{periodo.label} ({periodo.fecha_desde} al {periodo.fecha_hasta})</span>
-                    </div>
-                    <div>
-                        <span className="block text-[10px] font-bold text-slate-500 uppercase">Fecha de Expedición</span>
-                        <span className="font-semibold text-slate-800">{new Date().toLocaleString('es-CO')}</span>
-                    </div>
-                </div>
-            </div>
 
             {/* Barra de Ámbito y Período Activo */}
             <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-colors duration-200">
