@@ -33,6 +33,7 @@ class ExportService
 
         return $export->download();
     }
+
     /**
      * Exporta visitas a archivo Excel o CSV.
      */
@@ -53,6 +54,9 @@ class ExportService
      */
     public function exportCiudadanos(array $filters = [], string $format = 'xlsx'): BinaryFileResponse
     {
+        @ini_set('memory_limit', '1024M');
+        @set_time_limit(300);
+
         $fecha = date('Ymd_His');
         $fileName = "Directorio_Ciudadanos_PVD_Acacias_{$fecha}.{$format}";
         $writerType = $format === 'csv' ? \Maatwebsite\Excel\Excel::CSV : \Maatwebsite\Excel\Excel::XLSX;
@@ -65,6 +69,9 @@ class ExportService
      */
     public function exportPrestamos(array $filters = [], string $format = 'xlsx'): BinaryFileResponse
     {
+        @ini_set('memory_limit', '1024M');
+        @set_time_limit(300);
+
         $fecha = date('Ymd_His');
         $fileName = "Reporte_Prestamos_Salas_PVD_{$fecha}.{$format}";
         $writerType = $format === 'csv' ? \Maatwebsite\Excel\Excel::CSV : \Maatwebsite\Excel\Excel::XLSX;
@@ -77,6 +84,9 @@ class ExportService
      */
     public function exportImpresiones(array $filters = [], string $format = 'xlsx'): BinaryFileResponse
     {
+        @ini_set('memory_limit', '1024M');
+        @set_time_limit(300);
+
         $fecha = date('Ymd_His');
         $fileName = "Reporte_Impresiones_PVD_{$fecha}.{$format}";
         $writerType = $format === 'csv' ? \Maatwebsite\Excel\Excel::CSV : \Maatwebsite\Excel\Excel::XLSX;

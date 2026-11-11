@@ -5,7 +5,7 @@ namespace App\Exports;
 use App\Models\RoomLoan;
 use Illuminate\Support\Enumerable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -16,15 +16,19 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class PrestamosExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithEvents
+class PrestamosExport implements FromCollection, WithColumnWidths, WithEvents, WithHeadings, WithMapping, WithStyles
 {
-    public function __construct(protected array $filters = []) {}
+    public function __construct(protected array $filters = [])
+    {
+        @ini_set('memory_limit', '1024M');
+        @set_time_limit(300);
+    }
 
     public function collection(): Enumerable
     {
         return RoomLoan::with(['ciudadano', 'punto', 'gestor'])
             ->dateBetween($this->filters['fecha_desde'] ?? null, $this->filters['fecha_hasta'] ?? null)
-            ->when($this->filters['id_punto'] ?? null, fn($q, $p) => $q->where('id_punto', $p))
+            ->when($this->filters['id_punto'] ?? null, fn ($q, $p) => $q->where('id_punto', $p))
             ->latest('fecha_prestamo')
             ->get();
     }
@@ -66,6 +70,26 @@ class PrestamosExport implements FromCollection, WithHeadings, WithMapping, Shou
             $p->observaciones,
             $p->gestor?->name,
             $p->created_at?->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 12,
+            'B' => 24,
+            'C' => 18,
+            'D' => 16,
+            'E' => 22,
+            'F' => 22,
+            'G' => 14,
+            'H' => 16,
+            'I' => 14,
+            'J' => 14,
+            'K' => 14,
+            'L' => 30,
+            'M' => 22,
+            'N' => 20,
         ];
     }
 

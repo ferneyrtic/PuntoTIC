@@ -9,7 +9,6 @@ use App\Services\ExportService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -51,6 +50,9 @@ class ExportController extends Controller
 
     public function download(Request $request): HttpResponse
     {
+        @ini_set('memory_limit', '1024M');
+        @set_time_limit(300);
+
         $tipoReporte = $request->get('tipo', 'visitas');
         $formato = $request->get('formato', 'xlsx'); // xlsx o csv
         $columnas = $request->get('columnas'); // array de columnas seleccionadas

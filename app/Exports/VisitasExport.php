@@ -6,7 +6,7 @@ use App\Models\DynamicField;
 use App\Models\Visit;
 use Illuminate\Support\Enumerable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -17,15 +17,19 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class VisitasExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithEvents
+class VisitasExport implements FromCollection, WithColumnWidths, WithEvents, WithHeadings, WithMapping, WithStyles
 {
     protected array $selectedColumns;
+
     protected $dynamicFields;
 
     public function __construct(
         protected array $filters = [],
         ?array $selectedColumns = null
     ) {
+        @ini_set('memory_limit', '1024M');
+        @set_time_limit(300);
+
         $this->selectedColumns = $selectedColumns ?? [
             'documento', 'nombres', 'apellidos', 'edad', 'genero',
             'telefono', 'correo', 'barrio', 'zona', 'estrato',
@@ -47,12 +51,12 @@ class VisitasExport implements FromCollection, WithHeadings, WithMapping, Should
             'gestor',
             'valoresCamposDinamicos.campo',
         ])
-        ->dateBetween($this->filters['fecha_desde'] ?? null, $this->filters['fecha_hasta'] ?? null)
-        ->filterByPoint($this->filters['id_punto'] ?? null)
-        ->filterByCategory($this->filters['id_categoria'] ?? null)
-        ->latest('created_at')
-        ->when(isset($this->filters['limit']), fn($q) => $q->limit((int) $this->filters['limit']))
-        ->get();
+            ->dateBetween($this->filters['fecha_desde'] ?? null, $this->filters['fecha_hasta'] ?? null)
+            ->filterByPoint($this->filters['id_punto'] ?? null)
+            ->filterByCategory($this->filters['id_categoria'] ?? null)
+            ->latest('created_at')
+            ->when(isset($this->filters['limit']), fn ($q) => $q->limit((int) $this->filters['limit']))
+            ->get();
     }
 
     public function headings(): array
@@ -91,7 +95,7 @@ class VisitasExport implements FromCollection, WithHeadings, WithMapping, Should
         }
 
         foreach ($this->dynamicFields as $df) {
-            $headers[] = '[Extra] ' . $df->nombre_campo;
+            $headers[] = '[Extra] '.$df->nombre_campo;
         }
 
         return $headers;
@@ -142,6 +146,35 @@ class VisitasExport implements FromCollection, WithHeadings, WithMapping, Should
         }
 
         return $row;
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 16,
+            'B' => 20,
+            'C' => 20,
+            'D' => 10,
+            'E' => 14,
+            'F' => 16,
+            'G' => 26,
+            'H' => 20,
+            'I' => 14,
+            'J' => 10,
+            'K' => 20,
+            'L' => 16,
+            'M' => 18,
+            'N' => 24,
+            'O' => 22,
+            'P' => 22,
+            'Q' => 30,
+            'R' => 14,
+            'S' => 24,
+            'T' => 20,
+            'U' => 20,
+            'V' => 20,
+            'W' => 20,
+        ];
     }
 
     public function styles(Worksheet $sheet): ?array

@@ -5,7 +5,7 @@ namespace App\Exports;
 use App\Models\PrintRecord;
 use Illuminate\Support\Enumerable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -16,15 +16,19 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ImpresionesExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithEvents
+class ImpresionesExport implements FromCollection, WithColumnWidths, WithEvents, WithHeadings, WithMapping, WithStyles
 {
-    public function __construct(protected array $filters = []) {}
+    public function __construct(protected array $filters = [])
+    {
+        @ini_set('memory_limit', '1024M');
+        @set_time_limit(300);
+    }
 
     public function collection(): Enumerable
     {
         return PrintRecord::with(['ciudadano', 'punto', 'gestor'])
             ->dateBetween($this->filters['fecha_desde'] ?? null, $this->filters['fecha_hasta'] ?? null)
-            ->when($this->filters['id_punto'] ?? null, fn($q, $p) => $q->where('id_punto', $p))
+            ->when($this->filters['id_punto'] ?? null, fn ($q, $p) => $q->where('id_punto', $p))
             ->latest('created_at')
             ->get();
     }
@@ -56,6 +60,21 @@ class ImpresionesExport implements FromCollection, WithHeadings, WithMapping, Sh
             $imp->descripcion,
             $imp->gestor?->name,
             $imp->created_at?->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 12,
+            'B' => 24,
+            'C' => 18,
+            'D' => 22,
+            'E' => 16,
+            'F' => 24,
+            'G' => 30,
+            'H' => 22,
+            'I' => 20,
         ];
     }
 

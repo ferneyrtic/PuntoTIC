@@ -17,10 +17,16 @@ class Citizen extends Model
 
     protected $table = 'form_pvd';
 
+    protected static ?array $cachedTableColumns = null;
+
     public static function getTableColumns(): array
     {
+        if (static::$cachedTableColumns !== null) {
+            return static::$cachedTableColumns;
+        }
+
         try {
-            return Schema::getColumnListing('form_pvd');
+            return static::$cachedTableColumns = Schema::getColumnListing('form_pvd');
         } catch (\Throwable $e) {
             return [];
         }

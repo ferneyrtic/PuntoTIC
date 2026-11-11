@@ -43,6 +43,22 @@ class ExportTest extends TestCase
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
+    public function test_authenticated_users_can_download_ciudadanos_export(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->get(route('exportar.download', [
+                'tipo' => 'ciudadanos',
+                'formato' => 'xlsx',
+                'fecha_desde' => '2026-06-01',
+                'fecha_hasta' => '2026-07-01',
+            ]));
+
+        $response->assertOk();
+    }
+
     public function test_dashboard_graficas_respects_custom_date_range(): void
     {
         $this->seed(PuntosVdSeeder::class);
