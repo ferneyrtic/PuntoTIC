@@ -368,15 +368,6 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     >
                         🎄
                     </button>
-                    {!isCitizen && (
-                        <Link
-                            href={route('visitas.create')}
-                            className="btn-tactile p-2 rounded-xl bg-emerald-600 text-white shadow-sm"
-                            title="Registrar Visita"
-                        >
-                            <UserPlus className="w-4 h-4" />
-                        </Link>
-                    )}
                 </div>
             </header>
 
@@ -614,18 +605,6 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
 
                         {/* Dark Mode Toggle in Topbar */}
                         <DarkModeToggle showLabel={false} />
-
-                        {/* Direct Action for Staff */}
-                        {!isCitizen && (
-                            <Link
-                                href={route('visitas.create')}
-                                className="btn-tactile inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all"
-                            >
-                                <UserPlus className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Registrar Visita</span>
-                                <span className="sm:hidden">+ Visita</span>
-                            </Link>
-                        )}
                     </div>
                 </header>
 
