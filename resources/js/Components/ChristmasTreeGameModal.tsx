@@ -63,6 +63,21 @@ export const ORNAMENT_TYPES = [
 ];
 
 /**
+ * Helper para resolver URLs relativas al entorno (soporta tanto subdirectorio /test/ como raíz)
+ */
+const getNavidadUrl = (routeName: string, params?: any, fallbackPath?: string) => {
+    try {
+        if (typeof (window as any).route === 'function') {
+            return (window as any).route(routeName, params);
+        }
+    } catch {
+        // Fallback
+    }
+    const prefix = typeof window !== 'undefined' && window.location.pathname.startsWith('/test') ? '/test' : '';
+    return `${prefix}${fallbackPath || ''}`;
+};
+
+/**
  * Componente que dibuja el pino navideño en SVG con sus adornos y luces
  */
 export function PineTreeCanvas({
@@ -373,7 +388,8 @@ export default function ChristmasTreeGameModal({
         const loadTrees = async () => {
             setIsLoadingGallery(true);
             try {
-                const res = await axios.get('/api/navidad/arboles');
+                const url = getNavidadUrl('navidad.arboles.index', undefined, '/api/navidad/arboles');
+                const res = await axios.get(url);
                 const data = res.data;
 
                 if (data.mi_arbol) {
@@ -509,7 +525,8 @@ export default function ChristmasTreeGameModal({
         setSaveSuccess(false);
 
         try {
-            const res = await axios.post('/api/navidad/arbol', {
+            const url = getNavidadUrl('navidad.arboles.store', undefined, '/api/navidad/arbol');
+            const res = await axios.post(url, {
                 decoraciones: decorations,
                 mensaje: mensaje.trim() || '¡Feliz Navidad a todo el equipo TIC!',
                 luces_activas: lucesActivas,
@@ -552,7 +569,8 @@ export default function ChristmasTreeGameModal({
         }
 
         try {
-            await axios.post(`/api/navidad/arbol/${treeId}/reaccionar`);
+            const url = getNavidadUrl('navidad.arboles.reaccionar', treeId, `/api/navidad/arbol/${treeId}/reaccionar`);
+            await axios.post(url);
         } catch (err) {
             console.warn('Error registrando reacción:', err);
         }
