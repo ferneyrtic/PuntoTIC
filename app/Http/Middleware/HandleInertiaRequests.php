@@ -44,9 +44,9 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $user ? $user->getRoleNames() : [],
             ],
             'points' => fn () => Cache::remember(
-                'active_points_shared_list',
+                'active_points_shared_list_v1',
                 600,
-                fn () => Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona'])
+                fn () => Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona'])->toArray()
             ),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

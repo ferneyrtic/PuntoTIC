@@ -134,7 +134,7 @@ class MLService
      */
     public function getCitizensAtRiskOfChurn(int $limit = 6): Collection
     {
-        return Cache::remember("ml_churn_risk_{$limit}", 300, function () use ($limit) {
+        $items = Cache::remember("ml_churn_risk_v2_{$limit}", 300, function () use ($limit) {
             $thresholdDays = Setting::get('dias_alerta_inactividad', 60);
             $thresholdDate = Carbon::now()->subDays($thresholdDays);
 
@@ -158,13 +158,17 @@ class MLService
                         'nombre_completo' => $citizen->nombre_completo,
                         'telefono' => $citizen->telefono,
                         'punto_nombre' => $citizen->punto->nombre_punto ?? 'PVD',
-                        'total_visitas' => $citizen->visitas_count,
+                        'total_visitas' => (int) $citizen->visitas_count,
                         'ultima_visita_fecha' => $lastVisit ? $lastVisit->created_at->toDateString() : null,
                         'dias_inactivo' => $daysInactive,
                         'nivel_riesgo' => $riskLevel,
                     ];
-                });
+                })
+                ->values()
+                ->toArray();
         });
+
+        return collect($items);
     }
 
     /**

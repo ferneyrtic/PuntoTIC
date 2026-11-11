@@ -31,10 +31,11 @@ class DashboardController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $points = Cache::remember('welcome_points_list', 1800, function () {
+        $points = Cache::remember('welcome_points_list_v1', 1800, function () {
             return Point::where('activo', true)
                 ->whereNotIn('id_punto', [5, 6])
-                ->get(['id_punto', 'nombre_punto', 'zona', 'direccion']);
+                ->get(['id_punto', 'nombre_punto', 'zona', 'direccion'])
+                ->toArray();
         });
 
         return Inertia::render('Welcome', [
@@ -95,9 +96,9 @@ class DashboardController extends Controller
         $churnAlerts = $this->mlService->getCitizensAtRiskOfChurn(5);
         $tomorrowLoad = $this->mlService->predictTomorrowLoad($pointId);
 
-        $allPoints = Cache::remember('dashboard_active_points', 600, function () {
-            return Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'codigo', 'zona']);
-        });
+        $allPoints = collect(Cache::remember('dashboard_active_points_v1', 600, function () {
+            return Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'codigo', 'zona'])->toArray();
+        }));
 
         $recentVisitsQuery = Visit::with(['ciudadano', 'punto', 'categoria', 'subcategoria', 'gestor']);
         if ($pointId) {
@@ -109,8 +110,8 @@ class DashboardController extends Controller
         $recentVisits = $recentVisitsQuery->latest('created_at')->limit(8)->get();
 
         $points = (! $isGlobal && $user && $user->id_punto)
-            ? $allPoints->where('id_punto', (int) $user->id_punto)->values()
-            : $allPoints;
+            ? $allPoints->where('id_punto', (int) $user->id_punto)->values()->all()
+            : $allPoints->values()->all();
 
         return Inertia::render('Dashboard', [
             'stats' => $stats,
