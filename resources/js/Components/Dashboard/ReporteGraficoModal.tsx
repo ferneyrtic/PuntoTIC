@@ -89,7 +89,7 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
     }));
 
     const dataTramites = (dependencia_tramites?.top_tramites || []).slice(0, 5).map((t: any) => ({
-        name: t.nombre.length > 24 ? t.nombre.substring(0, 22) + '...' : t.nombre,
+        name: t.nombre.length > 22 ? t.nombre.substring(0, 20) + '...' : t.nombre,
         fullName: t.nombre,
         total: t.total,
     }));
@@ -336,18 +336,20 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                 </div>
                             </div>
 
-                            {/* Gráfico 2: Demanda por Sedes */}
+                            {/* Gráfico 2: Demanda por Sedes (Multi-sede) o Género (Sede única) */}
                             <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/40">
                                 <div className="flex items-center justify-between mb-2">
                                     <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight">
-                                        2. Participación por Sede
+                                        {dataSedesPie.length > 1 ? '2. Participación por Sede' : '2. Distribución por Género'}
                                     </h3>
                                     <span className="text-[9px] font-bold text-slate-500">
-                                        {dataSedesPie.length} Sedes
+                                        {dataSedesPie.length > 1
+                                            ? `${dataSedesPie.length} Sedes`
+                                            : `${dependencia_formacion?.total_ciudadanos_analizados || 0} ciudadanos`}
                                     </span>
                                 </div>
                                 <div className="h-44 w-full flex items-center justify-center">
-                                    {dataSedesPie.length > 0 ? (
+                                    {dataSedesPie.length > 1 ? (
                                         <PieChart width={340} height={170}>
                                             <Pie
                                                 data={dataSedesPie}
@@ -366,8 +368,27 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                             <Tooltip formatter={(value: any, name: any) => [`${value} visitas`, name]} />
                                             <Legend wrapperStyle={{ fontSize: '9px' }} />
                                         </PieChart>
+                                    ) : dataGenero.length > 0 ? (
+                                        <PieChart width={340} height={170}>
+                                            <Pie
+                                                data={dataGenero}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={35}
+                                                outerRadius={65}
+                                                paddingAngle={3}
+                                            >
+                                                {dataGenero.map((_: any, index: number) => (
+                                                    <Cell key={`cell-gen-${index}`} fill={GENERO_COLORS[index % GENERO_COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip formatter={(value: any, name: any) => [`${value} ciudadanos`, name]} />
+                                            <Legend wrapperStyle={{ fontSize: '9px' }} />
+                                        </PieChart>
                                     ) : (
-                                        <div className="text-xs text-slate-400">Sin datos de sedes</div>
+                                        <div className="text-xs text-slate-400">Sin datos en el período</div>
                                     )}
                                 </div>
                             </div>
@@ -381,25 +402,33 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                     3. Categorías de Atención
                                 </h3>
                                 <div className="h-44 w-full flex items-center justify-center">
-                                    <BarChart
-                                        width={340}
-                                        height={170}
-                                        data={dataCategorias}
-                                        layout="vertical"
-                                        margin={{ top: 5, right: 20, left: 15, bottom: 0 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
-                                        <XAxis type="number" fontSize={9} stroke="#64748B" />
-                                        <YAxis dataKey="name" type="category" fontSize={9} stroke="#64748B" width={85} />
-                                        <Bar dataKey="visitas" fill="#0d9488" radius={[0, 4, 4, 0]} />
-                                    </BarChart>
+                                    {dataCategorias.length > 0 ? (
+                                        <BarChart
+                                            width={340}
+                                            height={170}
+                                            data={dataCategorias}
+                                            layout="vertical"
+                                            margin={{ top: 5, right: 15, left: 5, bottom: 0 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
+                                            <XAxis type="number" fontSize={9} stroke="#64748B" allowDecimals={false} />
+                                            <YAxis dataKey="name" type="category" fontSize={8} stroke="#64748B" width={110} tickLine={false} />
+                                            <Bar dataKey="visitas" radius={[0, 4, 4, 0]}>
+                                                {dataCategorias.map((entry: any, idx: number) => (
+                                                    <Cell key={`cell-cat-${idx}`} fill={entry.color || '#0d9488'} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    ) : (
+                                        <div className="text-xs text-slate-400">Sin datos de categorías en el período</div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Gráfico 4: Trámites más Demandados */}
+                            {/* Gráfico 4: Trámites y Servicios más Demandados */}
                             <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/40">
                                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight mb-2">
-                                    4. Ranking de Trámites Solicitados
+                                    4. Ranking de Servicios y Trámites
                                 </h3>
                                 <div className="h-44 w-full flex items-center justify-center">
                                     {dataTramites.length > 0 ? (
@@ -408,11 +437,11 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                             height={170}
                                             data={dataTramites}
                                             layout="vertical"
-                                            margin={{ top: 5, right: 20, left: 15, bottom: 0 }}
+                                            margin={{ top: 5, right: 15, left: 5, bottom: 0 }}
                                         >
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
-                                            <XAxis type="number" fontSize={9} stroke="#64748B" />
-                                            <YAxis dataKey="name" type="category" fontSize={9} stroke="#64748B" width={90} />
+                                            <XAxis type="number" fontSize={9} stroke="#64748B" allowDecimals={false} />
+                                            <YAxis dataKey="name" type="category" fontSize={8} stroke="#64748B" width={115} tickLine={false} />
                                             <Bar dataKey="total" fill="#2563eb" radius={[0, 4, 4, 0]} />
                                         </BarChart>
                                     ) : (
@@ -435,11 +464,11 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                             width={340}
                                             height={170}
                                             data={dataSalas}
-                                            margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                                            margin={{ top: 8, right: 15, left: -16, bottom: 5 }}
                                         >
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                            <XAxis dataKey="name" fontSize={9} stroke="#64748B" />
-                                            <YAxis fontSize={9} stroke="#64748B" />
+                                            <XAxis dataKey="name" interval={0} fontSize={8.5} stroke="#64748B" tickLine={false} />
+                                            <YAxis fontSize={9} stroke="#64748B" allowDecimals={false} />
                                             <Bar dataKey="asistentes" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                                         </BarChart>
                                     ) : (
@@ -448,7 +477,7 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                 </div>
                             </div>
 
-                            {/* Gráfico 6: Demografía por Género y Edad */}
+                            {/* Gráfico 6: Demografía por Edad */}
                             <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/40">
                                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight mb-2">
                                     6. Perfil Demográfico (Grupos de Edad)
@@ -458,11 +487,11 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                         width={340}
                                         height={170}
                                         data={dataEdades}
-                                        margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                                        margin={{ top: 8, right: 18, left: -16, bottom: 6 }}
                                     >
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                        <XAxis dataKey="name" fontSize={8.5} stroke="#64748B" />
-                                        <YAxis fontSize={9} stroke="#64748B" />
+                                        <XAxis dataKey="name" interval={0} fontSize={8} stroke="#64748B" tickLine={false} dy={4} />
+                                        <YAxis fontSize={9} stroke="#64748B" allowDecimals={false} />
                                         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                                             {dataEdades.map((_, idx) => (
                                                 <Cell key={`cell-edad-${idx}`} fill={EDAD_COLORS[idx % EDAD_COLORS.length]} />

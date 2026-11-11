@@ -181,6 +181,8 @@ class VisitService
                 $visit->toArray()
             );
 
+            StatsService::invalidateCache();
+
             return $visit->load(['ciudadano', 'punto', 'categoria', 'subcategoria', 'gestor']);
         });
     }

@@ -28,10 +28,16 @@ class User extends Authenticatable
         'activo',
     ];
 
+    protected static ?array $columnsCache = null;
+
     public static function getTableColumns(): array
     {
+        if (static::$columnsCache !== null) {
+            return static::$columnsCache;
+        }
+
         try {
-            return Schema::getColumnListing('users');
+            return static::$columnsCache = Schema::getColumnListing('users');
         } catch (\Throwable $e) {
             return [];
         }

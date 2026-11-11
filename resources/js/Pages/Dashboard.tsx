@@ -1259,10 +1259,10 @@ export default function Dashboard({
                                             { name: 'Adultos (29-59)', value: stats.dependencia_formacion.grupos_edad.adultos },
                                             { name: 'Mayores (60+)', value: stats.dependencia_formacion.grupos_edad.adulto_mayor },
                                         ]}
-                                        margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                                        margin={{ top: 5, right: 18, left: -16, bottom: 5 }}
                                     >
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.5} />
-                                        <XAxis dataKey="name" stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} />
+                                        <XAxis dataKey="name" interval={0} stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} />
                                         <YAxis stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
                                         <Tooltip formatter={(value: any) => [`${value} beneficiarios`, 'Cantidad']} />
                                         <Bar dataKey="value" radius={[5, 5, 0, 0]}>

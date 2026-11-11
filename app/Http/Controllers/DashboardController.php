@@ -8,6 +8,8 @@ use App\Services\MLService;
 use App\Services\StatsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,6 +19,28 @@ class DashboardController extends Controller
         protected StatsService $statsService,
         protected MLService $mlService
     ) {}
+
+    public function welcome(): Response|RedirectResponse
+    {
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->hasRole(['Usuario', 'Ciudadano']) || $user->es_usuario_ciudadano) {
+                return redirect()->route('portal.index');
+            }
+
+            return redirect()->route('dashboard');
+        }
+
+        $points = Cache::remember('welcome_points_list', 1800, function () {
+            return Point::where('activo', true)
+                ->whereNotIn('id_punto', [5, 6])
+                ->get(['id_punto', 'nombre_punto', 'zona', 'direccion']);
+        });
+
+        return Inertia::render('Welcome', [
+            'points' => $points,
+        ]);
+    }
 
     public function index(Request $request): Response|RedirectResponse
     {
@@ -71,19 +95,22 @@ class DashboardController extends Controller
         $churnAlerts = $this->mlService->getCitizensAtRiskOfChurn(5);
         $tomorrowLoad = $this->mlService->predictTomorrowLoad($pointId);
 
+        $allPoints = Cache::remember('dashboard_active_points', 600, function () {
+            return Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'codigo', 'zona']);
+        });
+
         $recentVisitsQuery = Visit::with(['ciudadano', 'punto', 'categoria', 'subcategoria', 'gestor']);
         if ($pointId) {
             $recentVisitsQuery->where('id_punto', $pointId);
         } elseif ($zona) {
-            $recentVisitsQuery->whereHas('punto', fn ($q) => $q->where('zona', $zona));
+            $zonaIds = $allPoints->where('zona', $zona)->pluck('id_punto')->all();
+            $recentVisitsQuery->whereIn('id_punto', ! empty($zonaIds) ? $zonaIds : [-1]);
         }
         $recentVisits = $recentVisitsQuery->latest('created_at')->limit(8)->get();
 
-        $pointsQuery = Point::where('activo', true);
-        if (! $isGlobal && $user && $user->id_punto) {
-            $pointsQuery->where('id_punto', $user->id_punto);
-        }
-        $points = $pointsQuery->get(['id_punto', 'nombre_punto', 'codigo', 'zona']);
+        $points = (! $isGlobal && $user && $user->id_punto)
+            ? $allPoints->where('id_punto', (int) $user->id_punto)->values()
+            : $allPoints;
 
         return Inertia::render('Dashboard', [
             'stats' => $stats,

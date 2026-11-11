@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Point;
 use App\Models\RoomLoan;
+use App\Services\StatsService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -132,6 +133,8 @@ class RoomLoanController extends Controller
             ]
         );
 
+        StatsService::invalidateCache();
+
         return redirect()->route('prestamos.index')
             ->with('success', 'Préstamo de sala registrado con éxito.');
     }
@@ -167,6 +170,8 @@ class RoomLoanController extends Controller
             antiguos: $oldData,
             nuevos: $validated
         );
+
+        StatsService::invalidateCache();
 
         $msg = $validated['estado'] === 'Cancelado'
             ? 'Solicitud rechazada y motivo notificado al ciudadano.'

@@ -9,6 +9,7 @@ use App\Models\SubCategory;
 use App\Models\Visit;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class MLService
@@ -133,35 +134,37 @@ class MLService
      */
     public function getCitizensAtRiskOfChurn(int $limit = 6): Collection
     {
-        $thresholdDays = Setting::get('dias_alerta_inactividad', 60);
-        $thresholdDate = Carbon::now()->subDays($thresholdDays);
+        return Cache::remember("ml_churn_risk_{$limit}", 300, function () use ($limit) {
+            $thresholdDays = Setting::get('dias_alerta_inactividad', 60);
+            $thresholdDate = Carbon::now()->subDays($thresholdDays);
 
-        return Citizen::has('visitas', '>=', 2)
-            ->whereDoesntHave('visitas', function ($q) use ($thresholdDate) {
-                $q->where('created_at', '>=', $thresholdDate);
-            })
-            ->with(['punto', 'visitas' => fn($q) => $q->latest()->limit(1)])
-            ->withCount('visitas')
-            ->orderByDesc('visitas_count')
-            ->limit($limit)
-            ->get()
-            ->map(function ($citizen) {
-                $lastVisit = $citizen->visitas->first();
-                $daysInactive = $lastVisit ? $lastVisit->created_at->diffInDays(now()) : 90;
-                $riskLevel = $daysInactive > 90 ? 'ALTO' : 'MEDIO';
+            return Citizen::has('visitas', '>=', 2)
+                ->whereDoesntHave('visitas', function ($q) use ($thresholdDate) {
+                    $q->where('created_at', '>=', $thresholdDate);
+                })
+                ->with(['punto', 'visitas' => fn($q) => $q->latest()->limit(1)])
+                ->withCount('visitas')
+                ->orderByDesc('visitas_count')
+                ->limit($limit)
+                ->get()
+                ->map(function ($citizen) {
+                    $lastVisit = $citizen->visitas->first();
+                    $daysInactive = $lastVisit ? $lastVisit->created_at->diffInDays(now()) : 90;
+                    $riskLevel = $daysInactive > 90 ? 'ALTO' : 'MEDIO';
 
-                return [
-                    'id_form_pvd' => $citizen->id_form_pvd,
-                    'documento' => $citizen->documento,
-                    'nombre_completo' => $citizen->nombre_completo,
-                    'telefono' => $citizen->telefono,
-                    'punto_nombre' => $citizen->punto->nombre_punto ?? 'PVD',
-                    'total_visitas' => $citizen->visitas_count,
-                    'ultima_visita_fecha' => $lastVisit ? $lastVisit->created_at->toDateString() : null,
-                    'dias_inactivo' => $daysInactive,
-                    'nivel_riesgo' => $riskLevel,
-                ];
-            });
+                    return [
+                        'id_form_pvd' => $citizen->id_form_pvd,
+                        'documento' => $citizen->documento,
+                        'nombre_completo' => $citizen->nombre_completo,
+                        'telefono' => $citizen->telefono,
+                        'punto_nombre' => $citizen->punto->nombre_punto ?? 'PVD',
+                        'total_visitas' => $citizen->visitas_count,
+                        'ultima_visita_fecha' => $lastVisit ? $lastVisit->created_at->toDateString() : null,
+                        'dias_inactivo' => $daysInactive,
+                        'nivel_riesgo' => $riskLevel,
+                    ];
+                });
+        });
     }
 
     /**
@@ -233,28 +236,33 @@ class MLService
      */
     public function predictTomorrowLoad(?int $pointId = null): array
     {
-        $dayOfWeek = Carbon::tomorrow()->dayOfWeekIso; // 1 = Lunes, 7 = Domingo
+        $dayKey = Carbon::tomorrow()->toDateString();
+        $cacheKey = 'ml_tomorrow_load_' . ($pointId ?? 'all') . "_{$dayKey}";
 
-        $driver = DB::getDriverName();
-        $dayIndex = (string) ($dayOfWeek % 7);
+        return Cache::remember($cacheKey, 300, function () use ($pointId) {
+            $dayOfWeek = Carbon::tomorrow()->dayOfWeekIso; // 1 = Lunes, 7 = Domingo
 
-        $query = Visit::when($pointId, fn($q) => $q->where('id_punto', $pointId));
+            $driver = DB::getDriverName();
+            $dayIndex = (string) ($dayOfWeek % 7);
 
-        if ($driver === 'sqlite') {
-            $avgVisits = $query->whereRaw("strftime('%w', created_at) = ?", [$dayIndex])->count();
-            $samplesCount = max(1, Visit::select(DB::raw("date(created_at) as d"))->distinct()->count());
-        } else {
-            $avgVisits = $query->whereRaw("DAYOFWEEK(created_at) - 1 = ?", [$dayIndex])->count();
-            $samplesCount = max(1, Visit::select(DB::raw("DATE(created_at) as d"))->distinct()->count());
-        }
+            $query = Visit::when($pointId, fn($q) => $q->where('id_punto', $pointId));
 
-        $estimate = max(18, round(($avgVisits / $samplesCount) * 1.15));
+            if ($driver === 'sqlite') {
+                $avgVisits = $query->whereRaw("strftime('%w', created_at) = ?", [$dayIndex])->count();
+                $samplesCount = max(1, Visit::select(DB::raw("date(created_at) as d"))->distinct()->count());
+            } else {
+                $avgVisits = $query->whereRaw("DAYOFWEEK(created_at) - 1 = ?", [$dayIndex])->count();
+                $samplesCount = max(1, Visit::select(DB::raw("DATE(created_at) as d"))->distinct()->count());
+            }
 
-        return [
-            'visitas_estimadas' => $estimate,
-            'hora_pico' => '10:00 am - 11:30 am',
-            'dia_semana' => Carbon::tomorrow()->locale('es')->isoFormat('dddd'),
-            'recomendacion' => 'Mantener 2 gestores disponibles en la franja matutina.',
-        ];
+            $estimate = max(18, round(($avgVisits / $samplesCount) * 1.15));
+
+            return [
+                'visitas_estimadas' => $estimate,
+                'hora_pico' => '10:00 am - 11:30 am',
+                'dia_semana' => Carbon::tomorrow()->locale('es')->isoFormat('dddd'),
+                'recomendacion' => 'Mantener 2 gestores disponibles en la franja matutina.',
+            ];
+        });
     }
 }
