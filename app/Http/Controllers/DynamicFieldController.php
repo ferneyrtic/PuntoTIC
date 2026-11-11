@@ -19,21 +19,24 @@ class DynamicFieldController extends Controller
             return false;
         }
 
-        return $user->isAdmin() || $user->hasRole([
-            'Administrador',
-            'Super Administrador',
-            'Super Admin',
-            'Coordinador PVD',
-            'Coordinador General',
-            'Coordinador',
-            'Coordinador Aula Digital',
-        ]);
+        return $user->isAdmin() ||
+            $user->tieneAlcanceGlobal() ||
+            $user->hasRole([
+                'Administrador',
+                'Super Administrador',
+                'Super Admin',
+                'Coordinador PVD',
+                'Coordinador General',
+                'Coordinador',
+                'Coordinador Aula Digital',
+            ]) ||
+            in_array($user->email, ['admin@acacias.gov.co', 'coordinador.general@acacias.gov.co', 'davidmesa.cps.tic@gmail.com']);
     }
 
     public function index(Request $request): Response
     {
         if (! $this->canManage($request)) {
-            abort(403, 'Acceso denegado a campos dinámicos.');
+            abort(403, 'Acceso denegado: La administración de campos dinámicos está reservada exclusivamente para la Coordinación General y Administración.');
         }
 
         $fields = DynamicField::orderBy('modulo')->orderBy('orden')->get();
@@ -46,7 +49,7 @@ class DynamicFieldController extends Controller
     public function store(Request $request): RedirectResponse
     {
         if (! $this->canManage($request)) {
-            abort(403, 'Acceso denegado a campos dinámicos.');
+            abort(403, 'Acceso denegado: La administración de campos dinámicos está reservada exclusivamente para la Coordinación General y Administración.');
         }
 
         $validated = $request->validate([
@@ -72,7 +75,7 @@ class DynamicFieldController extends Controller
     public function destroy(Request $request, DynamicField $campo): RedirectResponse
     {
         if (! $this->canManage($request)) {
-            abort(403, 'Acceso denegado a campos dinámicos.');
+            abort(403, 'Acceso denegado: La administración de campos dinámicos está reservada exclusivamente para la Coordinación General y Administración.');
         }
 
         AuditLog::registrar('ELIMINAR_CAMPO_DINAMICO', 'CamposDinamicos', (string) $campo->id_campo, $campo->toArray(), null);

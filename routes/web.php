@@ -73,16 +73,16 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('throttle:20,1')
         ->name('exportar.listado-asistencia');
 
-    // Gestión de Categorías y Subcategorías
-    Route::get('categorias', [CategoryController::class, 'index'])->name('categorias.index');
-    Route::middleware(['role:Administrador|Coordinador PVD'])->group(function () {
+    // Gestión de Categorías y Subcategorías (Exclusivo para Coordinación General y Administración)
+    Route::middleware(['role:Administrador|Coordinador General|Coordinador PVD'])->group(function () {
+        Route::get('categorias', [CategoryController::class, 'index'])->name('categorias.index');
         Route::post('categorias', [CategoryController::class, 'store'])->name('categorias.store');
         Route::put('categorias/{categoria}', [CategoryController::class, 'update'])->name('categorias.update');
         Route::delete('categorias/{categoria}', [CategoryController::class, 'destroy'])->name('categorias.destroy');
         Route::post('/categorias/{categoria}/subcategorias', [CategoryController::class, 'storeSubcategory'])->name('categorias.subcategorias.store');
         Route::delete('/subcategorias/{subcategoria}', [CategoryController::class, 'deleteSubcategory'])->name('categorias.subcategorias.destroy');
 
-        // Campos Dinámicos (Solo Administrador y Coordinador PVD)
+        // Campos Dinámicos (Solo Administrador y Coordinador General)
         Route::resource('campos-dinamicos', DynamicFieldController::class)
             ->parameters(['campos-dinamicos' => 'campo'])
             ->only(['index', 'store', 'destroy']);

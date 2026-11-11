@@ -32,8 +32,25 @@ import {
     Share2,
     Award,
     X,
+    Download,
 } from 'lucide-react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from 'recharts';
+import {
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    CartesianGrid,
+    Cell,
+    PieChart,
+    Pie,
+    Legend,
+} from 'recharts';
+
+const SEDE_COLORS = ['#059669', '#2563eb', '#d97706', '#0d9488', '#6366f1'];
+const GENERO_COLORS = ['#ec4899', '#3b82f6', '#8b5cf6'];
+const EDAD_COLORS = ['#10b981', '#06b6d4', '#3b82f6', '#f59e0b'];
 
 interface Props {
     stats: {
@@ -634,16 +651,46 @@ export default function Dashboard({
                                             {comparativa_sedes.length} Sedes
                                         </span>
                                     </div>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-4">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-3">
                                         Participación de demanda en {periodo.label}
                                     </p>
 
-                                    <div className="space-y-4">
-                                        {comparativa_sedes.map((punto) => (
-                                            <div key={punto.id_punto} className="space-y-1.5">
+                                    {/* Gráfico Donut de Participación por Sede */}
+                                    <div className="h-40 w-full mb-3">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={comparativa_sedes.map((s) => ({
+                                                        name: s.nombre_punto,
+                                                        value: s.total_visitas,
+                                                        porcentaje: s.porcentaje,
+                                                    }))}
+                                                    dataKey="value"
+                                                    nameKey="name"
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={36}
+                                                    outerRadius={65}
+                                                    paddingAngle={3}
+                                                >
+                                                    {comparativa_sedes.map((_, index) => (
+                                                        <Cell key={`cell-sede-${index}`} fill={SEDE_COLORS[index % SEDE_COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip formatter={(value: any, name: any) => [`${value} visitas`, name]} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {comparativa_sedes.map((punto, idx) => (
+                                            <div key={punto.id_punto} className="space-y-1">
                                                 <div className="flex items-center justify-between text-xs">
                                                     <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
-                                                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                        <span
+                                                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                                                            style={{ backgroundColor: SEDE_COLORS[idx % SEDE_COLORS.length] }}
+                                                        />
                                                         <span className="truncate max-w-[140px]">{punto.nombre_punto}</span>
                                                         <span
                                                             className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
@@ -659,10 +706,13 @@ export default function Dashboard({
                                                         {punto.total_visitas.toLocaleString()} ({punto.porcentaje}%)
                                                     </span>
                                                 </div>
-                                                <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                                <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                                                     <div
-                                                        className="h-full rounded-full bg-emerald-600 transition-all duration-500"
-                                                        style={{ width: `${Math.max(4, punto.porcentaje)}%` }}
+                                                        className="h-full rounded-full transition-all duration-500"
+                                                        style={{
+                                                            width: `${Math.max(4, punto.porcentaje)}%`,
+                                                            backgroundColor: SEDE_COLORS[idx % SEDE_COLORS.length],
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
@@ -725,6 +775,59 @@ export default function Dashboard({
                             </div>
                         )}
                     </div>
+
+                    {/* Gráfico de Categorías y Servicios más Demandados */}
+                    {distribucion_categorias && distribucion_categorias.length > 0 && (
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors duration-200">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                                <div>
+                                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                                        Distribución de Atención por Categorías y Servicios
+                                    </h2>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                        Volumen de atenciones discriminado por tipo de servicio en {periodo.label} ({scope.nombre})
+                                    </p>
+                                </div>
+                                <span className="text-xs font-bold px-3 py-1 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 self-start sm:self-auto">
+                                    {distribucion_categorias.length} Categorías Activas
+                                </span>
+                            </div>
+
+                            <div className="h-64 sm:h-72 w-full pt-2">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={distribucion_categorias.map((c) => ({
+                                            name: c.nombre.length > 28 ? c.nombre.substring(0, 26) + '...' : c.nombre,
+                                            fullName: c.nombre,
+                                            visitas: c.total_visitas,
+                                            porcentaje: c.porcentaje,
+                                            color: c.color || '#059669',
+                                        }))}
+                                        layout="vertical"
+                                        margin={{ top: 10, right: 30, left: 20, bottom: 0 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" opacity={0.5} />
+                                        <XAxis type="number" stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} />
+                                        <YAxis dataKey="name" type="category" stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} width={140} />
+                                        <Tooltip
+                                            formatter={(value: any, name: any, props: any) => [
+                                                `${value} atenciones (${props.payload.porcentaje}%)`,
+                                                props.payload.fullName,
+                                            ]}
+                                        />
+                                        <Bar dataKey="visitas" radius={[0, 6, 6, 0]}>
+                                            {distribucion_categorias.map((entry, index) => (
+                                                <Cell
+                                                    key={`cat-cell-${index}`}
+                                                    fill={entry.color || '#059669'}
+                                                />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Tabla de Comparativa Multidimensional de Sedes (Exclusiva para Coordinador General y Administrador con alcance global) */}
                     {isGlobal && comparativa_sedes.length > 1 && (
@@ -923,36 +1026,72 @@ export default function Dashboard({
                             </span>
                         </div>
 
-                        <div className="space-y-4 pt-2">
-                            {stats.dependencia_tramites.top_tramites.map((t, idx) => (
-                                <div key={t.id_subcategoria} className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-xs font-bold">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-black flex items-center justify-center">
-                                                {idx + 1}
-                                            </span>
-                                            <span className="text-slate-800">{t.nombre}</span>
-                                        </div>
-                                        <div className="text-slate-700 tabular-nums">
-                                            <span>{t.total.toLocaleString()} trámites</span>
-                                            <span className="text-slate-400 font-normal ml-1">({t.porcentaje}%)</span>
-                                        </div>
-                                    </div>
-                                    <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 transition-all duration-500"
-                                            style={{ width: `${Math.max(5, t.porcentaje)}%` }}
-                                        />
-                                    </div>
+                        {stats.dependencia_tramites.top_tramites.length > 0 ? (
+                            <div className="space-y-6">
+                                {/* Gráfico de Barras de Trámites */}
+                                <div className="h-64 sm:h-72 w-full pt-2">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart
+                                            data={stats.dependencia_tramites.top_tramites.map((t) => ({
+                                                name: t.nombre.length > 25 ? t.nombre.substring(0, 23) + '...' : t.nombre,
+                                                fullName: t.nombre,
+                                                total: t.total,
+                                                porcentaje: t.porcentaje,
+                                            }))}
+                                            layout="vertical"
+                                            margin={{ top: 10, right: 30, left: 20, bottom: 0 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" opacity={0.5} />
+                                            <XAxis type="number" stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} />
+                                            <YAxis dataKey="name" type="category" stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} width={130} />
+                                            <Tooltip
+                                                formatter={(value: any, name: any, props: any) => [
+                                                    `${value} solicitudes (${props.payload.porcentaje}%)`,
+                                                    props.payload.fullName,
+                                                ]}
+                                            />
+                                            <Bar dataKey="total" fill="#2563eb" radius={[0, 6, 6, 0]}>
+                                                {stats.dependencia_tramites.top_tramites.map((_, index) => (
+                                                    <Cell
+                                                        key={`tramite-cell-${index}`}
+                                                        fill={index === 0 ? '#1d4ed8' : index === 1 ? '#2563eb' : index === 2 ? '#0284c7' : '#0ea5e9'}
+                                                    />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 </div>
-                            ))}
 
-                            {stats.dependencia_tramites.top_tramites.length === 0 && (
-                                <div className="py-8 text-center text-xs text-slate-400">
-                                    No hay registros de trámites en el período seleccionado.
+                                <div className="space-y-4 pt-3 border-t border-slate-100">
+                                    {stats.dependencia_tramites.top_tramites.map((t, idx) => (
+                                        <div key={t.id_subcategoria} className="space-y-1.5">
+                                            <div className="flex items-center justify-between text-xs font-bold">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-black flex items-center justify-center">
+                                                        {idx + 1}
+                                                    </span>
+                                                    <span className="text-slate-800">{t.nombre}</span>
+                                                </div>
+                                                <div className="text-slate-700 tabular-nums">
+                                                    <span>{t.total.toLocaleString()} trámites</span>
+                                                    <span className="text-slate-400 font-normal ml-1">({t.porcentaje}%)</span>
+                                                </div>
+                                            </div>
+                                            <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-500"
+                                                    style={{ width: `${Math.max(5, t.porcentaje)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        ) : (
+                            <div className="py-8 text-center text-xs text-slate-400">
+                                No hay registros de trámites en el período seleccionado.
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -988,19 +1127,46 @@ export default function Dashboard({
                         {/* Género */}
                         <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs">
                             <h3 className="text-sm font-bold text-slate-900 mb-1">Distribución por Género</h3>
-                            <p className="text-xs text-slate-500 font-medium mb-4">Participación ciudadana en la oferta TIC</p>
-                            <div className="grid grid-cols-3 gap-3 text-center">
-                                <div className="p-4 rounded-2xl bg-pink-50 border border-pink-200/60">
-                                    <div className="text-2xl font-black text-pink-700">{stats.dependencia_formacion.genero.femenino}</div>
-                                    <div className="text-xs font-bold text-pink-800 mt-1">Mujeres</div>
+                            <p className="text-xs text-slate-500 font-medium mb-3">Participación ciudadana en la oferta TIC</p>
+                            
+                            <div className="h-44 w-full flex items-center justify-center mb-3">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={[
+                                                { name: 'Mujeres', value: stats.dependencia_formacion.genero.femenino },
+                                                { name: 'Hombres', value: stats.dependencia_formacion.genero.masculino },
+                                                { name: 'Otro / No esp.', value: stats.dependencia_formacion.genero.otro },
+                                            ].filter((g) => g.value > 0)}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={36}
+                                            outerRadius={65}
+                                            paddingAngle={3}
+                                        >
+                                            <Cell fill="#ec4899" />
+                                            <Cell fill="#3b82f6" />
+                                            <Cell fill="#8b5cf6" />
+                                        </Pie>
+                                        <Tooltip formatter={(value: any, name: any) => [`${value} ciudadanos`, name]} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2.5 text-center">
+                                <div className="p-3 rounded-2xl bg-pink-50 border border-pink-200/60">
+                                    <div className="text-xl font-black text-pink-700">{stats.dependencia_formacion.genero.femenino}</div>
+                                    <div className="text-[11px] font-bold text-pink-800 mt-0.5">Mujeres</div>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200/60">
-                                    <div className="text-2xl font-black text-blue-700">{stats.dependencia_formacion.genero.masculino}</div>
-                                    <div className="text-xs font-bold text-blue-800 mt-1">Hombres</div>
+                                <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200/60">
+                                    <div className="text-xl font-black text-blue-700">{stats.dependencia_formacion.genero.masculino}</div>
+                                    <div className="text-[11px] font-bold text-blue-800 mt-0.5">Hombres</div>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/60">
-                                    <div className="text-2xl font-black text-slate-700">{stats.dependencia_formacion.genero.otro}</div>
-                                    <div className="text-xs font-bold text-slate-800 mt-1">Otro / No esp.</div>
+                                <div className="p-3 rounded-2xl bg-purple-50 border border-purple-200/60">
+                                    <div className="text-xl font-black text-purple-700">{stats.dependencia_formacion.genero.otro}</div>
+                                    <div className="text-[11px] font-bold text-purple-800 mt-0.5">Otro / No esp.</div>
                                 </div>
                             </div>
                         </div>
@@ -1008,23 +1174,48 @@ export default function Dashboard({
                         {/* Grupos de Edad */}
                         <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs">
                             <h3 className="text-sm font-bold text-slate-900 mb-1">Grupos Etarios</h3>
-                            <p className="text-xs text-slate-500 font-medium mb-4">Distribución de edades de los beneficiarios</p>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
-                                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                                    <div className="text-xl font-black text-slate-900">{stats.dependencia_formacion.grupos_edad.ninos}</div>
-                                    <div className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">Niños (0-13)</div>
+                            <p className="text-xs text-slate-500 font-medium mb-3">Distribución de edades de los beneficiarios</p>
+
+                            <div className="h-44 w-full mb-3 pt-2">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={[
+                                            { name: 'Niños (0-13)', value: stats.dependencia_formacion.grupos_edad.ninos },
+                                            { name: 'Jóvenes (14-28)', value: stats.dependencia_formacion.grupos_edad.jovenes },
+                                            { name: 'Adultos (29-59)', value: stats.dependencia_formacion.grupos_edad.adultos },
+                                            { name: 'Mayores (60+)', value: stats.dependencia_formacion.grupos_edad.adulto_mayor },
+                                        ]}
+                                        margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.5} />
+                                        <XAxis dataKey="name" stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
+                                        <Tooltip formatter={(value: any) => [`${value} beneficiarios`, 'Cantidad']} />
+                                        <Bar dataKey="value" radius={[5, 5, 0, 0]}>
+                                            {EDAD_COLORS.map((col, idx) => (
+                                                <Cell key={`cell-edad-${idx}`} fill={col} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                                <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100">
+                                    <div className="text-lg font-black text-emerald-800">{stats.dependencia_formacion.grupos_edad.ninos}</div>
+                                    <div className="text-[10px] font-bold text-emerald-700 uppercase mt-0.5">Niños (0-13)</div>
                                 </div>
-                                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
-                                    <div className="text-xl font-black text-emerald-700">{stats.dependencia_formacion.grupos_edad.jovenes}</div>
-                                    <div className="text-[10px] font-bold text-emerald-800 uppercase mt-0.5">Jóvenes (14-28)</div>
+                                <div className="p-2.5 rounded-xl bg-cyan-50/70 border border-cyan-100">
+                                    <div className="text-lg font-black text-cyan-800">{stats.dependencia_formacion.grupos_edad.jovenes}</div>
+                                    <div className="text-[10px] font-bold text-cyan-700 uppercase mt-0.5">Jóvenes (14-28)</div>
                                 </div>
-                                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                                    <div className="text-xl font-black text-slate-900">{stats.dependencia_formacion.grupos_edad.adultos}</div>
-                                    <div className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">Adultos (29-59)</div>
+                                <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-100">
+                                    <div className="text-lg font-black text-blue-800">{stats.dependencia_formacion.grupos_edad.adultos}</div>
+                                    <div className="text-[10px] font-bold text-blue-700 uppercase mt-0.5">Adultos (29-59)</div>
                                 </div>
-                                <div className="p-3 rounded-xl bg-amber-50 border border-amber-100">
-                                    <div className="text-xl font-black text-amber-700">{stats.dependencia_formacion.grupos_edad.adulto_mayor}</div>
-                                    <div className="text-[10px] font-bold text-amber-800 uppercase mt-0.5">Mayores (60+)</div>
+                                <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-100">
+                                    <div className="text-lg font-black text-amber-800">{stats.dependencia_formacion.grupos_edad.adulto_mayor}</div>
+                                    <div className="text-[10px] font-bold text-amber-700 uppercase mt-0.5">Mayores (60+)</div>
                                 </div>
                             </div>
                         </div>
@@ -1061,7 +1252,7 @@ export default function Dashboard({
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h2 className="text-base font-bold text-slate-900">
-                                    Motivos de Préstamo de Infraestructura
+                                    Motivos de Préstamo de Infraestructura y Aforo
                                 </h2>
                                 <p className="text-xs text-slate-500 font-medium">
                                     Reuniones comunitarias, institucionales y eventos JAC
@@ -1069,30 +1260,61 @@ export default function Dashboard({
                             </div>
                         </div>
 
-                        <div className="space-y-4">
-                            {stats.dependencia_salas.actividades.map((act) => (
-                                <div key={act.tipo} className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-xs font-bold">
-                                        <span className="text-slate-800">{act.tipo}</span>
-                                        <div className="text-slate-700">
-                                            <span>{act.eventos} eventos</span> · <strong className="text-emerald-700">{act.asistentes} asistentes</strong> ({act.porcentaje}%)
-                                        </div>
-                                    </div>
-                                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full bg-emerald-600 transition-all duration-500"
-                                            style={{ width: `${Math.max(4, act.porcentaje)}%` }}
-                                        />
-                                    </div>
+                        {stats.dependencia_salas.actividades.length > 0 ? (
+                            <div className="space-y-6">
+                                {/* Gráfico de Actividades y Asistentes en Salas */}
+                                <div className="h-64 sm:h-72 w-full pt-2">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart
+                                            data={stats.dependencia_salas.actividades.map((a) => ({
+                                                name: a.tipo.length > 25 ? a.tipo.substring(0, 23) + '...' : a.tipo,
+                                                fullName: a.tipo,
+                                                eventos: a.eventos,
+                                                asistentes: a.asistentes,
+                                                porcentaje: a.porcentaje,
+                                            }))}
+                                            margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.5} />
+                                            <XAxis dataKey="name" stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
+                                            <Tooltip
+                                                formatter={(value: any, name: any) => [
+                                                    name === 'asistentes' ? `${value} asistentes` : `${value} eventos`,
+                                                    name === 'asistentes' ? 'Personas' : 'Sesiones',
+                                                ]}
+                                            />
+                                            <Bar dataKey="asistentes" fill="#8b5cf6" name="asistentes" radius={[6, 6, 0, 0]} />
+                                            <Bar dataKey="eventos" fill="#059669" name="eventos" radius={[6, 6, 0, 0]} />
+                                            <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 </div>
-                            ))}
 
-                            {stats.dependencia_salas.actividades.length === 0 && (
-                                <div className="py-8 text-center text-xs text-slate-400">
-                                    No hay préstamos registrados en el período seleccionado.
+                                <div className="space-y-4 pt-3 border-t border-slate-100">
+                                    {stats.dependencia_salas.actividades.map((act) => (
+                                        <div key={act.tipo} className="space-y-1.5">
+                                            <div className="flex items-center justify-between text-xs font-bold">
+                                                <span className="text-slate-800">{act.tipo}</span>
+                                                <div className="text-slate-700">
+                                                    <span>{act.eventos} eventos</span> · <strong className="text-purple-700">{act.asistentes} asistentes</strong> ({act.porcentaje}%)
+                                                </div>
+                                            </div>
+                                            <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-gradient-to-r from-purple-600 to-indigo-500 transition-all duration-500"
+                                                    style={{ width: `${Math.max(4, act.porcentaje)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        ) : (
+                            <div className="py-8 text-center text-xs text-slate-400">
+                                No hay préstamos registrados en el período seleccionado.
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -1123,37 +1345,72 @@ export default function Dashboard({
 
                     {/* Desglose por Tipo de Impresión */}
                     <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs p-6">
-                        <h2 className="text-base font-bold text-slate-900 mb-1">
-                            Distribución de Consumibles por Tipo de Documento
-                        </h2>
-                        <p className="text-xs text-slate-500 font-medium mb-4">
-                            Control y auditoría de uso de papel y digitalización
-                        </p>
-
-                        <div className="space-y-4">
-                            {stats.dependencia_impresiones.tipos.map((t) => (
-                                <div key={t.tipo} className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-xs font-bold">
-                                        <span className="text-slate-800">{t.tipo}</span>
-                                        <div className="text-slate-700">
-                                            <strong className="text-amber-700">{t.hojas.toLocaleString()} hojas</strong> ({t.solicitudes} trámites) · {t.porcentaje}%
-                                        </div>
-                                    </div>
-                                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                                            style={{ width: `${Math.max(4, t.porcentaje)}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-
-                            {stats.dependencia_impresiones.tipos.length === 0 && (
-                                <div className="py-8 text-center text-xs text-slate-400">
-                                    No hay registros de impresiones en el período seleccionado.
-                                </div>
-                            )}
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 className="text-base font-bold text-slate-900">
+                                    Distribución Gráfica de Consumibles por Tipo de Documento
+                                </h2>
+                                <p className="text-xs text-slate-500 font-medium">
+                                    Control y auditoría de uso de papel y digitalización
+                                </p>
+                            </div>
                         </div>
+
+                        {stats.dependencia_impresiones.tipos.length > 0 ? (
+                            <div className="space-y-6">
+                                {/* Gráfico de Hojas y Solicitudes */}
+                                <div className="h-64 sm:h-72 w-full pt-2">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart
+                                            data={stats.dependencia_impresiones.tipos.map((t) => ({
+                                                name: t.tipo.length > 25 ? t.tipo.substring(0, 23) + '...' : t.tipo,
+                                                fullName: t.tipo,
+                                                hojas: t.hojas,
+                                                solicitudes: t.solicitudes,
+                                                porcentaje: t.porcentaje,
+                                            }))}
+                                            margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.5} />
+                                            <XAxis dataKey="name" stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
+                                            <Tooltip
+                                                formatter={(value: any, name: any) => [
+                                                    name === 'hojas' ? `${value} hojas impresas` : `${value} solicitudes`,
+                                                    name === 'hojas' ? 'Páginas' : 'Trámites',
+                                                ]}
+                                            />
+                                            <Bar dataKey="hojas" fill="#d97706" name="hojas" radius={[6, 6, 0, 0]} />
+                                            <Bar dataKey="solicitudes" fill="#0d9488" name="solicitudes" radius={[6, 6, 0, 0]} />
+                                            <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+
+                                <div className="space-y-4 pt-3 border-t border-slate-100">
+                                    {stats.dependencia_impresiones.tipos.map((t) => (
+                                        <div key={t.tipo} className="space-y-1.5">
+                                            <div className="flex items-center justify-between text-xs font-bold">
+                                                <span className="text-slate-800">{t.tipo}</span>
+                                                <div className="text-slate-700">
+                                                    <strong className="text-amber-700">{t.hojas.toLocaleString()} hojas</strong> ({t.solicitudes} trámites) · {t.porcentaje}%
+                                                </div>
+                                            </div>
+                                            <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-amber-500 transition-all duration-500"
+                                                    style={{ width: `${Math.max(4, t.porcentaje)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="py-8 text-center text-xs text-slate-400">
+                                No hay registros de impresiones en el período seleccionado.
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

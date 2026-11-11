@@ -113,17 +113,23 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
     };
     const user = auth?.user;
     const userRoles: string[] = auth?.roles || user?.roles_nombres || [];
-    const isAdmin = Boolean(
-        user?.is_admin ||
-        auth?.is_admin ||
+
+    const isSuperAdmin = Boolean(
+        user?.email === 'admin@acacias.gov.co' ||
+        user?.email === 'davidmesa.cps.tic@gmail.com' ||
         userRoles.some((r: string) =>
             ['Administrador', 'Super Administrador', 'Super Admin', 'SuperAdm', 'Admin'].includes(r)
         )
     );
-    const canManageFields = Boolean(
+
+    const isAdmin = Boolean(user?.is_admin || auth?.is_admin || isSuperAdmin);
+
+    const isCoordinatorOrAdmin = Boolean(
         isAdmin ||
+        user?.tiene_alcance_global ||
+        user?.email === 'coordinador.general@acacias.gov.co' ||
         userRoles.some((r: string) =>
-            ['Coordinador PVD', 'Coordinador General', 'Coordinador', 'Coordinador Aula Digital'].includes(r)
+            ['Coordinador PVD', 'Coordinador General', 'Coordinador', 'Coordinador Aula Digital', 'Gestor Global'].includes(r)
         )
     );
 
@@ -265,14 +271,14 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                                   icon: FileSpreadsheet,
                                   active: currentUrl.startsWith('/exportar'),
                               },
-                              {
-                                  name: 'Categorías y Servicios',
-                                  href: route('categorias.index'),
-                                  icon: Layers,
-                                  active: currentUrl.startsWith('/categorias'),
-                              },
-                              ...(canManageFields
+                              ...(isCoordinatorOrAdmin
                                   ? [
+                                        {
+                                            name: 'Categorías y Servicios',
+                                            href: route('categorias.index'),
+                                            icon: Layers,
+                                            active: currentUrl.startsWith('/categorias'),
+                                        },
                                         {
                                             name: 'Campos Dinámicos',
                                             href: route('campos-dinamicos.index'),
@@ -300,7 +306,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                           ],
                       },
                   ],
-        [isCitizen, isAdmin, canManageFields, currentUrl]
+        [isCitizen, isAdmin, isCoordinatorOrAdmin, currentUrl, pendingHref]
     );
 
     const currentPointName =
@@ -380,7 +386,7 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
                 }`}
             >
-                {/* Brand Header - Proportional & Compact */}
+                {/* Brand Header - Proportional Institutional Logo */}
                 <div className="px-4 py-3 border-b border-slate-800/60 bg-slate-950/40 shrink-0">
                     {/* Official Banner Card */}
                     <div className="bg-white rounded-xl py-1.5 px-3 shadow-xs border border-white/10 flex items-center justify-center mb-2.5 group transition-all duration-300 hover:shadow-md">

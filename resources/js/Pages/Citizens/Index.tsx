@@ -5,7 +5,6 @@ import {
     Search,
     UserPlus,
     Filter,
-    FileSpreadsheet,
     Eye,
     Edit3,
     X,
@@ -80,14 +79,6 @@ export default function CitizensIndex({ citizens, filters, points }: Props) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <Link
-                            href={route('exportar.index', { tipo: 'ciudadanos' })}
-                            className="btn-tactile inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-soft-xs transition-all"
-                        >
-                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                            <span className="hidden sm:inline">Exportar Directorio</span>
-                            <span className="sm:hidden">Excel</span>
-                        </Link>
                         <Link
                             href={route('ciudadanos.create')}
                             className="btn-tactile inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-soft hover:shadow-soft-lg hover:shadow-emerald-600/30 transition-all"
