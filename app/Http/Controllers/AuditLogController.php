@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Point;
 use App\Models\User;
+use App\Services\ProductivityService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,9 +15,9 @@ use Inertia\Response;
 class AuditLogController extends Controller
 {
     /**
-     * Muestra el panel completo de Trazabilidad, Auditoría y Notificaciones del Sistema.
+     * Muestra el panel completo de Trazabilidad, Auditoría Técnica y Rendición de Cuentas PVD.
      */
-    public function index(Request $request): Response|RedirectResponse
+    public function index(Request $request, ProductivityService $productivityService): Response|RedirectResponse
     {
         if (! $request->user()?->isAdmin()) {
             $user = $request->user();
@@ -27,8 +28,26 @@ class AuditLogController extends Controller
             return redirect()->route($target)->with('warning', 'No tienes permisos para acceder al registro de actividad.');
         }
 
-        $filters = $request->only(['modulo', 'accion', 'user_id', 'fecha_desde', 'fecha_hasta', 'search']);
+        $filters = $request->only([
+            'tab',
+            'modulo',
+            'accion',
+            'user_id',
+            'fecha_desde',
+            'fecha_hasta',
+            'search',
+            'periodo',
+            'gestor_id',
+            'id_punto',
+            'zona',
+        ]);
 
+        $activeTab = $filters['tab'] ?? 'rendicion';
+
+        // 1. Datos para la pestaña de Rendición de Cuentas & Gestión Operativa del Personal
+        $rendicion = $productivityService->getRendicionCuentas($filters);
+
+        // 2. Consulta para la pestaña de Auditoría Técnica de Seguridad / Sistema
         $query = AuditLog::with(['usuario.punto', 'usuario.roles']);
 
         if (! empty($filters['modulo'])) {
@@ -67,18 +86,20 @@ class AuditLogController extends Controller
 
         $logs = $query->latest('created_at')->paginate(25)->withQueryString();
 
-        // Métricas de auditoría
+        // Métricas de auditoría técnica
         $totalEventos = AuditLog::count();
         $eventosHoy = AuditLog::whereDate('created_at', Carbon::today())->count();
         $usuariosActivos = AuditLog::distinct('user_id')->count('user_id');
 
-        // Opciones para filtros
+        // Opciones para filtros técnicos
         $modulos = AuditLog::select('modulo')->distinct()->whereNotNull('modulo')->orderBy('modulo')->pluck('modulo');
         $acciones = AuditLog::select('accion')->distinct()->whereNotNull('accion')->orderBy('accion')->pluck('accion');
         $usuarios = User::select('id', 'name', 'email', 'id_punto')->orderBy('name')->get();
-        $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto']);
+        $points = Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona']);
 
         return Inertia::render('AuditLogs/Index', [
+            'activeTab' => $activeTab,
+            'rendicion' => $rendicion,
             'logs' => $logs,
             'filters' => $filters,
             'stats' => [
