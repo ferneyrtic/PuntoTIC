@@ -210,35 +210,6 @@ class VisitasExport implements FromCollection, WithColumnWidths, WithEvents, Wit
         return $row;
     }
 
-    public function columnWidths(): array
-    {
-        return [
-            'A' => 16,
-            'B' => 20,
-            'C' => 20,
-            'D' => 10,
-            'E' => 14,
-            'F' => 16,
-            'G' => 26,
-            'H' => 20,
-            'I' => 14,
-            'J' => 10,
-            'K' => 20,
-            'L' => 16,
-            'M' => 18,
-            'N' => 24,
-            'O' => 22,
-            'P' => 22,
-            'Q' => 30,
-            'R' => 14,
-            'S' => 24,
-            'T' => 20,
-            'U' => 20,
-            'V' => 20,
-            'W' => 20,
-        ];
-    }
-
     public function styles(Worksheet $sheet): ?array
     {
         return [
