@@ -19,6 +19,37 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class CiudadanosExport implements FromCollection, WithColumnWidths, WithEvents, WithHeadings, WithMapping, WithStyles
 {
+    public const HEADINGS = [
+        'ID',
+        'Tipo Documento',
+        'N° Documento',
+        'Nombres',
+        'Apellidos',
+        'Fecha Nacimiento',
+        'Edad',
+        'Género',
+        'Correo Electrónico',
+        'Teléfono',
+        'Dirección',
+        'Barrio / Vereda',
+        'Zona',
+        'Unidad Poblacional / Comuna',
+        'Estrato',
+        'Nivel Educativo',
+        'Ocupación',
+        'Grupo Étnico',
+        'Grupo Poblacional',
+        'Tipo Aseguramiento',
+        'Punto Registro',
+        'Total Visitas',
+        'Fecha Registro',
+    ];
+
+    public const COLUMN_WIDTHS = [
+        12, 16, 18, 24, 24, 18, 10, 14, 28, 16, 30, 26,
+        14, 26, 10, 22, 22, 20, 24, 22, 28, 14, 22,
+    ];
+
     protected array $visitCounts = [];
 
     public function __construct(protected array $filters = [])
@@ -53,30 +84,16 @@ class CiudadanosExport implements FromCollection, WithColumnWidths, WithEvents, 
 
     public function headings(): array
     {
+        return self::HEADINGS;
+    }
+
+    public function columnWidths(): array
+    {
         return [
-            'ID',
-            'Tipo Documento',
-            'N° Documento',
-            'Nombres',
-            'Apellidos',
-            'Fecha Nacimiento',
-            'Edad',
-            'Género',
-            'Correo Electrónico',
-            'Teléfono',
-            'Dirección',
-            'Barrio / Vereda',
-            'Zona',
-            'Unidad Poblacional / Comuna',
-            'Estrato',
-            'Nivel Educativo',
-            'Ocupación',
-            'Grupo Étnico',
-            'Grupo Poblacional',
-            'Tipo Aseguramiento',
-            'Punto Registro',
-            'Total Visitas',
-            'Fecha Registro',
+            'A' => 12, 'B' => 16, 'C' => 18, 'D' => 24, 'E' => 24, 'F' => 18,
+            'G' => 10, 'H' => 14, 'I' => 28, 'J' => 16, 'K' => 30, 'L' => 26,
+            'M' => 14, 'N' => 26, 'O' => 10, 'P' => 22, 'Q' => 22, 'R' => 20,
+            'S' => 24, 'T' => 22, 'U' => 28, 'V' => 14, 'W' => 22,
         ];
     }
 
@@ -109,35 +126,6 @@ class CiudadanosExport implements FromCollection, WithColumnWidths, WithEvents, 
         ];
     }
 
-    public function columnWidths(): array
-    {
-        return [
-            'A' => 10,  // ID
-            'B' => 15,  // Tipo Documento
-            'C' => 18,  // N° Documento
-            'D' => 22,  // Nombres
-            'E' => 22,  // Apellidos
-            'F' => 16,  // Fecha Nacimiento
-            'G' => 10,  // Edad
-            'H' => 14,  // Género
-            'I' => 28,  // Correo
-            'J' => 16,  // Teléfono
-            'K' => 28,  // Dirección
-            'L' => 22,  // Barrio
-            'M' => 14,  // Zona
-            'N' => 22,  // Unidad Poblacional
-            'O' => 10,  // Estrato
-            'P' => 22,  // Nivel Educativo
-            'Q' => 22,  // Ocupación
-            'R' => 18,  // Grupo Étnico
-            'S' => 22,  // Grupo Poblacional
-            'T' => 18,  // Tipo Aseguramiento
-            'U' => 25,  // Punto Registro
-            'V' => 14,  // Total Visitas
-            'W' => 20,  // Fecha Registro
-        ];
-    }
-
     public function styles(Worksheet $sheet): ?array
     {
         return [
@@ -155,9 +143,8 @@ class CiudadanosExport implements FromCollection, WithColumnWidths, WithEvents, 
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 $sheet->freezePane('A2');
-                $highestRow = $sheet->getHighestRow();
                 $highestColumn = $sheet->getHighestColumn();
-                $sheet->getStyle("A1:{$highestColumn}{$highestRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFE5E7EB');
+                $sheet->getStyle("A1:{$highestColumn}1")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFE5E7EB');
                 $sheet->getRowDimension(1)->setRowHeight(28);
             },
         ];

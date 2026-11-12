@@ -38,10 +38,16 @@ class Visit extends Model
 
     protected $appends = ['id_visita', 'servicio_texto'];
 
+    protected static ?array $columnsCache = null;
+
     public static function getTableColumns(): array
     {
+        if (static::$columnsCache !== null) {
+            return static::$columnsCache;
+        }
+
         try {
-            return Schema::getColumnListing('visitas');
+            return static::$columnsCache = Schema::getColumnListing('visitas');
         } catch (\Throwable $e) {
             return [];
         }

@@ -3,10 +3,11 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\Category;
 use App\Models\Citizen;
 use App\Models\DynamicFieldValue;
+use App\Models\Point;
 use App\Models\Visit;
-use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,9 +31,9 @@ class VisitService
             'subcategoria',
             'gestor',
         ])
-        ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
-        ->filterByPoint($filters['id_punto'] ?? null)
-        ->filterByCategory($filters['id_categoria'] ?? null);
+            ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
+            ->filterByPoint($filters['id_punto'] ?? null)
+            ->filterByCategory($filters['id_categoria'] ?? null);
 
         if (! empty($filters['id_subcategoria'])) {
             $query->where('id_subcategoria', $filters['id_subcategoria']);
@@ -42,9 +43,9 @@ class VisitService
             $term = trim($filters['search']);
             $query->whereHas('ciudadano', function ($q) use ($term) {
                 $q->where('documento', 'like', "%{$term}%")
-                  ->orWhere('id', 'like', "%{$term}%")
-                  ->orWhere('nombres', 'like', "%{$term}%")
-                  ->orWhere('apellidos', 'like', "%{$term}%");
+                    ->orWhere('id', 'like', "%{$term}%")
+                    ->orWhere('nombres', 'like', "%{$term}%")
+                    ->orWhere('apellidos', 'like', "%{$term}%");
             });
         }
 
@@ -60,7 +61,7 @@ class VisitService
         return DB::transaction(function () use ($data) {
             $citizenId = $data['id_form_pvd'] ?? null;
             $pointId = Auth::user()?->id_punto ?: ($data['id_punto'] ?? 1);
-            $point = \App\Models\Point::find($pointId);
+            $point = Point::find($pointId);
             $isAulaDigital = $point?->es_aula_digital ?? in_array($pointId, [3, 4]);
 
             // Caso A: Registro rápido de Aula Digital (Niños/Estudiantes sin cédula)
@@ -86,8 +87,8 @@ class VisitService
                     $citizenId = $existingChild->id ?: $existingChild->id_form_pvd;
                 } else {
                     $count = Citizen::where('documento', 'like', "ESC-{$prefix}-%")->count() + 1;
-                    $autoDoc = sprintf("ESC-%s-%05d", $prefix, $count);
-                    $numericId = (int)("99" . $pointId . sprintf("%06d", $count));
+                    $autoDoc = sprintf('ESC-%s-%05d', $prefix, $count);
+                    $numericId = (int) ('99'.$pointId.sprintf('%06d', $count));
 
                     $citizen = $this->citizenService->createCitizen([
                         'id' => $numericId,
@@ -113,7 +114,7 @@ class VisitService
             elseif (! $citizenId && ! empty($data['documento'])) {
                 $docClean = trim((string) $data['documento']);
                 $citizen = Citizen::where('documento', $docClean)
-                    ->orWhere('id', is_numeric($docClean) ? (int)$docClean : 0)
+                    ->orWhere('id', is_numeric($docClean) ? (int) $docClean : 0)
                     ->first();
                 if (! $citizen) {
                     $citizen = $this->citizenService->createCitizen([
@@ -145,7 +146,7 @@ class VisitService
             // Categoría por defecto si es aula digital y no se seleccionó
             $idCategoria = $data['id_categoria'] ?? null;
             if (! $idCategoria && $isAulaDigital) {
-                $idCategoria = \App\Models\Category::where('activo', true)->first()?->id_categoria ?? 1;
+                $idCategoria = Category::where('activo', true)->first()?->id_categoria ?? 1;
             }
 
             $visit = Visit::create([
@@ -180,6 +181,8 @@ class VisitService
                 null,
                 $visit->toArray()
             );
+
+            StatsService::invalidateCache();
 
             return $visit->load(['ciudadano', 'punto', 'categoria', 'subcategoria', 'gestor']);
         });

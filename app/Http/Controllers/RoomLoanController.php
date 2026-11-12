@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Point;
 use App\Models\RoomLoan;
+use App\Services\StatsService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ class RoomLoanController extends Controller
 
         $loans = RoomLoan::with(['ciudadano', 'punto', 'gestor'])
             ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
-            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
+            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function ($sub) use ($p) {
                 $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
             }))
             ->when($filters['estado'] ?? null, fn ($q, $e) => $q->where('estado', $e))
@@ -72,7 +73,7 @@ class RoomLoanController extends Controller
 
         $calendarLoans = RoomLoan::with(['ciudadano', 'punto'])
             ->whereBetween('fecha_prestamo', [$monthStart, $monthEnd])
-            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
+            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function ($sub) use ($p) {
                 $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
             }))
             ->when($filters['tipo_actividad'] ?? null, fn ($q, $t) => $q->where('tipo_actividad', $t))
@@ -132,6 +133,8 @@ class RoomLoanController extends Controller
             ]
         );
 
+        StatsService::invalidateCache();
+
         return redirect()->route('prestamos.index')
             ->with('success', 'Préstamo de sala registrado con éxito.');
     }
@@ -167,6 +170,8 @@ class RoomLoanController extends Controller
             antiguos: $oldData,
             nuevos: $validated
         );
+
+        StatsService::invalidateCache();
 
         $msg = $validated['estado'] === 'Cancelado'
             ? 'Solicitud rechazada y motivo notificado al ciudadano.'

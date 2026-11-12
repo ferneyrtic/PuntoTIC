@@ -14,10 +14,16 @@ class RoomLoan extends Model
 
     protected $table = 'prestamo_sala';
 
+    protected static ?array $columnsCache = null;
+
     public static function getTableColumns(): array
     {
+        if (static::$columnsCache !== null) {
+            return static::$columnsCache;
+        }
+
         try {
-            return Schema::getColumnListing('prestamo_sala');
+            return static::$columnsCache = Schema::getColumnListing('prestamo_sala');
         } catch (\Throwable $e) {
             return [];
         }

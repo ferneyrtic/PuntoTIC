@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Point;
 use App\Models\PrintRecord;
+use App\Services\StatsService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -98,6 +99,8 @@ class PrintRecordController extends Controller
                 'descripcion' => $record->descripcion,
             ]
         );
+
+        StatsService::invalidateCache();
 
         return redirect()->route('impresiones.index')
             ->with('success', 'Registro de impresión guardado exitosamente.');

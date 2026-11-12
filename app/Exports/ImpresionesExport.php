@@ -33,6 +33,14 @@ class ImpresionesExport implements FromCollection, WithColumnWidths, WithEvents,
             ->get();
     }
 
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 14, 'B' => 30, 'C' => 18, 'D' => 28,
+            'E' => 18, 'F' => 32, 'G' => 42, 'H' => 26, 'I' => 22,
+        ];
+    }
+
     public function headings(): array
     {
         return [
@@ -95,9 +103,8 @@ class ImpresionesExport implements FromCollection, WithColumnWidths, WithEvents,
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 $sheet->freezePane('A2');
-                $highestRow = $sheet->getHighestRow();
                 $highestColumn = $sheet->getHighestColumn();
-                $sheet->getStyle("A1:{$highestColumn}{$highestRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFE5E7EB');
+                $sheet->getStyle("A1:{$highestColumn}1")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFE5E7EB');
                 $sheet->getRowDimension(1)->setRowHeight(28);
             },
         ];

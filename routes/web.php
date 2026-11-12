@@ -13,28 +13,10 @@ use App\Http\Controllers\RoomLoanController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\VisitController;
 use App\Models\Citizen;
-use App\Models\Point;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Redirección inicial: Landing Page para visitantes, o Dashboard/Portal para usuarios autenticados
-Route::get('/', function () {
-    if (auth()->check()) {
-        if (auth()->user()->hasRole(['Usuario', 'Ciudadano']) || auth()->user()->es_usuario_ciudadano) {
-            return redirect()->route('portal.index');
-        }
-
-        return redirect()->route('dashboard');
-    }
-
-    $points = Point::where('activo', true)
-        ->whereNotIn('id_punto', [5, 6])
-        ->get(['id_punto', 'nombre_punto', 'zona', 'direccion']);
-
-    return Inertia::render('Welcome', [
-        'points' => $points,
-    ]);
-});
+Route::get('/', [DashboardController::class, 'welcome'])->name('home');
 
 // Rutas autenticadas del sistema PVD
 Route::middleware(['auth'])->group(function () {

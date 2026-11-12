@@ -10,10 +10,20 @@ use App\Models\RoomLoan;
 use App\Models\SubCategory;
 use App\Models\Visit;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class StatsService
 {
+    /**
+     * Invalida la caché de estadísticas cuando ingresan nuevos registros operativos.
+     */
+    public static function invalidateCache(): void
+    {
+        Cache::add('stats_cache_version', 1, 86400);
+        Cache::increment('stats_cache_version');
+    }
+
     /**
      * Resumen completo de métricas del Dashboard con soporte de ámbitos y períodos.
      *
@@ -36,59 +46,71 @@ class StatsService
             $zona = null;
         }
 
-        // 1. Ámbito de Sede
-        $scopeInfo = $this->resolveScopeInfo($pointId, $zona);
+        $version = Cache::get('stats_cache_version', 1);
+        $cacheKey = 'dashboard_stats_v'.$version.'_'.md5(json_encode([
+            'point_id' => $pointId,
+            'zona' => $zona,
+            'periodo' => $filters['periodo'] ?? 'mes',
+            'fecha_desde' => $filters['fecha_desde'] ?? null,
+            'fecha_hasta' => $filters['fecha_hasta'] ?? null,
+            'today' => Carbon::today()->toDateString(),
+        ]));
 
-        // 2. Rango Temporal
-        [$startDate, $endDate, $periodoLabel, $periodoKey] = $this->resolveDateRange($filters);
+        return Cache::remember($cacheKey, 45, function () use ($pointId, $zona, $filters) {
+            // 1. Ámbito de Sede
+            $scopeInfo = $this->resolveScopeInfo($pointId, $zona);
 
-        // 3. IDs de Puntos involucrados en el ámbito
-        $targetPointIds = $this->getTargetPointIds($pointId, $zona);
+            // 2. Rango Temporal
+            [$startDate, $endDate, $periodoLabel, $periodoKey] = $this->resolveDateRange($filters);
 
-        // 4. Métricas Clave (KPIs)
-        $kpis = $this->calculateKpis($targetPointIds, $startDate, $endDate);
+            // 3. IDs de Puntos involucrados en el ámbito
+            $targetPointIds = $this->getTargetPointIds($pointId, $zona);
 
-        // 5. Serie de Tiempo para el Gráfico
-        $timeSeries = $this->calculateTimeSeries($targetPointIds, $startDate, $endDate, $periodoKey);
+            // 4. Métricas Clave (KPIs)
+            $kpis = $this->calculateKpis($targetPointIds, $startDate, $endDate);
 
-        // 6. Comparativa de Sedes (PVD Urbanos y Aulas Rurales)
-        $comparativaSedes = $this->calculateSedeComparison($startDate, $endDate, $targetPointIds);
+            // 5. Serie de Tiempo para el Gráfico
+            $timeSeries = $this->calculateTimeSeries($targetPointIds, $startDate, $endDate, $periodoKey);
 
-        // 7. Dependencia: Trámites en Línea y Servicios Institucionales
-        $dependenciaTramites = $this->calculateTramitesStats($targetPointIds, $startDate, $endDate);
+            // 6. Comparativa de Sedes (PVD Urbanos y Aulas Rurales)
+            $comparativaSedes = $this->calculateSedeComparison($startDate, $endDate, $targetPointIds);
 
-        // 8. Dependencia: Capacitación y Formación Digital + Demografía
-        $dependenciaFormacion = $this->calculateFormacionStats($targetPointIds, $startDate, $endDate);
+            // 7. Dependencia: Trámites en Línea y Servicios Institucionales
+            $dependenciaTramites = $this->calculateTramitesStats($targetPointIds, $startDate, $endDate);
 
-        // 9. Dependencia: Préstamo de Salas y Espacios
-        $dependenciaSalas = $this->calculateSalasStats($targetPointIds, $startDate, $endDate);
+            // 8. Dependencia: Capacitación y Formación Digital + Demografía
+            $dependenciaFormacion = $this->calculateFormacionStats($targetPointIds, $startDate, $endDate);
 
-        // 10. Dependencia: Impresiones y Consumibles
-        $dependenciaImpresiones = $this->calculateImpresionesStats($targetPointIds, $startDate, $endDate);
+            // 9. Dependencia: Préstamo de Salas y Espacios
+            $dependenciaSalas = $this->calculateSalasStats($targetPointIds, $startDate, $endDate);
 
-        // 11. Distribución por Categorías Generales
-        $distribucionCategorias = $this->calculateCategoryDistribution($targetPointIds, $startDate, $endDate, $kpis['visitas_periodo']);
+            // 10. Dependencia: Impresiones y Consumibles
+            $dependenciaImpresiones = $this->calculateImpresionesStats($targetPointIds, $startDate, $endDate);
 
-        return [
-            'scope' => $scopeInfo,
-            'periodo' => [
-                'key' => $periodoKey,
-                'label' => $periodoLabel,
-                'fecha_desde' => $startDate->toDateString(),
-                'fecha_hasta' => $endDate->toDateString(),
-            ],
-            'kpis' => $kpis,
-            'chart_serie' => $timeSeries,
-            // Retrocompatibilidad con chart_7_dias si algún componente antiguo lo lee
-            'chart_7_dias' => $timeSeries,
-            'comparativa_sedes' => $comparativaSedes,
-            'distribucion_puntos' => $comparativaSedes,
-            'distribucion_categorias' => $distribucionCategorias,
-            'dependencia_tramites' => $dependenciaTramites,
-            'dependencia_formacion' => $dependenciaFormacion,
-            'dependencia_salas' => $dependenciaSalas,
-            'dependencia_impresiones' => $dependenciaImpresiones,
-        ];
+            // 11. Distribución por Categorías Generales
+            $distribucionCategorias = $this->calculateCategoryDistribution($targetPointIds, $startDate, $endDate, $kpis['visitas_periodo']);
+
+            return [
+                'scope' => $scopeInfo,
+                'periodo' => [
+                    'key' => $periodoKey,
+                    'label' => $periodoLabel,
+                    'fecha_desde' => $startDate->toDateString(),
+                    'fecha_hasta' => $endDate->toDateString(),
+                ],
+                'kpis' => $kpis,
+                'chart_serie' => $timeSeries,
+                // Retrocompatibilidad con chart_7_dias si algún componente antiguo lo lee
+                'chart_7_dias' => $timeSeries,
+                'comparativa_sedes' => $comparativaSedes,
+                'distribucion_puntos' => $comparativaSedes,
+                'distribucion_categorias' => $distribucionCategorias,
+                'dependencia_tramites' => $dependenciaTramites,
+                'dependencia_formacion' => $dependenciaFormacion,
+                'dependencia_salas' => $dependenciaSalas,
+                'dependencia_impresiones' => $dependenciaImpresiones,
+            ];
+        });
     }
 
     /**
@@ -427,53 +449,74 @@ class StatsService
     }
 
     /**
-     * Estadísticas de Trámites en Línea (Top trámites y solicitudes).
+     * Estadísticas de Trámites en Línea y Servicios Solicitados (Top trámites y servicios).
      */
     protected function calculateTramitesStats(?array $targetPointIds, Carbon $startDate, Carbon $endDate): array
     {
-        $query = Visit::query()
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->where(function ($q) {
-                $q->where('id_categoria', 1) // Trámites en Línea
-                    ->orWhereNotNull('id_subcategoria')
-                    ->orWhereNotNull('servicio_texto');
-            });
+        $query = DB::table('visitas')
+            ->whereBetween('created_at', [$startDate, $endDate]);
 
         if ($targetPointIds) {
             $query->whereIn('id_punto', $targetPointIds);
         }
 
-        $totalTramites = (clone $query)->count();
+        $groupedRows = $query
+            ->select('id_subcategoria', 'servicio', 'servicio_texto', DB::raw('count(*) as total'))
+            ->groupBy('id_subcategoria', 'servicio', 'servicio_texto')
+            ->get();
 
-        // Conteo agrupado por subcategoría
-        $subCounts = (clone $query)
-            ->whereNotNull('id_subcategoria')
-            ->select('id_subcategoria', DB::raw('count(*) as total'))
-            ->groupBy('id_subcategoria')
-            ->pluck('total', 'id_subcategoria')
-            ->toArray();
+        $subIds = $groupedRows->pluck('id_subcategoria')->filter()->unique()->values()->toArray();
+        $subNames = ! empty($subIds)
+            ? SubCategory::whereIn('id_subcategoria', $subIds)->pluck('nombre', 'id_subcategoria')->toArray()
+            : [];
 
-        $subcategories = SubCategory::whereIn('id_subcategoria', array_keys($subCounts))
-            ->get(['id_subcategoria', 'nombre'])
-            ->map(function ($sub) use ($subCounts, $totalTramites) {
-                $count = $subCounts[$sub->id_subcategoria] ?? 0;
-                $pct = $totalTramites > 0 ? round(($count / $totalTramites) * 100, 1) : 0;
+        $merged = [];
+        $totalAtenciones = 0;
 
-                return [
-                    'id_subcategoria' => $sub->id_subcategoria,
-                    'nombre' => $sub->nombre,
-                    'total' => $count,
-                    'porcentaje' => $pct,
+        foreach ($groupedRows as $row) {
+            $count = (int) $row->total;
+            if ($row->id_subcategoria && isset($subNames[$row->id_subcategoria])) {
+                $label = $subNames[$row->id_subcategoria];
+                $subId = (int) $row->id_subcategoria;
+            } else {
+                $rawText = trim((string) ($row->servicio_texto ?: $row->servicio ?: ''));
+                // Normalizar espacios duros (&nbsp;) y espacios múltiples
+                $label = trim(preg_replace('/\s+/u', ' ', str_replace("\u{00A0}", ' ', $rawText)));
+                if ($label === '') {
+                    $label = 'Atención PuntoTIC';
+                }
+                $subId = null;
+            }
+
+            $key = mb_strtolower($label);
+            if (! isset($merged[$key])) {
+                $merged[$key] = [
+                    'id_subcategoria' => $subId,
+                    'nombre' => $label,
+                    'total' => 0,
                 ];
-            })
-            ->sortByDesc('total')
-            ->take(8)
-            ->values()
-            ->toArray();
+            }
+            $merged[$key]['total'] += $count;
+            $totalAtenciones += $count;
+        }
+
+        uasort($merged, fn ($a, $b) => $b['total'] <=> $a['total']);
+        $topList = array_slice(array_values($merged), 0, 8);
+
+        $topTramites = [];
+        foreach ($topList as $idx => $item) {
+            $pct = $totalAtenciones > 0 ? round(($item['total'] / $totalAtenciones) * 100, 1) : 0;
+            $topTramites[] = [
+                'id_subcategoria' => $item['id_subcategoria'] ?? (10000 + $idx),
+                'nombre' => $item['nombre'],
+                'total' => $item['total'],
+                'porcentaje' => $pct,
+            ];
+        }
 
         return [
-            'total_atenciones' => $totalTramites,
-            'top_tramites' => $subcategories,
+            'total_atenciones' => $totalAtenciones,
+            'top_tramites' => $topTramites,
         ];
     }
 
@@ -482,13 +525,25 @@ class StatsService
      */
     protected function calculateFormacionStats(?array $targetPointIds, Carbon $startDate, Carbon $endDate): array
     {
-        $visitsQuery = Visit::query()->whereBetween('created_at', [$startDate, $endDate]);
+        $visitsQuery = DB::table('visitas')->whereBetween('created_at', [$startDate, $endDate]);
         if ($targetPointIds) {
             $visitsQuery->whereIn('id_punto', $targetPointIds);
         }
 
-        // Visitas de formación (categoría 4)
-        $formacionVisitas = (clone $visitsQuery)->where('id_categoria', 4)->count();
+        // Visitas de formación (categoría 4/66 o servicios de capacitación/talleres/tareas)
+        $formacionVisitas = (clone $visitsQuery)
+            ->where(function ($q) {
+                $q->whereIn('id_categoria', [4, 66])
+                    ->orWhere('servicio', 'like', '%capacita%')
+                    ->orWhere('servicio_texto', 'like', '%capacita%')
+                    ->orWhere('servicio', 'like', '%taller%')
+                    ->orWhere('servicio_texto', 'like', '%taller%')
+                    ->orWhere('servicio', 'like', '%tarea%')
+                    ->orWhere('servicio_texto', 'like', '%tarea%')
+                    ->orWhere('servicio', 'like', '%curso%')
+                    ->orWhere('servicio_texto', 'like', '%curso%');
+            })
+            ->count();
 
         // Obtenemos los ciudadanos únicos atendidos en este período para la analítica demográfica
         $citizenIds = (clone $visitsQuery)
@@ -497,9 +552,18 @@ class StatsService
             ->pluck('id_form_pvd')
             ->toArray();
 
-        $citizens = Citizen::where(function ($q) use ($citizenIds) {
-            $q->whereIn('id', $citizenIds)->orWhereIn('id_form_pvd', $citizenIds);
-        })->get();
+        $citizens = collect();
+        if (! empty($citizenIds)) {
+            $cols = Citizen::getTableColumns();
+            $pkColumn = in_array('id', $cols, true) ? 'id' : 'id_form_pvd';
+            foreach (array_chunk($citizenIds, 1000) as $chunk) {
+                $rows = DB::table('form_pvd')
+                    ->whereIn($pkColumn, $chunk)
+                    ->select(['genero', 'edad', 'fecha_nac', 'nivel_educativo', 'zona'])
+                    ->get();
+                $citizens = $citizens->concat($rows);
+            }
+        }
 
         $totalCitizens = $citizens->count() ?: 1;
 
@@ -677,20 +741,65 @@ class StatsService
      */
     protected function calculateCategoryDistribution(?array $targetPointIds, Carbon $startDate, Carbon $endDate, int $totalVisitas): array
     {
-        $visitsQuery = Visit::whereBetween('created_at', [$startDate, $endDate]);
+        $visitsQuery = DB::table('visitas')->whereBetween('created_at', [$startDate, $endDate]);
         if ($targetPointIds) {
             $visitsQuery->whereIn('id_punto', $targetPointIds);
         }
 
-        $visitsByCategory = (clone $visitsQuery)
-            ->select('id_categoria', DB::raw('count(*) as total'))
-            ->groupBy('id_categoria')
-            ->pluck('total', 'id_categoria')
-            ->toArray();
+        $groupedRows = $visitsQuery
+            ->select('id_categoria', 'servicio', 'servicio_texto', DB::raw('count(*) as total'))
+            ->groupBy('id_categoria', 'servicio', 'servicio_texto')
+            ->get();
 
-        return Category::all()
-            ->map(function ($cat) use ($visitsByCategory, $totalVisitas) {
-                $count = $visitsByCategory[$cat->id_categoria] ?? 0;
+        $categories = Category::where('activo', true)->orderBy('orden')->get();
+        if ($categories->isEmpty()) {
+            $categories = Category::orderBy('orden')->get();
+        }
+
+        if ($categories->isEmpty() || $groupedRows->isEmpty()) {
+            return [];
+        }
+
+        $catByKey = [
+            'tramites' => $categories->first(fn ($c) => str_contains(mb_strtolower($c->nombre), 'trámite') || str_contains(mb_strtolower($c->nombre), 'tramite') || in_array((int) $c->id_categoria, [1, 63], true)),
+            'conectividad' => $categories->first(fn ($c) => str_contains(mb_strtolower($c->nombre), 'conectividad') || in_array((int) $c->id_categoria, [2, 64], true)),
+            'impresion' => $categories->first(fn ($c) => str_contains(mb_strtolower($c->nombre), 'impresi') || in_array((int) $c->id_categoria, [3, 65], true)),
+            'capacitacion' => $categories->first(fn ($c) => str_contains(mb_strtolower($c->nombre), 'capacita') || str_contains(mb_strtolower($c->nombre), 'formaci') || in_array((int) $c->id_categoria, [4, 66], true)),
+            'salas' => $categories->first(fn ($c) => str_contains(mb_strtolower($c->nombre), 'sala') || str_contains(mb_strtolower($c->nombre), 'espacio') || in_array((int) $c->id_categoria, [5, 67], true)),
+        ];
+
+        $catCounts = [];
+        foreach ($categories as $cat) {
+            $catCounts[$cat->id_categoria] = 0;
+        }
+
+        foreach ($groupedRows as $row) {
+            $count = (int) $row->total;
+            if ($row->id_categoria && isset($catCounts[$row->id_categoria])) {
+                $catCounts[$row->id_categoria] += $count;
+
+                continue;
+            }
+
+            $text = mb_strtolower(str_replace("\u{00A0}", ' ', trim(($row->servicio ?? '').' '.($row->servicio_texto ?? ''))));
+
+            $targetCat = match (true) {
+                str_contains($text, 'informática') || str_contains($text, 'informatica') || str_contains($text, 'internet') || str_contains($text, 'entretenimiento') || str_contains($text, 'emisora') || str_contains($text, 'navegaci') => $catByKey['conectividad'],
+                str_contains($text, 'capacita') || str_contains($text, 'tarea') || str_contains($text, 'taller') || str_contains($text, 'curso') || str_contains($text, 'formaci') || str_contains($text, 'inducci') => $catByKey['capacitacion'],
+                str_contains($text, 'salón') || str_contains($text, 'salon') || str_contains($text, 'sala') || str_contains($text, 'espacio') || str_contains($text, 'reuni') || str_contains($text, 'prestamo') || str_contains($text, 'préstamo') => $catByKey['salas'],
+                str_contains($text, 'gobierno') || str_contains($text, 'trámite') || str_contains($text, 'tramite') || str_contains($text, 'sisben') || str_contains($text, 'dian') || str_contains($text, 'adres') || str_contains($text, 'antecedentes') || str_contains($text, 'impuesto') => $catByKey['tramites'],
+                str_contains($text, 'impres') || str_contains($text, 'copia') || str_contains($text, 'escan') || str_contains($text, 'digitaliz') => $catByKey['impresion'],
+                default => $catByKey['conectividad'] ?? $categories->first(),
+            };
+
+            if ($targetCat) {
+                $catCounts[$targetCat->id_categoria] += $count;
+            }
+        }
+
+        return $categories
+            ->map(function ($cat) use ($catCounts, $totalVisitas) {
+                $count = $catCounts[$cat->id_categoria] ?? 0;
                 $pct = $totalVisitas > 0 ? round(($count / $totalVisitas) * 100, 1) : 0;
 
                 return [
@@ -702,6 +811,7 @@ class StatsService
                     'porcentaje' => $pct,
                 ];
             })
+            ->filter(fn ($c) => $c['total_visitas'] > 0)
             ->sortByDesc('total_visitas')
             ->values()
             ->toArray();
