@@ -38,3 +38,4 @@ boost.json
 *.db
 *.dump
 backup*
+*.tar.gz
