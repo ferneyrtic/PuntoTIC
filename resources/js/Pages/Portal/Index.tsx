@@ -122,7 +122,6 @@ interface Props {
     selectedMonth?: string;
     selectedPunto?: number | null;
     soporte: {
-        telefono: string;
         whatsapp: string;
         correo: string;
         horario: string;
@@ -968,16 +967,7 @@ export default function PortalIndex({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
-                            <span className="text-[10px] font-bold uppercase text-slate-400 block">Línea Telefónica</span>
-                            <div className="font-black text-slate-900 text-sm flex items-center gap-1.5">
-                                <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>{soporte.telefono}</span>
-                            </div>
-                            <span className="text-[10px] text-slate-500 block">Atención en conmutador</span>
-                        </div>
-
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                         <a
                             href={`https://wa.me/573213618632?text=${encodeURIComponent('Hola, me gustaría solicitar información sobre los Puntos Vive Digital de Acacías.')}`}
                             target="_blank"
