@@ -43,11 +43,17 @@ export default function Welcome({ points = [] }: Props) {
             <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="bg-white p-1.5 px-3 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center">
+                        <div className="bg-white p-1.5 px-3 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center gap-3">
                             <img
                                 src={asset('images/logo_alcaldia.png')}
                                 alt="Alcaldía de Acacías"
                                 className="h-10 sm:h-11 w-auto object-contain"
+                            />
+                            <div className="h-6 w-px bg-slate-200"></div>
+                            <img
+                                src={asset('images/logo_pvd.png')}
+                                alt="Puntos Vive Digital"
+                                className="h-9 sm:h-10 w-auto object-contain"
                             />
                         </div>
                         <div>
@@ -88,9 +94,17 @@ export default function Welcome({ points = [] }: Props) {
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-gradient-to-tr from-emerald-600/20 via-teal-500/10 to-transparent blur-3xl pointer-events-none rounded-full"></div>
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-6 animate-fade-in-down">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Alcaldía Municipal de Acacías · Secretaría de las TIC</span>
+                    <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 mb-6 shadow-lg animate-fade-in-down">
+                        <img
+                            src={asset('images/logo_pvd.png')}
+                            alt="Puntos Vive Digital"
+                            className="h-7 w-auto object-contain bg-white/95 rounded-lg px-2 py-0.5"
+                        />
+                        <div className="h-4 w-px bg-emerald-400/40"></div>
+                        <div className="flex items-center gap-1.5 text-emerald-300 text-xs font-bold">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Alcaldía de Acacías · Secretaría de las TIC</span>
+                        </div>
                     </div>
 
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight max-w-4xl mx-auto leading-tight">
@@ -348,11 +362,17 @@ export default function Welcome({ points = [] }: Props) {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                         <div className="md:col-span-2">
                             <div className="flex items-center gap-3 mb-3">
-                                <div className="bg-white p-1 rounded-lg">
+                                <div className="bg-white p-1.5 px-3 rounded-xl flex items-center gap-3 shadow-xs">
                                     <img
                                         src={asset('images/logo_alcaldia.png')}
                                         alt="Alcaldía de Acacías"
                                         className="h-9 w-auto object-contain"
+                                    />
+                                    <div className="h-5 w-px bg-slate-200"></div>
+                                    <img
+                                        src={asset('images/logo_pvd.png')}
+                                        alt="Puntos Vive Digital"
+                                        className="h-8 w-auto object-contain"
                                     />
                                 </div>
                                 <div>
@@ -370,11 +390,11 @@ export default function Welcome({ points = [] }: Props) {
                             <ul className="space-y-2 text-xs">
                                 <li className="flex items-center gap-2">
                                     <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>Línea PVD: 321 361 8632</span>
+                                    <span>WhatsApp Ciudadano: +57 321 361 8632</span>
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Mail className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>contactenos@acacias.gov.co</span>
+                                    <span>tic@acacias.gov.co</span>
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Clock className="w-3.5 h-3.5 text-emerald-400" />

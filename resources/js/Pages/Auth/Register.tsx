@@ -85,11 +85,17 @@ export default function Register({ documentTypes = [], points = [] }: Props) {
                 {/* Header Institucional */}
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-4">
-                        <div className="bg-white/95 p-3 px-6 rounded-2xl shadow-lg border border-white/40 inline-flex items-center justify-center">
+                        <div className="bg-white/95 p-3 px-6 rounded-2xl shadow-lg border border-white/40 inline-flex items-center justify-center gap-4">
                             <img
                                 src={asset('images/logo_alcaldia.png')}
                                 alt="Alcaldía de Acacías"
-                                className="h-14 sm:h-16 w-auto object-contain"
+                                className="h-12 sm:h-14 w-auto object-contain"
+                            />
+                            <div className="h-8 w-px bg-slate-200"></div>
+                            <img
+                                src={asset('images/logo_pvd.png')}
+                                alt="Puntos Vive Digital"
+                                className="h-11 sm:h-13 w-auto object-contain"
                             />
                         </div>
                     </div>

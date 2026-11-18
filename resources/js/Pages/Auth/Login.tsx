@@ -52,6 +52,12 @@ export default function Login({ status }: { status?: string }) {
                             alt="Alcaldía de Acacías"
                             className="h-10 sm:h-12 w-auto object-contain"
                         />
+                        <div className="h-8 w-px bg-slate-200"></div>
+                        <img
+                            src={asset('images/logo_pvd.png')}
+                            alt="Puntos Vive Digital"
+                            className="h-9 sm:h-11 w-auto object-contain"
+                        />
                         <div className="border-l border-slate-200 pl-3">
                             <span className="text-lg font-black text-slate-900 tracking-tight block">
                                 PuntoTIC
@@ -252,7 +258,7 @@ export default function Login({ status }: { status?: string }) {
             <div className="hidden lg:flex lg:w-1/2 relative bg-[#01A300] items-center justify-center p-12 select-none">
                 <div className="relative text-center flex flex-col items-center justify-center max-w-md">
                     {/* Escudo oficial de Acacías + Tipografía Institucional */}
-                    <div className="flex items-center gap-5 justify-center mb-3">
+                    <div className="flex items-center gap-5 justify-center mb-4">
                         <img
                             src={asset('images/escudo_acacias.png')}
                             alt="Escudo de Acacías"
@@ -267,6 +273,15 @@ export default function Login({ status }: { status?: string }) {
                                 ACACÍAS
                             </span>
                         </div>
+                    </div>
+
+                    {/* Logo oficial Puntos Vive Digital */}
+                    <div className="mt-4 bg-white/95 rounded-2xl py-2 px-5 shadow-lg backdrop-blur-xs flex items-center justify-center border border-white/20">
+                        <img
+                            src={asset('images/logo_pvd.png')}
+                            alt="Puntos Vive Digital para la gente"
+                            className="h-14 w-auto object-contain"
+                        />
                     </div>
 
                     <div className="mt-4 text-center">
