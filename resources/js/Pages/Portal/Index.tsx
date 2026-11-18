@@ -133,10 +133,21 @@ interface Props {
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 const HORAS_PREDEFINIDAS = [
-    { inicio: '08:00', fin: '10:00', label: '08:00 - 10:00 AM', turno: 'Mañana' },
-    { inicio: '10:00', fin: '12:00', label: '10:00 - 12:00 M', turno: 'Mañana' },
-    { inicio: '14:00', fin: '16:00', label: '02:00 - 04:00 PM', turno: 'Tarde' },
-    { inicio: '16:00', fin: '18:00', label: '04:00 - 06:00 PM', turno: 'Tarde' },
+    // Franjas de 1 hora (Mañana)
+    { inicio: '08:00', fin: '09:00', label: '08:00 - 09:00 AM (1h)', turno: 'Mañana' },
+    { inicio: '09:00', fin: '10:00', label: '09:00 - 10:00 AM (1h)', turno: 'Mañana' },
+    { inicio: '10:00', fin: '11:00', label: '10:00 - 11:00 AM (1h)', turno: 'Mañana' },
+    { inicio: '11:00', fin: '12:00', label: '11:00 - 12:00 M (1h)', turno: 'Mañana' },
+    // Franjas de 1 hora (Tarde)
+    { inicio: '14:00', fin: '15:00', label: '02:00 - 03:00 PM (1h)', turno: 'Tarde' },
+    { inicio: '15:00', fin: '16:00', label: '03:00 - 04:00 PM (1h)', turno: 'Tarde' },
+    { inicio: '16:00', fin: '17:00', label: '04:00 - 05:00 PM (1h)', turno: 'Tarde' },
+    { inicio: '17:00', fin: '18:00', label: '05:00 - 06:00 PM (1h)', turno: 'Tarde' },
+    // Bloques continuos de 2 horas (Capacitaciones y eventos)
+    { inicio: '08:00', fin: '10:00', label: '08:00 - 10:00 AM (2h)', turno: 'Mañana' },
+    { inicio: '10:00', fin: '12:00', label: '10:00 - 12:00 M (2h)', turno: 'Mañana' },
+    { inicio: '14:00', fin: '16:00', label: '02:00 - 04:00 PM (2h)', turno: 'Tarde' },
+    { inicio: '16:00', fin: '18:00', label: '04:00 - 06:00 PM (2h)', turno: 'Tarde' },
 ];
 
 export default function PortalIndex({
