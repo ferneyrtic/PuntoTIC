@@ -19,6 +19,7 @@ class CategoriasSeeder extends Seeder
                 'orden' => 1,
                 'activo' => true,
                 'subs' => [
+                    'Certificado de Residencia y Avecindamiento',
                     'SISBEN (Consulta, actualización y solicitudes)',
                     'Alcaldía de Acacías (Impuesto predial e ICA)',
                     'Antecedentes Judiciales y Policía Nacional',
@@ -39,6 +40,7 @@ class CategoriasSeeder extends Seeder
                 'color' => '#1B6B35', // Verde Alcaldía
                 'orden' => 2,
                 'subs' => [
+                    'Certificado de Residencia y Avecindamiento',
                     'Navegación general en Internet e investigación',
                     'Consultas académicas y tareas estudiantiles',
                     'Videollamadas, entrevistas y teletrabajo',

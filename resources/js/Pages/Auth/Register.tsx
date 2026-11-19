@@ -484,12 +484,12 @@ export default function Register({ documentTypes = [], points = [] }: Props) {
                                     <select
                                         value={data.ocupacion}
                                         onChange={(e) => setData('ocupacion', e.target.value)}
-                                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
+                                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none bg-white"
                                     >
-                                        <option value="Estudiante">Estudiante</option>
                                         <option value="Empleado">Empleado</option>
                                         <option value="Independiente">Independiente</option>
-                                        <option value="Hogar">Hogar</option>
+                                        <option value="Estudiante">Estudiante</option>
+                                        <option value="Ama de casa">Ama de casa / Hogar</option>
                                         <option value="Desempleado">Desempleado</option>
                                         <option value="Jubilado / Pensionado">Jubilado / Pensionado</option>
                                         <option value="Docente">Docente / Educador</option>

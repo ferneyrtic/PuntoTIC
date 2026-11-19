@@ -132,7 +132,7 @@ class VisitService
                         'estrato' => $data['estrato'] ?? 1,
                         'grupo_etnico' => $data['grupo_etnico'] ?? 'NINGUNO',
                         'nivel_educativo' => $data['nivel_educativo'] ?? 'PRIMARIA',
-                        'ocupacion' => $data['ocupacion'] ?? 'OTRO',
+                        'ocupacion' => $data['ocupacion'] ?? 'Empleado',
                         'g_poblacional' => $data['g_poblacional'] ?? null,
                         't_aseguramiento' => $data['t_aseguramiento'] ?? null,
                         'id_punto' => $pointId,

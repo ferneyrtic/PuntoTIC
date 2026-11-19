@@ -50,6 +50,7 @@ class StoreVisitRequest extends FormRequest
             'zona' => ['nullable', 'string', 'max:30'],
             'estrato' => ['nullable', 'integer', 'min:1', 'max:6'],
             'nivel_educativo' => ['nullable', 'string', 'max:100'],
+            'ocupacion' => ['nullable', 'string', 'max:100'],
             't_aseguramiento' => ['nullable', 'string', 'max:100'],
         ];
     }
