@@ -24,8 +24,11 @@ class PrestamosExport implements FromCollection, WithHeadings, WithMapping, With
     {
         return RoomLoan::with(['ciudadano', 'punto', 'gestor'])
             ->dateBetween($this->filters['fecha_desde'] ?? null, $this->filters['fecha_hasta'] ?? null)
-            ->when($this->filters['id_punto'] ?? null, fn($q, $p) => $q->where('id_punto', $p))
-            ->latest('fecha_prestamo')
+            ->when($this->filters['id_punto'] ?? null, fn($q, $p) => $q->where(function($sub) use ($p) {
+                $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
+            }))
+            ->orderByRaw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at)) DESC')
+            ->orderByDesc('id')
             ->get();
     }
 
@@ -60,20 +63,30 @@ class PrestamosExport implements FromCollection, WithHeadings, WithMapping, With
 
     public function map($p): array
     {
+        $responsable = $p->ciudadano?->nombre_completo 
+            ?: ($p->nombre_responsable_texto ?: ($p->nombre ?: 'Ciudadano'));
+        $puntoNombre = $p->punto?->nombre_punto 
+            ?: (\App\Models\Point::find($p->id_puntos ?? $p->id_punto)?->nombre_punto ?? 'Vive Digital Tradicional');
+        $gestorNombre = $p->gestor?->name 
+            ?: ($p->id_gestores ? (\App\Models\User::find($p->id_gestores)?->name ?? 'Martha Viviana Medina Palacio') : 'Martha Viviana Medina Palacio');
+        $fechaPrestamo = $p->fecha_prestamo?->toDateString() 
+            ?: ($p->created_at ? $p->created_at->toDateString() : '');
+        $observaciones = $p->observaciones ?: ($p->otro ?: '');
+
         return [
-            $p->id_prestamo,
-            $p->ciudadano?->nombre_completo ?? $p->nombre_responsable_texto,
+            $p->id_prestamo ?? $p->id,
+            $responsable,
             $p->ciudadano?->documento ?? 'N/A',
-            $p->ciudadano?->telefono ?? 'N/A',
-            $p->punto?->nombre_punto,
-            $p->tipo_actividad,
-            $p->num_asistentes,
-            $p->fecha_prestamo?->toDateString(),
+            $p->ciudadano?->telefono ?? ($p->telefono ?: 'N/A'),
+            $puntoNombre,
+            $p->tipo_actividad ?: ($p->tipo_prestamo ?: 'Reunión comunitaria'),
+            $p->num_asistentes ?? 1,
+            $fechaPrestamo,
             $p->hora_inicio,
             $p->hora_fin,
-            $p->estado,
-            $p->observaciones,
-            $p->gestor?->name,
+            $p->estado ?: 'Completado',
+            $observaciones,
+            $gestorNombre,
             $p->created_at?->format('Y-m-d H:i:s'),
         ];
     }

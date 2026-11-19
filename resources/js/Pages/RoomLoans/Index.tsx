@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Head, useForm, router, Link } from '@inertiajs/react';
+import { Head, useForm, router, Link, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import {
     DoorOpen,
@@ -22,6 +22,7 @@ import {
     CalendarDays,
     AlertCircle,
     MessageSquare,
+    Edit3,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -83,6 +84,9 @@ export default function RoomLoansIndex({
     tiposActividad,
     pendingCount = 0,
 }: Props) {
+    const { auth } = usePage<any>().props;
+    const currentUser = auth?.user;
+
     const [modalOpen, setModalOpen] = useState(false);
     const [documentInput, setDocumentInput] = useState('');
     const [citizenFound, setCitizenFound] = useState<any>(null);
@@ -98,6 +102,10 @@ export default function RoomLoansIndex({
     // Modal para ver detalle de un evento al hacer clic en el calendario
     const [selectedLoanDetail, setSelectedLoanDetail] = useState<any>(null);
 
+    // Modal de edición directa de préstamo
+    const [editModalLoan, setEditModalLoan] = useState<any>(null);
+    const [savingEdit, setSavingEdit] = useState(false);
+
     // Modal de revisión (Aprobar / Rechazar) con comentario explicativo
     const [reviewModal, setReviewModal] = useState<{
         loan: any;
@@ -106,6 +114,27 @@ export default function RoomLoansIndex({
     const [reviewComment, setReviewComment] = useState('');
     const [reviewCategory, setReviewCategory] = useState('');
     const [submittingReview, setSubmittingReview] = useState(false);
+
+    const submitEdit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editModalLoan) return;
+        setSavingEdit(true);
+        router.post(
+            route('prestamos.update', editModalLoan.id_prestamo),
+            {
+                _method: 'put',
+                ...editModalLoan,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setEditModalLoan(null);
+                    setSavingEdit(false);
+                },
+                onError: () => setSavingEdit(false),
+            }
+        );
+    };
 
     const openReviewModal = (loan: any, action: 'Reservado' | 'Cancelado') => {
         setReviewModal({ loan, action });
@@ -1058,30 +1087,47 @@ export default function RoomLoansIndex({
                         </div>
 
                         <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                            {selectedLoanDetail.estado === 'Pendiente' ? (
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => openReviewModal(selectedLoanDetail, 'Reservado')}
-                                        className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
-                                    >
-                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                        <span>Aprobar Reserva</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => openReviewModal(selectedLoanDetail, 'Cancelado')}
-                                        className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors flex items-center gap-1"
-                                    >
-                                        <X className="w-3.5 h-3.5" />
-                                        <span>Rechazar</span>
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="text-[11px] text-slate-400">
-                                    {selectedLoanDetail.gestor?.name ? `Gestor responsable: ${selectedLoanDetail.gestor.name}` : ''}
-                                </div>
-                            )}
+                            <div className="flex items-center gap-2">
+                                {selectedLoanDetail.estado === 'Pendiente' && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => openReviewModal(selectedLoanDetail, 'Reservado')}
+                                            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
+                                        >
+                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                            <span>Aprobar Reserva</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => openReviewModal(selectedLoanDetail, 'Cancelado')}
+                                            className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors flex items-center gap-1"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                            <span>Rechazar</span>
+                                        </button>
+                                    </>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEditModalLoan({
+                                            id_prestamo: selectedLoanDetail.id_prestamo || selectedLoanDetail.id,
+                                            nombre_responsable_texto: selectedLoanDetail.nombre_responsable_texto || selectedLoanDetail.nombre || '',
+                                            tipo_actividad: selectedLoanDetail.tipo_actividad || CATEGORIAS_PRESTAMO[0],
+                                            num_asistentes: selectedLoanDetail.num_asistentes || 1,
+                                            fecha_prestamo: selectedLoanDetail.fecha_prestamo ? selectedLoanDetail.fecha_prestamo.split('T')[0] : '',
+                                            observaciones: selectedLoanDetail.observaciones || '',
+                                            estado: selectedLoanDetail.estado || 'Completado',
+                                        });
+                                        setSelectedLoanDetail(null);
+                                    }}
+                                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                                >
+                                    <Edit3 className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>Editar</span>
+                                </button>
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setSelectedLoanDetail(null)}
@@ -1090,6 +1136,129 @@ export default function RoomLoansIndex({
                                 Cerrar
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Edición de Préstamo */}
+            {editModalLoan && (
+                <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+                        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-2">
+                                <Edit3 className="w-5 h-5 text-emerald-600" />
+                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                                    Editar Préstamo #{editModalLoan.id_prestamo}
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => setEditModalLoan(null)}
+                                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={submitEdit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Persona Responsable o Entidad Solicitante *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editModalLoan.nombre_responsable_texto}
+                                    onChange={(e) => setEditModalLoan({ ...editModalLoan, nombre_responsable_texto: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                    required
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Fecha del Préstamo *</label>
+                                    <input
+                                        type="date"
+                                        value={editModalLoan.fecha_prestamo}
+                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, fecha_prestamo: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">N° Asistentes *</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={editModalLoan.num_asistentes}
+                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, num_asistentes: parseInt(e.target.value) || 1 })}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Categoría de Actividad *</label>
+                                    <select
+                                        value={editModalLoan.tipo_actividad}
+                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, tipo_actividad: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                        required
+                                    >
+                                        {CATEGORIAS_PRESTAMO.map((c) => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Estado *</label>
+                                    <select
+                                        value={editModalLoan.estado}
+                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, estado: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                        required
+                                    >
+                                        <option value="Completado">Completado</option>
+                                        <option value="Reservado">Reservado</option>
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="En curso">En curso</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Detalle / Tema de la Actividad u Observaciones
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    value={editModalLoan.observaciones}
+                                    onChange={(e) => setEditModalLoan({ ...editModalLoan, observaciones: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                    placeholder="Descripción del taller, curso o actividad realizada..."
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditModalLoan(null)}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={savingEdit}
+                                    className="px-5 py-2 rounded-xl bg-alcaldia-green hover:bg-alcaldia-green-dark text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
+                                >
+                                    <Save className="w-3.5 h-3.5" />
+                                    <span>{savingEdit ? 'Guardando...' : 'Guardar Cambios'}</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
@@ -1110,11 +1279,25 @@ export default function RoomLoansIndex({
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Cédula del Responsable</label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-xs font-bold text-slate-700">
+                                        Persona Responsable o Entidad Solicitante *
+                                    </label>
+                                    {currentUser?.name && !citizenFound && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('nombre_responsable_texto', currentUser.name)}
+                                            className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 underline flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <UserCheck className="w-3.5 h-3.5" />
+                                            <span>Asignarme a mí ({currentUser.name})</span>
+                                        </button>
+                                    )}
+                                </div>
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
-                                        placeholder="Ingrese número de cédula..."
+                                        placeholder="Cédula del ciudadano (opcional si es entidad o particular)..."
                                         value={documentInput}
                                         onChange={(e) => setDocumentInput(e.target.value)}
                                         className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
@@ -1124,22 +1307,40 @@ export default function RoomLoansIndex({
                                         onClick={() => verifyCitizen(documentInput)}
                                         className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
                                     >
-                                        Buscar
+                                        Buscar Cédula
                                     </button>
                                 </div>
                                 {citizenFound ? (
-                                    <p className="text-[11px] text-emerald-600 font-bold mt-1 flex items-center gap-1">
-                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                        <span>{citizenFound.nombre_completo}</span>
-                                    </p>
+                                    <div className="mt-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+                                        <p className="text-xs text-emerald-800 font-bold flex items-center gap-1.5">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                            <span>{citizenFound.nombre_completo} (CC {citizenFound.documento})</span>
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setCitizenFound(null);
+                                                setData('id_form_pvd', null);
+                                            }}
+                                            className="text-[11px] text-slate-500 hover:text-rose-600 font-bold"
+                                        >
+                                            Cambiar
+                                        </button>
+                                    </div>
                                 ) : (
-                                    <input
-                                        type="text"
-                                        placeholder="O ingrese nombre de entidad o persona si no está registrado..."
-                                        value={data.nombre_responsable_texto}
-                                        onChange={(e) => setData('nombre_responsable_texto', e.target.value)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium mt-2 outline-none focus:border-alcaldia-green"
-                                    />
+                                    <div className="mt-2 space-y-1">
+                                        <input
+                                            type="text"
+                                            placeholder="Nombre completo de la persona o entidad (ej: Martha Viviana Medina / SENA / Personería)"
+                                            value={data.nombre_responsable_texto}
+                                            onChange={(e) => setData('nombre_responsable_texto', e.target.value)}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                            required
+                                        />
+                                        <p className="text-[10px] text-slate-400">
+                                            💡 Ingrese aquí el nombre de la persona responsable. El tema del taller o curso va en el campo <strong>Detalle / Tema de la Actividad</strong> abajo.
+                                        </p>
+                                    </div>
                                 )}
                             </div>
 
@@ -1200,13 +1401,16 @@ export default function RoomLoansIndex({
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Detalle / Observaciones</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Detalle / Tema de la Actividad u Observaciones *
+                                </label>
                                 <textarea
                                     rows={2}
-                                    placeholder="Motivo de la reunión, entidad solicitante, equipos requeridos..."
+                                    placeholder="Ej: Finalizamos el Taller Exploradores Digitales 'Alfabetización', inducción de robótica, capacitación SENA..."
                                     value={data.observaciones}
                                     onChange={(e) => setData('observaciones', e.target.value)}
                                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                    required
                                 />
                             </div>
 

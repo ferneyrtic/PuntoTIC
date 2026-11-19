@@ -68,8 +68,14 @@ class RoomLoan extends Model
             if (in_array('id_gestores', $cols, true) && empty($loan->id_gestores) && ! empty($loan->id_gestor)) {
                 $loan->attributes['id_gestores'] = $loan->id_gestor;
             }
+            if (in_array('id_gestor', $cols, true) && empty($loan->id_gestor) && ! empty($loan->id_gestores)) {
+                $loan->attributes['id_gestor'] = $loan->id_gestores;
+            }
             if (in_array('fecha_prestamo', $cols, true) && empty($loan->fecha_prestamo)) {
                 $loan->attributes['fecha_prestamo'] = now()->toDateString();
+            }
+            if (in_array('id_prestamo', $cols, true) && empty($loan->id_prestamo) && ! empty($loan->id)) {
+                $loan->attributes['id_prestamo'] = $loan->id;
             }
 
             foreach ($loan->attributes as $key => $val) {
@@ -139,11 +145,13 @@ class RoomLoan extends Model
 
     public function scopeDateBetween(Builder $query, ?string $from, ?string $to): Builder
     {
+        $dateCol = \Illuminate\Support\Facades\DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
+
         if ($from) {
-            $query->whereDate('fecha_prestamo', '>=', $from);
+            $query->whereDate($dateCol, '>=', $from);
         }
         if ($to) {
-            $query->whereDate('fecha_prestamo', '<=', $to);
+            $query->whereDate($dateCol, '<=', $to);
         }
 
         return $query;

@@ -72,12 +72,12 @@ class RoomLoanController extends Controller
         $monthEnd = $monthCarbon->copy()->endOfMonth()->addDays(7)->toDateString();
 
         $calendarLoans = RoomLoan::with(['ciudadano', 'punto'])
-            ->whereBetween('fecha_prestamo', [$monthStart, $monthEnd])
+            ->dateBetween($monthStart, $monthEnd)
             ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
                 $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
             }))
             ->when($filters['tipo_actividad'] ?? null, fn ($q, $t) => $q->where('tipo_actividad', $t))
-            ->orderBy('fecha_prestamo')
+            ->orderByRaw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at)) ASC')
             ->get();
 
         return Inertia::render('RoomLoans/Index', [
@@ -148,6 +148,9 @@ class RoomLoanController extends Controller
             'tipo_actividad' => ['nullable', 'string', 'max:150'],
             'observaciones' => ['nullable', 'string'],
             'respuesta_gestor' => ['nullable', 'string', 'max:1000'],
+            'nombre_responsable_texto' => ['nullable', 'string', 'max:150'],
+            'num_asistentes' => ['nullable', 'integer', 'min:1', 'max:500'],
+            'fecha_prestamo' => ['nullable', 'date'],
         ]);
 
         $oldData = [
@@ -155,6 +158,9 @@ class RoomLoanController extends Controller
             'tipo_actividad' => $loan->tipo_actividad,
             'observaciones' => $loan->observaciones,
             'respuesta_gestor' => $loan->respuesta_gestor,
+            'nombre_responsable_texto' => $loan->nombre_responsable_texto,
+            'num_asistentes' => $loan->num_asistentes,
+            'fecha_prestamo' => $loan->fecha_prestamo,
         ];
 
         if (Auth::check()) {
