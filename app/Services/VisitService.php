@@ -63,50 +63,66 @@ class VisitService
             $point = \App\Models\Point::find($pointId);
             $isAulaDigital = $point?->es_aula_digital ?? in_array($pointId, [3, 4]);
 
-            // Caso A: Registro rápido de Aula Digital (Niños/Estudiantes sin cédula)
+            // Caso A: Registro rápido de Aula Digital (Niños/Estudiantes sin cédula o cédula ingresada en campo único)
             if (! $citizenId && empty($data['documento']) && (! empty($data['nombres']) || ! empty($data['nombre_completo']))) {
-                $nombres = trim($data['nombres'] ?? '');
-                $apellidos = trim($data['apellidos'] ?? '');
+                $rawInput = trim($data['nombre_completo'] ?? ($data['nombres'] ?? ''));
 
-                if (empty($apellidos) && ! empty($data['nombre_completo'])) {
-                    $parts = preg_split('/\s+/', trim($data['nombre_completo']), 2);
-                    $nombres = $parts[0];
-                    $apellidos = $parts[1] ?? 'Estudiante';
+                // Si el gestor digitó un número de cédula o documento en el campo único de búsqueda
+                $potentialDoc = preg_replace('/\D/', '', $rawInput);
+                if (strlen($potentialDoc) >= 5 && (is_numeric($rawInput) || strlen($potentialDoc) === strlen($rawInput))) {
+                    $existingByDoc = Citizen::where('documento', $potentialDoc)
+                        ->orWhere('id', (int) $potentialDoc)
+                        ->orWhere('id_form_pvd', (int) $potentialDoc)
+                        ->first();
+                    if ($existingByDoc) {
+                        $citizenId = $existingByDoc->id ?: $existingByDoc->id_form_pvd;
+                    }
                 }
 
-                $prefix = str_contains(strtolower($point?->nombre_punto ?? ''), 'chichimene') ? 'CHI' : 'DIN';
+                if (! $citizenId) {
+                    $nombres = trim($data['nombres'] ?? '');
+                    $apellidos = trim($data['apellidos'] ?? '');
 
-                // Buscar si el menor ya vino anteriormente a esta sede
-                $existingChild = Citizen::where('id_punto', $pointId)
-                    ->where('nombres', $nombres)
-                    ->where('apellidos', $apellidos)
-                    ->first();
+                    if (empty($apellidos) && ! empty($data['nombre_completo'])) {
+                        $parts = preg_split('/\s+/', trim($data['nombre_completo']), 2);
+                        $nombres = $parts[0];
+                        $apellidos = $parts[1] ?? 'Estudiante';
+                    }
 
-                if ($existingChild) {
-                    $citizenId = $existingChild->id ?: $existingChild->id_form_pvd;
-                } else {
-                    $count = Citizen::where('documento', 'like', "ESC-{$prefix}-%")->count() + 1;
-                    $autoDoc = sprintf("ESC-%s-%05d", $prefix, $count);
-                    $numericId = (int)("99" . $pointId . sprintf("%06d", $count));
+                    $prefix = str_contains(strtolower($point?->nombre_punto ?? ''), 'chichimene') ? 'CHI' : 'DIN';
 
-                    $citizen = $this->citizenService->createCitizen([
-                        'id' => $numericId,
-                        'id_form_pvd' => $numericId,
-                        'documento' => $autoDoc,
-                        'id_tipo' => 2, // Tarjeta de Identidad / Escolar
-                        'nombres' => $nombres,
-                        'apellidos' => $apellidos ?: 'Estudiante',
-                        'barrio' => $point?->nombre_punto ?? 'Corregimiento',
-                        'zona' => 'Rural',
-                        'estrato' => 1,
-                        'grupo_etnico' => 'NINGUNO',
-                        'nivel_educativo' => 'Primaria / Escolar',
-                        'ocupacion' => 'ESTUDIANTE',
-                        'g_poblacional' => 'Estudiante Menor de Edad',
-                        'id_punto' => $pointId,
-                        'id_gestor' => Auth::id(),
-                    ]);
-                    $citizenId = $citizen->id ?: $citizen->id_form_pvd;
+                    // Buscar si el ciudadano/menor ya vino anteriormente a esta sede o a otra sede
+                    $existingChild = Citizen::where('nombres', $nombres)
+                        ->where('apellidos', $apellidos)
+                        ->orderByRaw("CASE WHEN id_punto = ? THEN 0 ELSE 1 END", [$pointId ?: 0])
+                        ->first();
+
+                    if ($existingChild) {
+                        $citizenId = $existingChild->id ?: $existingChild->id_form_pvd;
+                    } else {
+                        $count = Citizen::where('documento', 'like', "ESC-{$prefix}-%")->count() + 1;
+                        $autoDoc = sprintf("ESC-%s-%05d", $prefix, $count);
+                        $numericId = (int)("99" . $pointId . sprintf("%06d", $count));
+
+                        $citizen = $this->citizenService->createCitizen([
+                            'id' => $numericId,
+                            'id_form_pvd' => $numericId,
+                            'documento' => $autoDoc,
+                            'id_tipo' => 2, // Tarjeta de Identidad / Escolar
+                            'nombres' => $nombres,
+                            'apellidos' => $apellidos ?: 'Estudiante',
+                            'barrio' => $point?->nombre_punto ?? 'Corregimiento',
+                            'zona' => 'Rural',
+                            'estrato' => 1,
+                            'grupo_etnico' => 'NINGUNO',
+                            'nivel_educativo' => 'Primaria / Escolar',
+                            'ocupacion' => 'ESTUDIANTE',
+                            'g_poblacional' => 'Estudiante Menor de Edad',
+                            'id_punto' => $pointId,
+                            'id_gestor' => Auth::id(),
+                        ]);
+                        $citizenId = $citizen->id ?: $citizen->id_form_pvd;
+                    }
                 }
             }
             // Caso B: Registro tradicional PVD con número de documento

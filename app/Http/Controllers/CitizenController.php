@@ -169,7 +169,9 @@ class CitizenController extends Controller
     }
 
     /**
-     * Búsqueda ágil de niños y estudiantes para el modo Aula Digital (Dinamarca y Chichimene).
+     * Búsqueda ágil de ciudadanos y estudiantes para el modo Aula Digital (Dinamarca y Chichimene)
+     * Permite buscar por nombres, apellidos o número de documento en todo el municipio,
+     * priorizando los ciudadanos de la sede actual sin bloquear a quienes fueron registrados en otras sedes.
      */
     public function searchStudents(Request $request): JsonResponse
     {
@@ -180,16 +182,30 @@ class CitizenController extends Controller
             return response()->json([]);
         }
 
+        $numericTerm = preg_replace('/\D/', '', $term);
+        $isNumeric = strlen($numericTerm) >= 2;
+
         $students = Citizen::query()
-            ->when($pointId, fn($q) => $q->where('id_punto', $pointId))
-            ->where(function ($q) use ($term) {
+            ->where(function ($q) use ($term, $numericTerm, $isNumeric) {
                 $q->where('nombres', 'like', "%{$term}%")
                   ->orWhere('apellidos', 'like', "%{$term}%")
                   ->orWhere('documento', 'like', "%{$term}%");
+
+                if ($isNumeric) {
+                    $q->orWhere('documento', 'like', "%{$numericTerm}%")
+                      ->orWhere('id', (int) $numericTerm)
+                      ->orWhere('id_form_pvd', (int) $numericTerm);
+                }
             })
+            ->orderByRaw("CASE 
+                WHEN documento = ? THEN 1
+                WHEN id = ? THEN 1
+                WHEN id_punto = ? THEN 2
+                ELSE 3
+            END", [$term, is_numeric($term) ? (int) $term : 0, $pointId ?: 0])
             ->latest('id_form_pvd')
-            ->limit(8)
-            ->get(['id_form_pvd', 'documento', 'nombres', 'apellidos', 'barrio', 'edad']);
+            ->limit(10)
+            ->get(['id_form_pvd', 'id', 'documento', 'nombres', 'apellidos', 'barrio', 'edad', 'id_punto', 'ocupacion']);
 
         return response()->json($students);
     }

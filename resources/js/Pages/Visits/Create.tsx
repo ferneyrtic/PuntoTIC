@@ -152,15 +152,16 @@ export default function VisitCreate({
 
     const selectStudent = (student: any) => {
         setSelectedStudent(student);
-        setStudentSearch(`${student.nombres} ${student.apellidos}`);
+        const fullName = `${student.nombres || ''} ${student.apellidos || ''}`.trim();
+        setStudentSearch(fullName);
         setStudentSuggestions([]);
         setData((prev) => ({
             ...prev,
-            id_form_pvd: student.id_form_pvd,
+            id_form_pvd: student.id_form_pvd || student.id,
             documento: student.documento,
             nombres: student.nombres,
             apellidos: student.apellidos,
-            nombre_completo: `${student.nombres} ${student.apellidos}`,
+            nombre_completo: fullName,
         }));
     };
 
@@ -466,10 +467,10 @@ export default function VisitCreate({
                     <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-soft space-y-6">
                         <div>
                             <label className="block text-sm font-black text-slate-900 mb-1.5">
-                                Nombre y Apellidos del Estudiante <span className="text-rose-500">*</span>
+                                Nombre, Apellido o Número de Documento <span className="text-rose-500">*</span>
                             </label>
                             <p className="text-xs text-slate-500 mb-3 font-medium">
-                                Si el estudiante ya asistió antes, el sistema sugerirá su perfil. Si es nuevo, solo escriba su nombre.
+                                Ingrese el nombre, apellido o número de documento del usuario. El sistema buscará en toda la red municipal. Si es un nuevo menor de edad sin documento, solo escriba su nombre.
                             </p>
 
                             <div className="relative">
@@ -490,7 +491,7 @@ export default function VisitCreate({
                                             apellidos: '',
                                         }));
                                     }}
-                                    placeholder="Ej: Juan David Gómez Parra"
+                                    placeholder="Ej: Juan David Gómez o 34611483 o Margarita..."
                                     className="w-full pl-11 pr-10 py-3.5 rounded-2xl border-2 border-slate-200 text-sm font-bold focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all"
                                     required
                                     autoFocus
@@ -506,28 +507,28 @@ export default function VisitCreate({
                             {studentSuggestions.length > 0 && (
                                 <div className="mt-2 bg-white rounded-2xl border border-slate-200 shadow-soft-xl overflow-hidden divide-y divide-slate-100 animate-fade-in-down">
                                     <div className="p-2.5 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                                        <span>Estudiantes registrados:</span>
+                                        <span>Resultados encontrados:</span>
                                         <span className="text-[10px] text-emerald-600 font-bold">
                                             Clic para seleccionar
                                         </span>
                                     </div>
                                     {studentSuggestions.map((s) => (
                                         <button
-                                            key={s.id_form_pvd}
+                                            key={s.id_form_pvd || s.id}
                                             type="button"
                                             onClick={() => selectStudent(s)}
                                             className="w-full px-4 py-3 text-left hover:bg-emerald-50/70 transition-colors flex items-center justify-between group"
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
-                                                    {s.nombres.charAt(0)}
+                                                    {(s.nombres || 'C').trim().charAt(0)}
                                                 </div>
                                                 <div>
                                                     <div className="text-xs font-black text-slate-900 group-hover:text-emerald-700">
                                                         {s.nombres} {s.apellidos}
                                                     </div>
                                                     <div className="text-[10px] text-slate-400 font-mono">
-                                                        Código: {s.documento} • {s.barrio}
+                                                        Doc: {s.documento} • {s.barrio || 'Acacías'} {s.ocupacion ? `• ${s.ocupacion}` : ''}
                                                     </div>
                                                 </div>
                                             </div>
@@ -544,7 +545,7 @@ export default function VisitCreate({
                                 <div className="mt-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between animate-fade-in">
                                     <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
                                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                                        <span>Estudiante recurrente enlazado ({selectedStudent.documento})</span>
+                                        <span>Ciudadano enlazado: <strong>{selectedStudent.nombres} {selectedStudent.apellidos}</strong> ({selectedStudent.documento})</span>
                                     </div>
                                     <button
                                         type="button"
