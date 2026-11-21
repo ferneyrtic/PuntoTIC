@@ -239,7 +239,7 @@ export default function VisitCreate({
                     const matchingCat = categories.find((c) => c.id_categoria === suggCatId);
                     if (matchingCat) {
                         const suggSubId = Number(res.data.suggestion.subcategorias?.[0]?.id_subcategoria);
-                        const hasSub = matchingCat.subcategorias?.some((s) => s.id_subcategoria === suggSubId);
+                        const hasSub = matchingCat.subcategorias?.some((s: any) => s.id_subcategoria === suggSubId);
                         setData((prev) => ({
                             ...prev,
                             id_categoria: suggCatId,

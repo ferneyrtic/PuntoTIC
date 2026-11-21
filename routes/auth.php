@@ -57,7 +57,7 @@ Route::middleware('auth')->group(function () {
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store'])
         ->middleware('throttle:5,1');
 
-    Route::put('password', [PasswordController::class, 'update'])
+    Route::match(['put', 'post'], 'password', [PasswordController::class, 'update'])
         ->middleware('throttle:6,1')
         ->name('password.update');
 

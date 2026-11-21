@@ -13,7 +13,8 @@ export default function CitizenEdit({ citizen = {}, points = [], documentTypes =
     const citizenId = citizen?.id_form_pvd || citizen?.id || citizen?.documento || 1;
     const citizenDisplayName = citizen?.nombre_completo || `${citizen?.nombres || ''} ${citizen?.apellidos || ''}`.trim() || citizen?.documento || 'Ciudadano';
 
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
+        _method: 'put',
         documento: citizen?.documento || (citizen?.id ? String(citizen.id) : ''),
         id_tipo: citizen?.id_tipo || citizen?.tipo_id || 1,
         nombres: citizen?.nombres || '',
@@ -58,7 +59,9 @@ export default function CitizenEdit({ citizen = {}, points = [], documentTypes =
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('ciudadanos.update', citizenId));
+        post(route('ciudadanos.update.post', citizenId), {
+            preserveScroll: true,
+        });
     };
 
     return (

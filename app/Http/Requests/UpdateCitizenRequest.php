@@ -11,10 +11,22 @@ class UpdateCitizenRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('zona')) {
+            $val = trim((string) $this->input('zona'));
+            if (strcasecmp($val, 'urbano') === 0 || strcasecmp($val, 'urbana') === 0) {
+                $this->merge(['zona' => 'Urbana']);
+            } elseif (strcasecmp($val, 'rural') === 0) {
+                $this->merge(['zona' => 'Rural']);
+            }
+        }
+    }
+
     public function rules(): array
     {
         $citizen = $this->route('ciudadano') ?? $this->route('citizen');
-        $citizenId = is_object($citizen) ? ($citizen->id ?? $citizen->id_form_pvd) : $citizen;
+        $citizenId = is_object($citizen) ? ($citizen->getKey() ?? $citizen->id_form_pvd) : $citizen;
 
         return [
             'documento' => ['required', 'string', 'max:50', 'unique:form_pvd,documento,' . $citizenId . ',id'],
@@ -28,7 +40,7 @@ class UpdateCitizenRequest extends FormRequest
             'telefono' => ['nullable', 'string', 'max:50'],
             'direccion' => ['nullable', 'string', 'max:255'],
             'barrio' => ['nullable', 'string', 'max:120'],
-            'zona' => ['required', 'in:Urbana,Rural'],
+            'zona' => ['required', 'in:Urbana,Rural,URBANO,RURAL,urbano,rural'],
             'up' => ['nullable', 'string', 'max:100'],
             'estrato' => ['nullable', 'integer', 'min:0', 'max:6'],
             'grupo_etnico' => ['nullable', 'string', 'max:100'],

@@ -37,8 +37,9 @@ export default function UpdateProfileInformation({
 }: Props) {
     const user = usePage().props.auth.user as any;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } =
+    const { data, setData, post, errors, processing, recentlySuccessful } =
         useForm({
+            _method: 'patch',
             name: user.name || '',
             email: user.email || '',
             telefono: user.telefono || ciudadano?.telefono || '',
@@ -55,7 +56,7 @@ export default function UpdateProfileInformation({
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(route('profile.update'));
+        post(route('profile.update'));
     };
 
     const docNumero = user.documento || ciudadano?.documento || 'No registrado';

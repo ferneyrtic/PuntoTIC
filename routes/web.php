@@ -29,6 +29,7 @@ Route::middleware(['auth'])->group(function () {
     // Gestión de Ciudadanos (Directorio, Búsqueda, Creación y Edición)
     Route::model('ciudadano', Citizen::class);
     Route::resource('ciudadanos', CitizenController::class)->except(['destroy']);
+    Route::post('ciudadanos/{ciudadano}', [CitizenController::class, 'update'])->name('ciudadanos.update.post');
     Route::post('/api/ciudadanos/verificar', [CitizenController::class, 'verify'])
         ->middleware('throttle:60,1')
         ->name('ciudadanos.verify');
@@ -67,15 +68,18 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:Administrador|Super Administrador|Super Admin|Coordinador General|Coordinador PVD|Coordinador Aula Digital|Coordinador'])->group(function () {
         Route::get('categorias', [CategoryController::class, 'index'])->name('categorias.index');
         Route::post('categorias', [CategoryController::class, 'store'])->name('categorias.store');
-        Route::put('categorias/{categoria}', [CategoryController::class, 'update'])->name('categorias.update');
+        Route::match(['put', 'post'], 'categorias/{categoria}', [CategoryController::class, 'update'])->name('categorias.update');
+        Route::match(['delete', 'post'], 'categorias/{categoria}/delete', [CategoryController::class, 'destroy'])->name('categorias.destroy.post');
         Route::delete('categorias/{categoria}', [CategoryController::class, 'destroy'])->name('categorias.destroy');
         Route::post('/categorias/{categoria}/subcategorias', [CategoryController::class, 'storeSubcategory'])->name('categorias.subcategorias.store');
+        Route::match(['delete', 'post'], '/subcategorias/{subcategoria}/delete', [CategoryController::class, 'deleteSubcategory'])->name('categorias.subcategorias.destroy.post');
         Route::delete('/subcategorias/{subcategoria}', [CategoryController::class, 'deleteSubcategory'])->name('categorias.subcategorias.destroy');
 
         // Campos Dinámicos (Solo Administrador y Coordinador General)
         Route::resource('campos-dinamicos', DynamicFieldController::class)
             ->parameters(['campos-dinamicos' => 'campo'])
             ->only(['index', 'store', 'destroy']);
+        Route::post('campos-dinamicos/{campo}/delete', [DynamicFieldController::class, 'destroy'])->name('campos-dinamicos.destroy.post');
     });
 
     // Configuración y Auditoría del Sistema (Blindada: Exclusivo para Administrador / Super Admin)
@@ -92,8 +96,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Perfil de usuario autenticado
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::match(['patch', 'post'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::match(['delete', 'post'], '/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';
