@@ -207,7 +207,7 @@ class MLService
                 'cat' => $tramitesCat,
                 'words' => [
                     'sisben', 'encuesta', 'puntaje', 'predial', 'impuesto', 'ica', 'policia', 'antecedentes',
-                    'cedula', 'registraduria', 'dian', 'rut', 'salud', 'adres', 'fosyga', 'eps', 'avecindamiento',
+                    'cedula', 'registraduria', 'dian', 'rut', 'salud', 'adres', 'fosyga', 'eps', 'avecindamiento', 'avecidamiento',
                     'residencia', 'certificado', 'certificados', 'pago en linea', 'servicios publicos',
                 ],
             ],
@@ -252,7 +252,7 @@ class MLService
                     $subcats = $cat->subcategorias->values();
 
                     // Si el texto menciona avecindamiento o residencia, priorizar esa subcategoría específica
-                    if (str_contains($text, 'avecindamiento') || str_contains($text, 'residencia')) {
+                    if (str_contains($text, 'avecindamiento') || str_contains($text, 'avecidamiento') || str_contains($text, 'residencia')) {
                         $matchedSub = $cat->subcategorias->first(fn($s) => str_contains(mb_strtolower($s->nombre), 'avecindamiento') || str_contains(mb_strtolower($s->nombre), 'residencia'));
                         if ($matchedSub) {
                             $subcats = $cat->subcategorias->sortByDesc(fn($s) => $s->id_subcategoria === $matchedSub->id_subcategoria)->values();
