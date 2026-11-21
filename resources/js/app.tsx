@@ -28,10 +28,14 @@ createInertiaApp({
 
 // Asegurar que por defecto inicie en Modo Claro institucional
 if (typeof window !== 'undefined') {
-    if (localStorage.getItem('puntotic-theme') === 'dark') {
+    if (localStorage.getItem('puntotic-theme-v2') === 'dark') {
         document.documentElement.classList.add('dark');
     } else {
         document.documentElement.classList.remove('dark');
+        if (!localStorage.getItem('puntotic-theme-v2')) {
+            localStorage.setItem('puntotic-theme-v2', 'light');
+            localStorage.removeItem('puntotic-theme');
+        }
     }
 }
 

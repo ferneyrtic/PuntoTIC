@@ -10,17 +10,17 @@ export default function DarkModeToggle({ className = '', showLabel = false }: Pr
     const [dark, setDark] = useState<boolean>(() => {
         if (typeof window === 'undefined') return false;
         // Solo activar si el usuario lo configuró explícitamente en dark
-        return localStorage.getItem('puntotic-theme') === 'dark';
+        return localStorage.getItem('puntotic-theme-v2') === 'dark';
     });
 
     useEffect(() => {
         const root = document.documentElement;
         if (dark) {
             root.classList.add('dark');
-            localStorage.setItem('puntotic-theme', 'dark');
+            localStorage.setItem('puntotic-theme-v2', 'dark');
         } else {
             root.classList.remove('dark');
-            localStorage.setItem('puntotic-theme', 'light');
+            localStorage.setItem('puntotic-theme-v2', 'light');
         }
     }, [dark]);
 

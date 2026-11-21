@@ -16,6 +16,26 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="PuntoTIC">
 
+        <!-- Forzar Modo Claro por defecto institucional en primera vista -->
+        <script>
+            (function() {
+                try {
+                    var theme = localStorage.getItem('puntotic-theme-v2');
+                    if (theme === 'dark') {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        if (!theme) {
+                            localStorage.setItem('puntotic-theme-v2', 'light');
+                            localStorage.removeItem('puntotic-theme');
+                        }
+                    }
+                } catch (e) {
+                    document.documentElement.classList.remove('dark');
+                }
+            })();
+        </script>
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
