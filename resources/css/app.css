@@ -47,6 +47,14 @@
         background-color: #1e293b;
         color: #e2e8f0;
     }
+    .dark .bg-slate-200,
+    .dark .bg-slate-200\/70,
+    .dark .bg-slate-200\/80,
+    .dark .bg-slate-200\/90,
+    .dark .bg-slate-300 {
+        background-color: #0f172a;
+        color: #f8fafc;
+    }
     .dark .border-slate-200,
     .dark .border-slate-200\/90,
     .dark .border-slate-200\/80,

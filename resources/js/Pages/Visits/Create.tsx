@@ -382,7 +382,7 @@ export default function VisitCreate({
 
             {/* Mode Switcher Tabs */}
             {canAulaDigital && canPvdGeneral ? (
-                <div className="flex bg-slate-200/70 p-1.5 rounded-2xl max-w-xl mx-auto mb-6 border border-slate-300/60 shadow-inner">
+                <div className="flex bg-slate-200/80 dark:bg-slate-900 p-1.5 rounded-2xl max-w-xl mx-auto mb-6 border border-slate-300/80 dark:border-slate-800 shadow-inner">
                     <button
                         type="button"
                         onClick={() => {
@@ -398,7 +398,7 @@ export default function VisitCreate({
                         className={`btn-tactile flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
                             mode === 'aula'
                                 ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-soft shadow-emerald-700/20'
-                                : 'text-slate-600 hover:text-slate-900 font-bold'
+                                : 'text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-slate-800/80 font-bold'
                         }`}
                     >
                         <GraduationCap className="w-4 h-4" />
@@ -418,8 +418,8 @@ export default function VisitCreate({
                         }}
                         className={`btn-tactile flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
                             mode === 'pvd'
-                                ? 'bg-slate-900 text-white shadow-soft'
-                                : 'text-slate-600 hover:text-slate-900 font-bold'
+                                ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-soft'
+                                : 'text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-slate-800/80 font-bold'
                         }`}
                     >
                         <Building2 className="w-4 h-4" />
@@ -576,7 +576,7 @@ export default function VisitCreate({
 
                         {/* Actividad en el Computador */}
                         <div>
-                            <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                                 Actividad Asignada
                             </label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -595,15 +595,15 @@ export default function VisitCreate({
                                         }}
                                         className={`btn-tactile p-3 rounded-2xl border text-left text-xs font-bold transition-all flex items-center gap-2.5 ${
                                             selectedActivity === act
-                                                ? 'border-emerald-500 bg-emerald-50 text-emerald-900 shadow-soft-xs'
-                                                : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
+                                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 shadow-soft-xs'
+                                                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800/80'
                                         }`}
                                     >
                                         <div
                                             className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
                                                 selectedActivity === act
                                                     ? 'border-emerald-600 bg-emerald-600'
-                                                    : 'border-slate-300'
+                                                    : 'border-slate-300 dark:border-slate-600'
                                             }`}
                                         >
                                             {selectedActivity === act && (
@@ -618,7 +618,7 @@ export default function VisitCreate({
 
                         {/* Duración */}
                         <div>
-                            <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                                 Tiempo de Uso
                             </label>
                             <div className="flex flex-wrap gap-2">
@@ -632,8 +632,8 @@ export default function VisitCreate({
                                         }}
                                         className={`btn-tactile px-4 py-2.5 rounded-xl text-xs font-black transition-all ${
                                             selectedTime === mins
-                                                ? 'bg-slate-900 text-white shadow-soft'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-soft'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                     >
                                         {mins} min {mins === 60 && '(Recomendado)'}
