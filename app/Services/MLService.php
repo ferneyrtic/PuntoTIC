@@ -34,7 +34,7 @@ class MLService
             foreach ($subcatCounts as $subId => $visits) {
                 if (! $subId) continue;
                 $subcat = $visits->first()->subcategoria;
-                if (! $subcat) continue;
+                if (! $subcat || ! $subcat->activo || ! $subcat->categoria || ! $subcat->categoria->activo) continue;
 
                 $freq = $visits->count() / $totalVisits;
                 $predictions[$subId] = [
@@ -72,7 +72,7 @@ class MLService
 
             foreach ($cohortVisits as $cv) {
                 $subcat = SubCategory::with('categoria')->find($cv->id_subcategoria);
-                if (! $subcat) continue;
+                if (! $subcat || ! $subcat->activo || ! $subcat->categoria || ! $subcat->categoria->activo) continue;
 
                 $cohortScore = ($cv->total / $totalCohort) * 0.25;
 
@@ -104,7 +104,7 @@ class MLService
             $totalTop = $topServices->sum('total') ?: 1;
             foreach ($topServices as $ts) {
                 $subcat = SubCategory::with('categoria')->find($ts->id_subcategoria);
-                if (! $subcat) continue;
+                if (! $subcat || ! $subcat->activo || ! $subcat->categoria || ! $subcat->categoria->activo) continue;
 
                 $predictions[$ts->id_subcategoria] = [
                     'id_categoria' => $subcat->categoria_id,
@@ -173,62 +173,98 @@ class MLService
 
     /**
      * Clasificación NLP de texto libre para auto-asignar categoría.
+     * Solo opera sobre categorías y subcategorías vigentes y activas del sistema.
      */
     public function classifyDescription(string $text): ?array
     {
         $text = mb_strtolower(trim($text));
-        $keywords = [
-            'sisben' => 1,
-            'encuesta' => 1,
-            'puntaje' => 1,
-            'predial' => 1,
-            'impuesto' => 1,
-            'ica' => 1,
-            'policia' => 1,
-            'antecedentes' => 1,
-            'cedula' => 1,
-            'registraduria' => 1,
-            'dian' => 1,
-            'rut' => 1,
-            'salud' => 1,
-            'adres' => 1,
-            'fosyga' => 1,
-            'eps' => 1,
-            'internet' => 2,
-            'navegacion' => 2,
-            'tarea' => 2,
-            'investigacion' => 2,
-            'correo' => 2,
-            'empleo' => 2,
-            'computrabajo' => 2,
-            'impresion' => 3,
-            'imprimir' => 3,
-            'copia' => 3,
-            'fotocopia' => 3,
-            'escaner' => 3,
-            'escanear' => 3,
-            'digitalizar' => 3,
-            'curso' => 4,
-            'taller' => 4,
-            'capacitacion' => 4,
-            'excel' => 4,
-            'word' => 4,
-            'alfabetizacion' => 4,
-            'sala' => 5,
-            'prestamo' => 5,
-            'reunion' => 5,
-            'jac' => 5,
-            'junta' => 5,
+        if (empty($text)) {
+            return null;
+        }
+
+        // Obtener las categorías activas de Punto TIC
+        $activeCategories = Category::with(['subcategorias' => fn($q) => $q->where('activo', true)->orderBy('orden')])
+            ->where('activo', true)
+            ->get();
+
+        if ($activeCategories->isEmpty()) {
+            return null;
+        }
+
+        $tramitesCat = $activeCategories->firstWhere('id_categoria', 63)
+            ?? $activeCategories->first(fn($c) => str_contains(mb_strtolower($c->nombre), 'trámite') || str_contains(mb_strtolower($c->nombre), 'tramite'));
+        $conectividadCat = $activeCategories->firstWhere('id_categoria', 64)
+            ?? $activeCategories->first(fn($c) => str_contains(mb_strtolower($c->nombre), 'conectividad') || str_contains(mb_strtolower($c->nombre), 'gobierno'));
+        $impresionCat = $activeCategories->firstWhere('id_categoria', 65)
+            ?? $activeCategories->first(fn($c) => str_contains(mb_strtolower($c->nombre), 'impresi') || str_contains(mb_strtolower($c->nombre), 'digitaliza'));
+        $capacitacionCat = $activeCategories->firstWhere('id_categoria', 66)
+            ?? $activeCategories->first(fn($c) => str_contains(mb_strtolower($c->nombre), 'capacita') || str_contains(mb_strtolower($c->nombre), 'formaci'));
+        $salasCat = $activeCategories->firstWhere('id_categoria', 67)
+            ?? $activeCategories->first(fn($c) => str_contains(mb_strtolower($c->nombre), 'sala') || str_contains(mb_strtolower($c->nombre), 'préstamo') || str_contains(mb_strtolower($c->nombre), 'prestamo'));
+
+        $keywordRules = [
+            [
+                'cat' => $tramitesCat,
+                'words' => [
+                    'sisben', 'encuesta', 'puntaje', 'predial', 'impuesto', 'ica', 'policia', 'antecedentes',
+                    'cedula', 'registraduria', 'dian', 'rut', 'salud', 'adres', 'fosyga', 'eps', 'avecindamiento',
+                    'residencia', 'certificado', 'certificados', 'pago en linea', 'servicios publicos',
+                ],
+            ],
+            [
+                'cat' => $conectividadCat,
+                'words' => [
+                    'internet', 'navegacion', 'navegar', 'tarea', 'tareas', 'investigacion', 'correo', 'email',
+                    'empleo', 'computrabajo', 'teletrabajo', 'computador', 'videollamada',
+                ],
+            ],
+            [
+                'cat' => $impresionCat,
+                'words' => [
+                    'impresion', 'imprimir', 'copia', 'copias', 'fotocopia', 'fotocopias', 'escaner', 'escanear',
+                    'digitalizar', 'digitalizacion', 'foto documento',
+                ],
+            ],
+            [
+                'cat' => $capacitacionCat,
+                'words' => [
+                    'curso', 'cursos', 'taller', 'talleres', 'capacitacion', 'capacitaciones', 'excel', 'word',
+                    'ofimatica', 'alfabetizacion', 'robotica', 'programacion',
+                ],
+            ],
+            [
+                'cat' => $salasCat,
+                'words' => [
+                    'sala', 'salas', 'prestamo', 'reunion', 'reuniones', 'jac', 'junta', 'comunitaria', 'auditorio',
+                ],
+            ],
         ];
 
-        foreach ($keywords as $word => $catId) {
-            if (str_contains($text, $word)) {
-                $cat = Category::with('subcategorias')->find($catId);
-                return [
-                    'id_categoria' => $cat->id_categoria,
-                    'categoria_nombre' => $cat->nombre,
-                    'subcategorias' => $cat->subcategorias,
-                ];
+        foreach ($keywordRules as $rule) {
+            $cat = $rule['cat'];
+            if (! $cat) {
+                continue;
+            }
+
+            foreach ($rule['words'] as $word) {
+                // Coincidencia con límite de palabra para evitar falsos positivos (ej: 'ica' dentro de 'certificado')
+                if (preg_match('/(?:\b|^)' . preg_quote($word, '/') . '(?:\b|$)/ui', $text)) {
+                    $subcats = $cat->subcategorias->values();
+
+                    // Si el texto menciona avecindamiento o residencia, priorizar esa subcategoría específica
+                    if (str_contains($text, 'avecindamiento') || str_contains($text, 'residencia')) {
+                        $matchedSub = $cat->subcategorias->first(fn($s) => str_contains(mb_strtolower($s->nombre), 'avecindamiento') || str_contains(mb_strtolower($s->nombre), 'residencia'));
+                        if ($matchedSub) {
+                            $subcats = $cat->subcategorias->sortByDesc(fn($s) => $s->id_subcategoria === $matchedSub->id_subcategoria)->values();
+                        }
+                    }
+
+                    return [
+                        'id_categoria' => $cat->id_categoria,
+                        'categoria_nombre' => $cat->nombre,
+                        'subcategorias' => $subcats,
+                    ];
+                }
             }
         }
 

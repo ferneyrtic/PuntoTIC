@@ -235,13 +235,19 @@ export default function VisitCreate({
             try {
                 const res = await axios.post(route('visitas.classify-nlp'), { descripcion: val });
                 if (res.data.classified && res.data.suggestion) {
-                    setData((prev) => ({
-                        ...prev,
-                        id_categoria: res.data.suggestion.id_categoria,
-                        id_subcategoria:
-                            res.data.suggestion.subcategorias?.[0]?.id_subcategoria ||
-                            prev.id_subcategoria,
-                    }));
+                    const suggCatId = Number(res.data.suggestion.id_categoria);
+                    const matchingCat = categories.find((c) => c.id_categoria === suggCatId);
+                    if (matchingCat) {
+                        const suggSubId = Number(res.data.suggestion.subcategorias?.[0]?.id_subcategoria);
+                        const hasSub = matchingCat.subcategorias?.some((s) => s.id_subcategoria === suggSubId);
+                        setData((prev) => ({
+                            ...prev,
+                            id_categoria: suggCatId,
+                            id_subcategoria: hasSub
+                                ? suggSubId
+                                : (matchingCat.subcategorias?.[0]?.id_subcategoria || prev.id_subcategoria),
+                        }));
+                    }
                 }
             } catch (err) {
                 // Ignore NLP errors
