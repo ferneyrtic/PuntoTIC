@@ -310,9 +310,10 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
         [isCitizen, isAdmin, canManageTaxonomy, currentUrl, pendingHref]
     );
 
-    const currentPointName =
-        points?.find((p: any) => p.id_punto === (selectedPointId || user?.id_punto))?.nombre_punto ||
-        'Punto Vive Digital';
+    const isGlobalUser = user?.tiene_alcance_global || user?.is_admin || user?.roles_nombres?.includes('Coordinador General');
+    const currentPointName = isGlobalUser
+        ? (selectedPointId ? (points?.find((p: any) => p.id_punto === selectedPointId)?.nombre_punto || 'Todas las Sedes') : 'Coordinación General TIC')
+        : (points?.find((p: any) => p.id_punto === (selectedPointId || user?.id_punto))?.nombre_punto || 'Punto Vive Digital');
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col md:flex-row font-sans selection:bg-emerald-600 selection:text-white transition-colors duration-200">

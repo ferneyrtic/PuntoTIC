@@ -208,6 +208,10 @@ class User extends Authenticatable
 
     public function getEsGestorPvdAttribute(): bool
     {
+        if ($this->hasRole(['Coordinador General', 'Administrador', 'Super Administrador', 'Super Admin'])) {
+            return false;
+        }
+
         return $this->hasRole(['Coordinador PVD', 'Gestor PVD']) || (in_array($this->id_punto, [1, 2]) && ! $this->hasRole('Administrador'));
     }
 
