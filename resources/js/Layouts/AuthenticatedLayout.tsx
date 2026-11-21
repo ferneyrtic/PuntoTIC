@@ -776,7 +776,11 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     isOpen={isTreeGameOpen}
                     onClose={() => setIsTreeGameOpen(false)}
                     currentUserName={user?.name}
-                    currentUserPoint={user?.point?.nombre_punto || (points && points.find((p: any) => p.id_punto === user?.id_punto)?.nombre_punto)}
+                    currentUserPoint={
+                        user?.tiene_alcance_global || user?.is_admin || user?.roles_nombres?.includes('Coordinador General')
+                            ? 'Coordinación General TIC'
+                            : (user?.point?.nombre_punto || (points && points.find((p: any) => p.id_punto === user?.id_punto)?.nombre_punto) || 'Red TIC Acacías')
+                    }
                 />
             )}
 

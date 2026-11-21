@@ -592,7 +592,7 @@ export default function ChristmasTreeGameModal({
                         <div>
                             <div className="flex items-center gap-2">
                                 <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
-                                    Taller Navideño de Gestores
+                                    Taller Navideño de la Red TIC
                                 </h2>
                                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                                     PuntoTIC 2026
@@ -659,8 +659,8 @@ export default function ChristmasTreeGameModal({
                                     <div className="w-full flex items-center justify-between text-xs mb-2 text-slate-300">
                                         <div className="flex items-center gap-2">
                                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                            <span className="font-bold text-white">{currentUserName || 'Gestor TIC'}</span>
-                                            <span className="text-slate-400">· {currentUserPoint || 'Sede Acacías'}</span>
+                                            <span className="font-bold text-white">{currentUserName || 'Equipo TIC'}</span>
+                                            <span className="text-slate-400">· {currentUserPoint || 'Red TIC Acacías'}</span>
                                         </div>
                                         <div className="text-[11px] font-mono bg-white/10 px-2 py-0.5 rounded-md text-emerald-300 font-bold">
                                             {decorations.length} / 45 adornos
@@ -774,7 +774,7 @@ export default function ChristmasTreeGameModal({
                                     <div className="flex flex-col gap-1 mt-1">
                                         <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1">
                                             <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                                            <span>Tu Mensaje para los Compañeros Gestores:</span>
+                                            <span>Tu Mensaje para el Equipo TIC:</span>
                                         </label>
                                         <input
                                             type="text"
@@ -831,7 +831,7 @@ export default function ChristmasTreeGameModal({
                                             Galería Navideña de la Red de Puntos Vive Digital & Aulas
                                         </h3>
                                         <p className="text-xs text-slate-300">
-                                            Descubre los árboles decorados por cada gestor de Acacías. ¡Haz clic en el corazón para enviarles tus mejores deseos!
+                                            Descubre los árboles decorados por el equipo y gestores de Acacías. ¡Haz clic en el corazón para enviarles tus mejores deseos!
                                         </p>
                                     </div>
                                 </div>

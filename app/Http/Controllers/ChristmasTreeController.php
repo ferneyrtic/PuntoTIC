@@ -45,7 +45,20 @@ class ChristmasTreeController extends Controller
 
         $user = $request->user();
         $point = $user->point;
-        $nombrePunto = $point ? $point->nombre_punto : 'Punto Vive Digital';
+        
+        // Determinar nombre institucional de la sede o coordinación
+        if ($user->tieneAlcanceGlobal() || $user->hasRole(['Coordinador General', 'Administrador', 'Super Administrador'])) {
+            $nombrePunto = 'Coordinación General TIC';
+        } elseif ($user->hasRole(['Coordinador PVD', 'Coordinador Aula Digital', 'Coordinador'])) {
+            $nombrePunto = $point ? "Coordinación {$point->nombre_punto}" : 'Coordinación de Sedes';
+        } elseif ($point) {
+            $nombrePunto = $point->nombre_punto;
+        } elseif ($user->id_punto) {
+            $pointObj = \App\Models\Point::find($user->id_punto);
+            $nombrePunto = $pointObj ? $pointObj->nombre_punto : 'Red TIC Acacías';
+        } else {
+            $nombrePunto = 'Red de Puntos y Aulas Digitales';
+        }
 
         $tree = ChristmasTree::updateOrCreate(
             ['user_id' => $user->id],
