@@ -145,7 +145,7 @@ class RoomLoan extends Model
 
     public function participantes(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(RoomLoanParticipant::class, 'id_prestamo', 'id_prestamo');
+        return $this->hasMany(RoomLoanParticipant::class, 'id_prestamo', 'id');
     }
 
     public function scopeDateBetween(Builder $query, ?string $from, ?string $to): Builder

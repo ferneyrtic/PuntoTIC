@@ -82,6 +82,7 @@ class User extends Authenticatable
     }
 
     protected $appends = [
+        'nombre',
         'is_admin',
         'es_aula_digital',
         'rol_principal',
@@ -94,6 +95,11 @@ class User extends Authenticatable
         'tiene_alcance_global',
         'puede_gestionar_taxonomia',
     ];
+
+    public function getNombreAttribute(): string
+    {
+        return $this->attributes['name'] ?? $this->attributes['names'] ?? '';
+    }
 
     public function tieneAlcanceGlobal(): bool
     {

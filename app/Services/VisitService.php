@@ -100,9 +100,36 @@ class VisitService
                     if ($existingChild) {
                         $citizenId = $existingChild->id ?: $existingChild->id_form_pvd;
                     } else {
-                        $count = Citizen::where('documento', 'like', "ESC-{$prefix}-%")->count() + 1;
-                        $autoDoc = sprintf("ESC-%s-%05d", $prefix, $count);
-                        $numericId = (int)("99" . $pointId . sprintf("%06d", $count));
+                        // Encontrar el número consecutivo más alto para este prefijo
+                        $highestDoc = Citizen::where('documento', 'like', "ESC-{$prefix}-%")
+                            ->orderByDesc('documento')
+                            ->value('documento');
+
+                        $highestNum = 0;
+                        if ($highestDoc && preg_match('/ESC-' . preg_quote($prefix, '/') . '-(\d+)/', $highestDoc, $matches)) {
+                            $highestNum = (int) $matches[1];
+                        }
+
+                        $prefixNumeric = (int) ("99" . $pointId);
+                        $highestId = Citizen::where('id', '>=', $prefixNumeric * 1000000)
+                            ->where('id', '<', ($prefixNumeric + 1) * 1000000)
+                            ->max('id');
+                        $highestIdNum = $highestId ? ($highestId % 1000000) : 0;
+
+                        $nextNum = max($highestNum, $highestIdNum) + 1;
+
+                        // Bucle de seguridad para garantizar unicidad absoluta
+                        do {
+                            $autoDoc = sprintf("ESC-%s-%05d", $prefix, $nextNum);
+                            $numericId = (int) ("99" . $pointId . sprintf("%06d", $nextNum));
+                            $exists = Citizen::where('documento', $autoDoc)
+                                ->orWhere('id', $numericId)
+                                ->orWhere('id_form_pvd', $numericId)
+                                ->exists();
+                            if ($exists) {
+                                $nextNum++;
+                            }
+                        } while ($exists);
 
                         $citizen = $this->citizenService->createCitizen([
                             'id' => $numericId,

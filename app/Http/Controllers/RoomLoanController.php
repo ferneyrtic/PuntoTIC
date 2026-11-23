@@ -20,7 +20,7 @@ class RoomLoanController extends Controller
         $user = $request->user();
         $isGlobal = $user ? $user->tieneAlcanceGlobal() : false;
 
-        $filters = $request->only(['fecha_desde', 'fecha_hasta', 'id_punto', 'estado', 'tipo_actividad', 'search']);
+        $filters = $request->only(['fecha_desde', 'fecha_hasta', 'id_punto', 'id_gestor', 'estado', 'tipo_actividad', 'search']);
 
         if (! $isGlobal && $user && $user->id_punto) {
             $filters['id_punto'] = (int) $user->id_punto;
@@ -30,6 +30,9 @@ class RoomLoanController extends Controller
             ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
             ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
                 $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
+            }))
+            ->when($filters['id_gestor'] ?? null, fn ($q, $g) => $q->where(function($sub) use ($g) {
+                $sub->where('id_gestor', $g)->orWhere('id_gestores', $g);
             }))
             ->when($filters['estado'] ?? null, fn ($q, $e) => $q->where('estado', $e))
             ->when($filters['tipo_actividad'] ?? null, fn ($q, $t) => $q->where('tipo_actividad', $t))
@@ -41,6 +44,11 @@ class RoomLoanController extends Controller
                             $c->where('nombres', 'like', "%{$search}%")
                                 ->orWhere('apellidos', 'like', "%{$search}%")
                                 ->orWhere('documento', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('gestor', function ($g) use ($search) {
+                            $g->where('name', 'like', "%{$search}%")
+                                ->orWhere('names', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
                         });
                 });
             })
@@ -59,6 +67,14 @@ class RoomLoanController extends Controller
             ->orderBy('tipo_actividad')
             ->pluck('tipo_actividad');
 
+        $gestores = \App\Models\User::where('activo', true)
+            ->whereHas('roles', fn($r) => $r->whereIn('name', [
+                'Gestor', 'Gestor PVD', 'Gestor Aula Digital', 'Gestor Global',
+                'Coordinador', 'Coordinador General', 'Coordinador PVD', 'Coordinador Aula Digital', 'Administrador'
+            ]))
+            ->orderBy('name')
+            ->get(['id', 'name', 'names', 'id_punto']);
+
         // Eventos completos para la vista de calendario
         $selectedMonth = $request->get('mes', now()->format('Y-m'));
         try {
@@ -71,10 +87,13 @@ class RoomLoanController extends Controller
         $monthStart = $monthCarbon->copy()->startOfMonth()->subDays(7)->toDateString();
         $monthEnd = $monthCarbon->copy()->endOfMonth()->addDays(7)->toDateString();
 
-        $calendarLoans = RoomLoan::with(['ciudadano', 'punto', 'participantes.ciudadano'])
+        $calendarLoans = RoomLoan::with(['ciudadano', 'punto', 'gestor', 'participantes.ciudadano'])
             ->dateBetween($monthStart, $monthEnd)
             ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
                 $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
+            }))
+            ->when($filters['id_gestor'] ?? null, fn ($q, $g) => $q->where(function($sub) use ($g) {
+                $sub->where('id_gestor', $g)->orWhere('id_gestores', $g);
             }))
             ->when($filters['tipo_actividad'] ?? null, fn ($q, $t) => $q->where('tipo_actividad', $t))
             ->orderByRaw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at)) ASC')
@@ -87,6 +106,7 @@ class RoomLoanController extends Controller
             'filters' => $filters,
             'points' => $points,
             'tiposActividad' => $tiposActividad,
+            'gestores' => $gestores,
             'pendingCount' => RoomLoan::where('estado', 'Pendiente')
                 ->when(! $isGlobal && $user?->id_punto, fn ($q) => $q->where('id_punto', $user->id_punto))
                 ->count(),
@@ -134,19 +154,23 @@ class RoomLoanController extends Controller
             }
         }
 
-        AuditLog::registrar(
-            accion: 'PRESTAMO_SALA',
-            modulo: 'prestamos',
-            registroId: (string) $loan->id_prestamo,
-            antiguos: null,
-            nuevos: [
-                'tipo_actividad' => $loan->tipo_actividad,
-                'asistentes' => $loan->num_asistentes,
-                'fecha_prestamo' => $loan->fecha_prestamo,
-                'id_punto' => $loan->id_punto,
-                'estado' => $loan->estado,
-            ]
-        );
+        try {
+            AuditLog::registrar(
+                accion: 'PRESTAMO_SALA',
+                modulo: 'prestamos',
+                registroId: (string) ($loan->id_prestamo ?? $loan->id),
+                antiguos: null,
+                nuevos: [
+                    'tipo_actividad' => $loan->tipo_actividad,
+                    'asistentes' => $loan->num_asistentes,
+                    'fecha_prestamo' => $loan->fecha_prestamo,
+                    'id_punto' => $loan->id_punto,
+                    'estado' => $loan->estado,
+                ]
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('AuditLog PRESTAMO_SALA failed: ' . $e->getMessage());
+        }
 
         StatsService::invalidateCache();
 
@@ -186,13 +210,17 @@ class RoomLoanController extends Controller
 
         $loan->update($validated);
 
-        AuditLog::registrar(
-            accion: 'ACTUALIZAR_PRESTAMO',
-            modulo: 'prestamos',
-            registroId: (string) $loan->id_prestamo,
-            antiguos: $oldData,
-            nuevos: $validated
-        );
+        try {
+            AuditLog::registrar(
+                accion: 'ACTUALIZAR_PRESTAMO',
+                modulo: 'prestamos',
+                registroId: (string) ($loan->id_prestamo ?? $loan->id),
+                antiguos: $oldData,
+                nuevos: $validated
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('AuditLog ACTUALIZAR_PRESTAMO failed: ' . $e->getMessage());
+        }
 
         StatsService::invalidateCache();
 

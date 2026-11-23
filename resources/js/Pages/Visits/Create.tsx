@@ -567,11 +567,36 @@ export default function VisitCreate({
                                 </div>
                             ) : (
                                 studentSearch.trim().length >= 3 && (
-                                    <div className="mt-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center gap-2 animate-fade-in">
-                                        <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-                                        <span>
-                                            Se creará automáticamente como <strong>nuevo estudiante</strong> en el aula.
-                                        </span>
+                                    <div className="mt-3 space-y-2">
+                                        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center gap-2 animate-fade-in">
+                                            <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                                            <span>
+                                                Se creará automáticamente como <strong>nuevo estudiante</strong> en el aula digital.
+                                            </span>
+                                        </div>
+                                        <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 animate-fade-in">
+                                            <span className="font-medium">
+                                                ¿Es un <strong>ciudadano adulto</strong> o trámite formal?
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setMode('pvd');
+                                                    setDocumentInput(studentSearch.trim());
+                                                    setData((prev) => ({
+                                                        ...prev,
+                                                        es_registro_rapido: false,
+                                                        duracion_minutos: 30,
+                                                        servicio_texto: '',
+                                                        id_punto: userPointId,
+                                                    }));
+                                                }}
+                                                className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shrink-0 flex items-center justify-center gap-1.5 shadow-xs"
+                                            >
+                                                <Building2 className="w-3.5 h-3.5" />
+                                                <span>Pasar a Modo PVD Adultos</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 )
                             )}

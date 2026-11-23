@@ -23,7 +23,7 @@ class RoomLoanParticipant extends Model
 
     public function prestamo(): BelongsTo
     {
-        return $this->belongsTo(RoomLoan::class, 'id_prestamo', 'id_prestamo');
+        return $this->belongsTo(RoomLoan::class, 'id_prestamo', 'id');
     }
 
     public function ciudadano(): BelongsTo

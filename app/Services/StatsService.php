@@ -281,14 +281,15 @@ class StatsService
                 $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
             });
         }
+        $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
         $prestamosPeriodo = (clone $prestamosQuery)
-            ->whereBetween('fecha_prestamo', [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
             ->count();
         $asistentesPeriodo = (int) (clone $prestamosQuery)
-            ->whereBetween('fecha_prestamo', [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
             ->sum('num_asistentes');
         $prestamosHoy = (clone $prestamosQuery)
-            ->whereDate('fecha_prestamo', Carbon::today())
+            ->whereDate($dateLoanCol, Carbon::today())
             ->count();
 
         return [
@@ -427,15 +428,16 @@ class StatsService
             ->toArray();
 
         // Préstamos por punto en el período
-        $loansQuery = RoomLoan::whereBetween('fecha_prestamo', [$startDate->toDateString(), $endDate->toDateString()]);
+        $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
+        $loansQuery = RoomLoan::whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()]);
         if ($targetPointIds && count($targetPointIds) > 0) {
             $loansQuery->where(function ($sub) use ($targetPointIds) {
                 $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
             });
         }
         $loansByPoint = $loansQuery
-            ->select('id_punto', DB::raw('count(*) as total_prestamos, sum(num_asistentes) as total_asistentes'))
-            ->groupBy('id_punto')
+            ->select(DB::raw('COALESCE(id_punto, id_puntos) as id_punto, count(*) as total_prestamos, sum(num_asistentes) as total_asistentes'))
+            ->groupBy(DB::raw('COALESCE(id_punto, id_puntos)'))
             ->get()
             ->keyBy('id_punto');
 
