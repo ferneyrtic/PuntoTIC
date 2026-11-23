@@ -11,10 +11,13 @@ use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PrintRecordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoomLoanController;
+use App\Http\Controllers\RoomLoanParticipantController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\VisitController;
 use App\Models\Citizen;
 use App\Models\Point;
+use App\Models\RoomLoan;
+use App\Models\RoomLoanParticipant;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -44,8 +47,13 @@ Route::middleware(['auth'])->group(function () {
         ->name('visitas.classify-nlp');
 
     // Préstamos de Salas
+    Route::model('prestamo', RoomLoan::class);
     Route::resource('prestamos', RoomLoanController::class)->only(['index', 'store', 'update']);
     Route::post('prestamos/{prestamo}', [RoomLoanController::class, 'update'])->name('prestamos.update.post');
+    Route::get('prestamos/{prestamo}/participantes', [RoomLoanParticipantController::class, 'index'])->name('prestamos.participantes.index');
+    Route::post('prestamos/{prestamo}/participantes', [RoomLoanParticipantController::class, 'store'])->name('prestamos.participantes.store');
+    Route::delete('prestamos/{prestamo}/participantes/{participante}', [RoomLoanParticipantController::class, 'destroy'])->name('prestamos.participantes.destroy');
+    Route::post('prestamos/{prestamo}/participantes/{participante}/delete', [RoomLoanParticipantController::class, 'destroy'])->name('prestamos.participantes.destroy.post');
 
     // Registro de Impresiones
     Route::resource('impresiones', PrintRecordController::class)->only(['index', 'store']);

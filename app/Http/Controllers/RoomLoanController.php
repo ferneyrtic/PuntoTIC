@@ -26,7 +26,7 @@ class RoomLoanController extends Controller
             $filters['id_punto'] = (int) $user->id_punto;
         }
 
-        $loans = RoomLoan::with(['ciudadano', 'punto', 'gestor'])
+        $loans = RoomLoan::with(['ciudadano', 'punto', 'gestor', 'participantes.ciudadano'])
             ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
             ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
                 $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
@@ -71,7 +71,7 @@ class RoomLoanController extends Controller
         $monthStart = $monthCarbon->copy()->startOfMonth()->subDays(7)->toDateString();
         $monthEnd = $monthCarbon->copy()->endOfMonth()->addDays(7)->toDateString();
 
-        $calendarLoans = RoomLoan::with(['ciudadano', 'punto'])
+        $calendarLoans = RoomLoan::with(['ciudadano', 'punto', 'participantes.ciudadano'])
             ->dateBetween($monthStart, $monthEnd)
             ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
                 $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
@@ -109,6 +109,7 @@ class RoomLoanController extends Controller
             'hora_fin' => ['nullable', 'string'],
             'observaciones' => ['nullable', 'string'],
             'estado' => ['required', 'in:Pendiente,Reservado,En curso,Completado,Cancelado'],
+            'participantes' => ['nullable', 'array'],
         ]);
 
         if (! $isGlobal && $user && $user->id_punto) {
@@ -118,6 +119,20 @@ class RoomLoanController extends Controller
         $validated['id_gestor'] = Auth::id();
 
         $loan = RoomLoan::create($validated);
+
+        if ($request->has('participantes') && is_array($request->participantes)) {
+            $prestamoId = $loan->id_prestamo ?? $loan->getKey();
+            foreach ($request->participantes as $part) {
+                if (! empty($part['id_form_pvd']) || ! empty($part['nombre_libre'])) {
+                    $loan->participantes()->create([
+                        'id_prestamo' => $prestamoId,
+                        'id_form_pvd' => $part['id_form_pvd'] ?? null,
+                        'nombre_libre' => $part['nombre_libre'] ?? null,
+                        'documento_libre' => $part['documento_libre'] ?? null,
+                    ]);
+                }
+            }
+        }
 
         AuditLog::registrar(
             accion: 'PRESTAMO_SALA',
@@ -151,6 +166,8 @@ class RoomLoanController extends Controller
             'nombre_responsable_texto' => ['nullable', 'string', 'max:150'],
             'num_asistentes' => ['nullable', 'integer', 'min:1', 'max:500'],
             'fecha_prestamo' => ['nullable', 'date'],
+            'hora_inicio' => ['nullable', 'string'],
+            'hora_fin' => ['nullable', 'string'],
         ]);
 
         $oldData = [

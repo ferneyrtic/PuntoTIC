@@ -21,6 +21,7 @@ import {
     Database,
     ChevronDown,
     ChevronUp,
+    Edit3,
 } from 'lucide-react';
 import axios from 'axios';
 import { addToOfflineQueue } from '@/services/pwaService';
@@ -90,6 +91,8 @@ export default function VisitCreate({
     const [selectedTime, setSelectedTime] = useState(60);
     const [offlineSavedNotice, setOfflineSavedNotice] = useState(false);
     const [showDemographics, setShowDemographics] = useState(false);
+    // Tiempo personalizado
+    const [customMinutos, setCustomMinutos] = useState<number | ''>('');
 
     const { data, setData, post, processing, errors, reset } = useForm({
         id_form_pvd: initialCitizen?.id_form_pvd || null,
@@ -622,13 +625,14 @@ export default function VisitCreate({
                                 Tiempo de Uso
                             </label>
                             <div className="flex flex-wrap gap-2">
-                                {[30, 60, 90, 120].map((mins) => (
+                                {[30, 60, 90, 120, 240].map((mins) => (
                                     <button
                                         key={mins}
                                         type="button"
                                         onClick={() => {
                                             setSelectedTime(mins);
                                             setData('duracion_minutos', mins);
+                                            setCustomMinutos('');
                                         }}
                                         className={`btn-tactile px-4 py-2.5 rounded-xl text-xs font-black transition-all ${
                                             selectedTime === mins
@@ -636,9 +640,29 @@ export default function VisitCreate({
                                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                         }`}
                                     >
-                                        {mins} min {mins === 60 && '(Recomendado)'}
+                                        {mins === 240 ? '4 h' : `${mins} min`}{mins === 60 && ' (Recomendado)'}
                                     </button>
                                 ))}
+                                {/* Personalizado */}
+                                <div className="flex items-center gap-1.5">
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={600}
+                                        value={customMinutos}
+                                        placeholder="Personalizado"
+                                        onChange={(e) => {
+                                            const v = e.target.value === '' ? '' : parseInt(e.target.value);
+                                            setCustomMinutos(v as number | '');
+                                            if (typeof v === 'number' && v > 0) {
+                                                setSelectedTime(-1);
+                                                setData('duracion_minutos', v);
+                                            }
+                                        }}
+                                        className="w-28 px-3 py-2.5 rounded-xl text-xs font-black border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500"
+                                    />
+                                    <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">min</span>
+                                </div>
                             </div>
                         </div>
 
@@ -750,13 +774,27 @@ export default function VisitCreate({
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-left sm:text-right">
-                                    <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
-                                        Historial de Atención
+                                <div className="text-left sm:text-right flex flex-col items-start sm:items-end gap-1.5">
+                                    <div>
+                                        <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                                            Historial de Atención
+                                        </div>
+                                        <div className="text-xs font-black text-emerald-700">
+                                            {citizenFound.total_visitas || 0} visitas previas
+                                        </div>
                                     </div>
-                                    <div className="text-xs font-black text-emerald-700">
-                                        {citizenFound.total_visitas || 0} visitas previas
-                                    </div>
+                                    {citizenFound.id_form_pvd && (
+                                        <a
+                                            href={route('ciudadanos.edit', citizenFound.id_form_pvd)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-bold shadow-xs transition-colors"
+                                            title="Editar información del ciudadano en una nueva pestaña"
+                                        >
+                                            <Edit3 className="w-3 h-3 text-amber-600" />
+                                            <span>Editar datos</span>
+                                        </a>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -1096,21 +1134,47 @@ export default function VisitCreate({
                             <label className="block text-xs font-bold text-slate-700 mb-2">
                                 Duración Estimada de la Atención
                             </label>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                {[15, 30, 60, 120].map((mins) => (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {[15, 30, 60, 120, 240].map((mins) => (
                                     <button
                                         key={mins}
                                         type="button"
-                                        onClick={() => setData('duracion_minutos', mins)}
+                                        onClick={() => {
+                                            setData('duracion_minutos', mins);
+                                            setCustomMinutos('');
+                                        }}
                                         className={`btn-tactile py-2.5 rounded-xl text-xs font-bold transition-all border ${
-                                            data.duracion_minutos === mins
+                                            data.duracion_minutos === mins && customMinutos === ''
                                                 ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-transparent shadow-soft-xs'
                                                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                         }`}
                                     >
-                                        {mins} min
+                                        {mins === 240 ? '4 h (240 min)' : `${mins} min`}
                                     </button>
                                 ))}
+                                {/* Personalizado */}
+                                <div className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 transition-all ${
+                                    customMinutos !== ''
+                                        ? 'border-emerald-500 bg-emerald-50'
+                                        : 'border-slate-200 bg-white'
+                                }`}>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={600}
+                                        value={customMinutos}
+                                        placeholder="Personalizado"
+                                        onChange={(e) => {
+                                            const v = e.target.value === '' ? '' : parseInt(e.target.value);
+                                            setCustomMinutos(v as number | '');
+                                            if (typeof v === 'number' && v > 0) {
+                                                setData('duracion_minutos', v);
+                                            }
+                                        }}
+                                        className="w-full text-xs font-bold bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+                                    />
+                                    <span className="text-[11px] text-slate-400 font-semibold shrink-0">min</span>
+                                </div>
                             </div>
                         </div>
                     </div>

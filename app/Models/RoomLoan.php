@@ -143,6 +143,11 @@ class RoomLoan extends Model
         return $this->belongsTo(User::class, 'id_gestor', 'id');
     }
 
+    public function participantes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(RoomLoanParticipant::class, 'id_prestamo', 'id_prestamo');
+    }
+
     public function scopeDateBetween(Builder $query, ?string $from, ?string $to): Builder
     {
         $dateCol = \Illuminate\Support\Facades\DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');

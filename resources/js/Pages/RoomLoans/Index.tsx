@@ -23,6 +23,8 @@ import {
     AlertCircle,
     MessageSquare,
     Edit3,
+    UserPlus,
+    Trash2,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -238,11 +240,171 @@ export default function RoomLoansIndex({
         tipo_actividad: CATEGORIAS_PRESTAMO[0],
         num_asistentes: 15,
         fecha_prestamo: new Date().toISOString().substring(0, 10),
-        hora_inicio: '09:00',
-        hora_fin: '11:00',
+        hora_inicio: '08:00',
+        hora_fin: '10:00',
         observaciones: '',
         estado: 'Completado',
+        participantes: [] as Array<{
+            id_form_pvd?: number;
+            nombre: string;
+            documento?: string;
+            nombre_libre?: string;
+            documento_libre?: string;
+        }>,
     });
+
+    // Participantes para el detalle / visualización del préstamo
+    const [partDocInput, setPartDocInput] = useState('');
+    const [partSearching, setPartSearching] = useState(false);
+    const [partCitizenFound, setPartCitizenFound] = useState<any>(null);
+    const [partNotFound, setPartNotFound] = useState(false);
+    const [partFreeName, setPartFreeName] = useState('');
+    const [partAdding, setPartAdding] = useState(false);
+    const [partError, setPartError] = useState<string | null>(null);
+
+    // Participantes para el modal de Creación
+    const [createPartDoc, setCreatePartDoc] = useState('');
+    const [createPartSearching, setCreatePartSearching] = useState(false);
+    const [createPartNotFound, setCreatePartNotFound] = useState(false);
+    const [createPartFreeName, setCreatePartFreeName] = useState('');
+
+    const searchParticipantForDetail = async () => {
+        if (!partDocInput.trim()) return;
+        setPartSearching(true);
+        setPartError(null);
+        setPartCitizenFound(null);
+        setPartNotFound(false);
+        try {
+            const res = await axios.post(route('ciudadanos.verify'), { documento: partDocInput.trim() });
+            if (res.data.exists && res.data.citizen) {
+                setPartCitizenFound(res.data.citizen);
+            } else {
+                setPartNotFound(true);
+            }
+        } catch (e) {
+            setPartError('Error al buscar cédula');
+        } finally {
+            setPartSearching(false);
+        }
+    };
+
+    const addParticipantToDetail = async (citizen?: any, freeName?: string) => {
+        if (!selectedLoanDetail) return;
+        const loanId = selectedLoanDetail.id_prestamo || selectedLoanDetail.id;
+        setPartAdding(true);
+        setPartError(null);
+        try {
+            const payload: any = {};
+            if (citizen) {
+                payload.id_form_pvd = citizen.id_form_pvd;
+            } else if (freeName) {
+                payload.nombre_libre = freeName.trim();
+                payload.documento_libre = partDocInput.trim() || undefined;
+            }
+
+            const res = await axios.post(route('prestamos.participantes.store', loanId), payload);
+            if (res.data.participante) {
+                const newPart = res.data.participante;
+                const updatedList = [...(selectedLoanDetail.participantes || []), newPart];
+                setSelectedLoanDetail({
+                    ...selectedLoanDetail,
+                    participantes: updatedList,
+                });
+                router.reload({ only: ['loans', 'calendarLoans'] });
+                setPartDocInput('');
+                setPartCitizenFound(null);
+                setPartNotFound(false);
+                setPartFreeName('');
+            }
+        } catch (e: any) {
+            if (e.response?.data?.error) {
+                setPartError(e.response.data.error);
+            } else {
+                setPartError('No se pudo registrar al participante');
+            }
+        } finally {
+            setPartAdding(false);
+        }
+    };
+
+    const removeParticipantFromDetail = async (participantId: number) => {
+        if (!selectedLoanDetail) return;
+        const loanId = selectedLoanDetail.id_prestamo || selectedLoanDetail.id;
+        try {
+            await axios.post(route('prestamos.participantes.destroy.post', [loanId, participantId]));
+            const updatedList = (selectedLoanDetail.participantes || []).filter((p: any) => p.id !== participantId);
+            setSelectedLoanDetail({
+                ...selectedLoanDetail,
+                participantes: updatedList,
+            });
+            router.reload({ only: ['loans', 'calendarLoans'] });
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handleSearchCreatePart = async () => {
+        if (!createPartDoc.trim()) return;
+        setCreatePartSearching(true);
+        setCreatePartNotFound(false);
+        try {
+            const res = await axios.post(route('ciudadanos.verify'), { documento: createPartDoc.trim() });
+            if (res.data.exists && res.data.citizen) {
+                const c = res.data.citizen;
+                if (data.participantes.some((p) => p.id_form_pvd === c.id_form_pvd)) {
+                    alert('Este ciudadano ya está en la lista de participantes.');
+                    setCreatePartSearching(false);
+                    return;
+                }
+                const newItems = [
+                    ...data.participantes,
+                    {
+                        id_form_pvd: c.id_form_pvd,
+                        nombre: c.nombre_completo,
+                        documento: c.documento,
+                    },
+                ];
+                setData('participantes', newItems);
+                if (newItems.length > data.num_asistentes) {
+                    setData('num_asistentes', newItems.length);
+                }
+                setCreatePartDoc('');
+            } else {
+                setCreatePartNotFound(true);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setCreatePartSearching(false);
+        }
+    };
+
+    const handleAddCreateFreePart = () => {
+        if (!createPartFreeName.trim()) return;
+        const newItems = [
+            ...data.participantes,
+            {
+                nombre: createPartFreeName.trim(),
+                documento: createPartDoc.trim() || undefined,
+                nombre_libre: createPartFreeName.trim(),
+                documento_libre: createPartDoc.trim() || undefined,
+            },
+        ];
+        setData('participantes', newItems);
+        if (newItems.length > data.num_asistentes) {
+            setData('num_asistentes', newItems.length);
+        }
+        setCreatePartDoc('');
+        setCreatePartFreeName('');
+        setCreatePartNotFound(false);
+    };
+
+    const handleRemoveCreatePart = (idx: number) => {
+        setData(
+            'participantes',
+            data.participantes.filter((_, i) => i !== idx)
+        );
+    };
 
     const verifyCitizen = async (doc: string) => {
         if (!doc) return;
@@ -296,6 +458,9 @@ export default function RoomLoansIndex({
                 reset();
                 setCitizenFound(null);
                 setDocumentInput('');
+                setCreatePartDoc('');
+                setCreatePartFreeName('');
+                setCreatePartNotFound(false);
             },
         });
     };
@@ -731,14 +896,24 @@ export default function RoomLoansIndex({
                                                 </div>
                                                 <div className="flex items-center justify-between text-[9px] text-slate-500 font-normal">
                                                     <span>{event.punto?.nombre_punto?.split(' ')[0] || 'Sede'}</span>
-                                                    {event.estado === 'Pendiente' ? (
-                                                        <span className="font-bold text-amber-600 flex items-center gap-0.5 bg-amber-100/80 px-1 rounded">
-                                                            <Clock className="w-2.5 h-2.5 animate-pulse" />
-                                                            Por aprobar
-                                                        </span>
-                                                    ) : (
-                                                        <span className="font-bold">{event.num_asistentes}p</span>
-                                                    )}
+                                                    <div className="flex items-center gap-1.5">
+                                                        {event.hora_inicio && event.hora_fin ? (
+                                                            <span className="font-semibold text-slate-600">{event.hora_inicio.substring(0,5)}–{event.hora_fin.substring(0,5)}</span>
+                                                        ) : event.estado === 'Pendiente' ? (
+                                                            <span className="font-bold text-amber-600 flex items-center gap-0.5 bg-amber-100/80 px-1 rounded">
+                                                                <Clock className="w-2.5 h-2.5 animate-pulse" />
+                                                                Por aprobar
+                                                            </span>
+                                                        ) : (
+                                                            <span className="font-bold">{event.num_asistentes}p</span>
+                                                        )}
+                                                        {event.participantes && event.participantes.length > 0 && (
+                                                            <span className="font-black text-emerald-700 flex items-center gap-0.5" title={`${event.participantes.length} participantes registrados`}>
+                                                                <Users className="w-2.5 h-2.5 text-emerald-600" />
+                                                                <span>{event.participantes.length}</span>
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </button>
                                         ))}
@@ -812,7 +987,15 @@ export default function RoomLoansIndex({
                                         <td className="px-4 py-3.5 text-xs text-slate-600 font-medium whitespace-nowrap">
                                             {loan.punto?.nombre_punto}
                                         </td>
-                                        <td className="px-4 py-3.5 text-xs text-slate-700 font-semibold whitespace-nowrap">{loan.num_asistentes} pers.</td>
+                                        <td className="px-4 py-3.5 text-xs text-slate-700 whitespace-nowrap">
+                                            <div className="font-semibold">{loan.num_asistentes} pers.</div>
+                                            {loan.participantes && loan.participantes.length > 0 && (
+                                                <div className="text-[10px] text-emerald-700 font-bold flex items-center gap-1 mt-0.5">
+                                                    <Users className="w-3 h-3 text-emerald-600" />
+                                                    <span>{loan.participantes.length} registrados</span>
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="px-4 py-3.5 whitespace-nowrap">
                                             {renderEstadoBadge(loan.estado)}
                                         </td>
@@ -895,9 +1078,17 @@ export default function RoomLoansIndex({
                                         <span className="inline-block px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 text-alcaldia-green border border-emerald-200">
                                             {loan.tipo_actividad}
                                         </span>
-                                        <span className="text-xs font-semibold text-slate-700">
-                                            {loan.num_asistentes} asistentes
-                                        </span>
+                                        <div className="text-right">
+                                            <span className="text-xs font-semibold text-slate-700">
+                                                {loan.num_asistentes} asistentes
+                                            </span>
+                                            {loan.participantes && loan.participantes.length > 0 && (
+                                                <div className="text-[10px] text-emerald-700 font-bold flex items-center justify-end gap-1">
+                                                    <Users className="w-3 h-3 text-emerald-600" />
+                                                    <span>{loan.participantes.length} registrados</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     {loan.observaciones && (
                                         <div className="text-[11px] text-slate-500 italic pt-0.5">
@@ -982,7 +1173,7 @@ export default function RoomLoansIndex({
             {/* Modal de Detalle de Evento del Calendario */}
             {selectedLoanDetail && (
                 <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+                    <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
                         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
                             <div className="flex items-center gap-2">
                                 <DoorOpen className="w-5 h-5 text-emerald-600" />
@@ -1015,12 +1206,29 @@ export default function RoomLoansIndex({
                                     </div>
                                 </div>
                                 <div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Asistentes</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Aforo / Asistentes</span>
                                     <div className="font-bold text-slate-800 text-xs mt-0.5 flex items-center gap-1">
                                         <Users className="w-3.5 h-3.5 text-slate-400" />
                                         <span>{selectedLoanDetail.num_asistentes} personas</span>
                                     </div>
                                 </div>
+                                {(selectedLoanDetail.hora_inicio || selectedLoanDetail.hora_fin) && (
+                                    <div className="col-span-2">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase">Horario del Préstamo</span>
+                                        <div className="font-bold text-slate-800 text-xs mt-0.5 flex items-center gap-1">
+                                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                            <span>
+                                                {selectedLoanDetail.hora_inicio
+                                                    ? selectedLoanDetail.hora_inicio.substring(0, 5)
+                                                    : '--:--'}
+                                                {' — '}
+                                                {selectedLoanDetail.hora_fin
+                                                    ? selectedLoanDetail.hora_fin.substring(0, 5)
+                                                    : '--:--'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
@@ -1041,14 +1249,30 @@ export default function RoomLoansIndex({
 
                             <div>
                                 <span className="text-[10px] font-bold text-slate-400 uppercase">Responsable / Solicitante</span>
-                                <div className="font-bold text-slate-800 mt-0.5">
-                                    {selectedLoanDetail.ciudadano?.nombre_completo || selectedLoanDetail.nombre_responsable_texto || 'Particular'}
-                                </div>
-                                {selectedLoanDetail.ciudadano && (
-                                    <div className="text-[11px] text-slate-400 font-mono">
-                                        CC {selectedLoanDetail.ciudadano.documento}
+                                <div className="flex items-center justify-between mt-0.5">
+                                    <div>
+                                        <div className="font-bold text-slate-800">
+                                            {selectedLoanDetail.ciudadano?.nombre_completo || selectedLoanDetail.nombre_responsable_texto || 'Particular'}
+                                        </div>
+                                        {selectedLoanDetail.ciudadano && (
+                                            <div className="text-[11px] text-slate-400 font-mono">
+                                                CC {selectedLoanDetail.ciudadano.documento}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                    {selectedLoanDetail.ciudadano?.id_form_pvd && (
+                                        <a
+                                            href={route('ciudadanos.edit', selectedLoanDetail.ciudadano.id_form_pvd)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-bold shadow-xs transition-colors shrink-0"
+                                            title="Editar información del ciudadano en una nueva pestaña"
+                                        >
+                                            <Edit3 className="w-3 h-3 text-amber-600" />
+                                            <span>Editar datos</span>
+                                        </a>
+                                    )}
+                                </div>
                             </div>
 
                             {selectedLoanDetail.observaciones && (
@@ -1084,6 +1308,156 @@ export default function RoomLoansIndex({
                                     </p>
                                 </div>
                             )}
+
+                            {/* Sección de Participantes / Personas Asociadas a la Capacitación */}
+                            <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
+                                            <Users className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                                Participantes de la Capacitación
+                                            </h4>
+                                            <p className="text-[10px] text-slate-400">
+                                                {(selectedLoanDetail.participantes || []).length} registrados · Capacidad prevista: {selectedLoanDetail.num_asistentes}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
+                                        {(selectedLoanDetail.participantes || []).length} / {selectedLoanDetail.num_asistentes}
+                                    </span>
+                                </div>
+
+                                {/* Formulario para buscar y agregar participante */}
+                                <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar por documento para asociar participante..."
+                                            value={partDocInput}
+                                            onChange={(e) => {
+                                                setPartDocInput(e.target.value);
+                                                setPartNotFound(false);
+                                                setPartCitizenFound(null);
+                                                setPartError(null);
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    searchParticipantForDetail();
+                                                }
+                                            }}
+                                            className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={searchParticipantForDetail}
+                                            disabled={partSearching || !partDocInput.trim()}
+                                            className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1 shrink-0"
+                                        >
+                                            <Search className="w-3.5 h-3.5" />
+                                            <span>{partSearching ? '...' : 'Buscar'}</span>
+                                        </button>
+                                    </div>
+
+                                    {partError && (
+                                        <div className="text-[11px] text-rose-600 font-medium flex items-center gap-1 bg-rose-50 p-2 rounded-xl border border-rose-200">
+                                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                            <span>{partError}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Si el ciudadano se encuentra en base de datos */}
+                                    {partCitizenFound && (
+                                        <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2">
+                                            <div>
+                                                <div className="text-xs font-bold text-emerald-950">
+                                                    {partCitizenFound.nombre_completo}
+                                                </div>
+                                                <div className="text-[10px] text-emerald-700 font-mono">
+                                                    CC {partCitizenFound.documento}
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => addParticipantToDetail(partCitizenFound)}
+                                                disabled={partAdding}
+                                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1 shrink-0"
+                                            >
+                                                <Plus className="w-3.5 h-3.5" />
+                                                <span>{partAdding ? 'Agregando...' : 'Asociar a la Capacitación'}</span>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Si el ciudadano no existe en BD */}
+                                    {partNotFound && (
+                                        <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+                                            <p className="text-[11px] text-amber-900 font-medium">
+                                                Cédula <strong>{partDocInput}</strong> no encontrada en directorio. Ingrese el nombre para asociarlo:
+                                            </p>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nombre completo del participante..."
+                                                    value={partFreeName}
+                                                    onChange={(e) => setPartFreeName(e.target.value)}
+                                                    className="flex-1 px-3 py-1.5 rounded-xl border border-amber-300 text-xs font-medium outline-none bg-white"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addParticipantToDetail(undefined, partFreeName)}
+                                                    disabled={partAdding || !partFreeName.trim()}
+                                                    className="px-3 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition-colors flex items-center gap-1 shrink-0"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5" />
+                                                    <span>{partAdding ? '...' : 'Asociar'}</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Listado de participantes asociados */}
+                                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5">
+                                    {(selectedLoanDetail.participantes || []).length === 0 ? (
+                                        <div className="text-center py-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs">
+                                            No hay participantes asociados aún. Busca una cédula arriba para agregarlos.
+                                        </div>
+                                    ) : (
+                                        (selectedLoanDetail.participantes || []).map((p: any) => (
+                                            <div
+                                                key={p.id}
+                                                className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/70 text-xs transition-colors"
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-[10px] shrink-0">
+                                                        {(p.nombre_display || p.ciudadano?.nombre_completo || p.nombre_libre || 'P').charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="truncate">
+                                                        <span className="font-bold text-slate-800 truncate block">
+                                                            {p.nombre_display || p.ciudadano?.nombre_completo || p.nombre_libre}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 font-mono">
+                                                            {p.documento_display || (p.ciudadano ? `CC ${p.ciudadano.documento}` : p.documento_libre ? `CC ${p.documento_libre}` : 'Sin documento')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeParticipantFromDetail(p.id)}
+                                                    className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-2 shrink-0"
+                                                    title="Quitar participante de esta capacitación"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
@@ -1117,6 +1491,8 @@ export default function RoomLoansIndex({
                                             tipo_actividad: selectedLoanDetail.tipo_actividad || CATEGORIAS_PRESTAMO[0],
                                             num_asistentes: selectedLoanDetail.num_asistentes || 1,
                                             fecha_prestamo: selectedLoanDetail.fecha_prestamo ? selectedLoanDetail.fecha_prestamo.split('T')[0] : '',
+                                            hora_inicio: selectedLoanDetail.hora_inicio || '',
+                                            hora_fin: selectedLoanDetail.hora_fin || '',
                                             observaciones: selectedLoanDetail.observaciones || '',
                                             estado: selectedLoanDetail.estado || 'Completado',
                                         });
@@ -1199,6 +1575,27 @@ export default function RoomLoansIndex({
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Inicio</label>
+                                    <input
+                                        type="time"
+                                        value={editModalLoan.hora_inicio || ''}
+                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, hora_inicio: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Fin</label>
+                                    <input
+                                        type="time"
+                                        value={editModalLoan.hora_fin || ''}
+                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, hora_fin: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
                                     <label className="block text-xs font-bold text-slate-700 mb-1">Categoría de Actividad *</label>
                                     <select
                                         value={editModalLoan.tipo_actividad}
@@ -1266,7 +1663,7 @@ export default function RoomLoansIndex({
             {/* Modal de Registro de Préstamo */}
             {modalOpen && (
                 <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
                         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
                             <div className="flex items-center gap-2">
                                 <DoorOpen className="w-5 h-5 text-emerald-600" />
@@ -1316,16 +1713,30 @@ export default function RoomLoansIndex({
                                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                                             <span>{citizenFound.nombre_completo} (CC {citizenFound.documento})</span>
                                         </p>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setCitizenFound(null);
-                                                setData('id_form_pvd', null);
-                                            }}
-                                            className="text-[11px] text-slate-500 hover:text-rose-600 font-bold"
-                                        >
-                                            Cambiar
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            {citizenFound.id_form_pvd && (
+                                                <a
+                                                    href={route('ciudadanos.edit', citizenFound.id_form_pvd)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-bold shadow-xs transition-colors"
+                                                    title="Modificar datos del ciudadano en una nueva pestaña"
+                                                >
+                                                    <Edit3 className="w-3 h-3 text-amber-600" />
+                                                    <span>Editar datos</span>
+                                                </a>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setCitizenFound(null);
+                                                    setData('id_form_pvd', null);
+                                                }}
+                                                className="text-[11px] text-slate-500 hover:text-rose-600 font-bold"
+                                            >
+                                                Cambiar
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="mt-2 space-y-1">
@@ -1400,6 +1811,27 @@ export default function RoomLoansIndex({
                                 />
                             </div>
 
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Inicio *</label>
+                                    <input
+                                        type="time"
+                                        value={data.hora_inicio}
+                                        onChange={(e) => setData('hora_inicio', e.target.value)}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Fin *</label>
+                                    <input
+                                        type="time"
+                                        value={data.hora_fin}
+                                        onChange={(e) => setData('hora_fin', e.target.value)}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                    />
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">
                                     Detalle / Tema de la Actividad u Observaciones *
@@ -1412,6 +1844,91 @@ export default function RoomLoansIndex({
                                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
                                     required
                                 />
+                            </div>
+
+                            {/* Asociar Participantes Iniciales */}
+                            <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-xs font-bold text-slate-700">
+                                        Asociar Participantes a la Capacitación (Opcional)
+                                    </label>
+                                    <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                        {data.participantes.length} agregados
+                                    </span>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Cédula del participante..."
+                                        value={createPartDoc}
+                                        onChange={(e) => {
+                                            setCreatePartDoc(e.target.value);
+                                            setCreatePartNotFound(false);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleSearchCreatePart();
+                                            }
+                                        }}
+                                        className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleSearchCreatePart}
+                                        disabled={createPartSearching || !createPartDoc.trim()}
+                                        className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-colors disabled:opacity-50 shrink-0"
+                                    >
+                                        {createPartSearching ? '...' : 'Buscar y Agregar'}
+                                    </button>
+                                </div>
+
+                                {createPartNotFound && (
+                                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 space-y-1.5">
+                                        <p className="text-[11px] text-amber-900">
+                                            No encontrado con CC <strong>{createPartDoc}</strong>. Escriba el nombre completo para agregarlo:
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre completo del participante..."
+                                                value={createPartFreeName}
+                                                onChange={(e) => setCreatePartFreeName(e.target.value)}
+                                                className="flex-1 px-3 py-1 rounded-xl border border-amber-300 text-xs font-medium outline-none bg-white"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleAddCreateFreePart}
+                                                disabled={!createPartFreeName.trim()}
+                                                className="px-3 py-1 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition-colors shrink-0"
+                                            >
+                                                Agregar
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {data.participantes.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 pt-1 max-h-28 overflow-y-auto">
+                                        {data.participantes.map((part, idx) => (
+                                            <span
+                                                key={idx}
+                                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-xs"
+                                            >
+                                                <span>{part.nombre} {part.documento ? `(CC ${part.documento})` : ''}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveCreatePart(idx)}
+                                                    className="text-slate-400 hover:text-rose-600 p-0.5"
+                                                    title="Quitar"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
