@@ -83,7 +83,7 @@ class GestoresAuditRunner
             'Visitas Create' => fn($req) => app(\App\Http\Controllers\VisitController::class)->create($req),
             'Ciudadanos Index' => fn($req) => app(\App\Http\Controllers\CitizenController::class)->index($req),
             'Préstamos Index' => fn($req) => app(\App\Http\Controllers\RoomLoanController::class)->index($req),
-            'Impresiones Index' => fn($req) => app(\App\Http\Controllers\PrintController::class)->index($req),
+            'Impresiones Index' => fn($req) => app(\App\Http\Controllers\PrintRecordController::class)->index($req),
             'Exportar Index' => fn($req) => app(\App\Http\Controllers\ExportController::class)->index(),
         ];
 
@@ -138,10 +138,14 @@ class GestoresAuditRunner
                         "Points count: " . count($props['points'])
                     );
                 } else {
+                    $firstPoint = $props['points'][0] ?? null;
+                    $pId = is_array($firstPoint) ? ($firstPoint['id_punto'] ?? null) : ($firstPoint?->id_punto ?? null);
+                    $pName = is_array($firstPoint) ? ($firstPoint['nombre_punto'] ?? '') : ($firstPoint?->nombre_punto ?? '');
+
                     $this->assert(
                         "[{$label}] Scoped únicamente a su sede",
-                        $props['canExportAllPoints'] === false && count($props['points']) === 1 && $props['points'][0]->id_punto == $user->id_punto,
-                        "Punto permitido: " . ($props['points'][0]->nombre_punto ?? 'Ninguno')
+                        $props['canExportAllPoints'] === false && count($props['points']) === 1 && $pId == $user->id_punto,
+                        "Punto permitido: " . ($pName ?: 'Ninguno')
                     );
                 }
             } catch (\Throwable $e) {
@@ -216,7 +220,11 @@ class GestoresAuditRunner
             Auth::login($user);
             try {
                 $export = new ListadoAsistenciaExport(
-                    filters: ['id_punto' => $user->id_punto],
+                    filters: [
+                        'id_punto' => $user->id_punto,
+                        'fecha_desde' => '2026-10-01',
+                        'fecha_hasta' => '2026-11-23',
+                    ],
                     eventoTema: 'Capacitación en Alfabetización Digital',
                     responsable: mb_strtoupper("{$user->name} (" . ($user->cargo ?: $user->rol_principal) . ")", 'UTF-8'),
                     incluirFirma: true,
