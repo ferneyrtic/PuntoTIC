@@ -9,6 +9,13 @@ $app = require_once __DIR__ . '/../../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
+// Usar array session driver para evitar el hook de FileSessionHandler en CLI con PHP 8.4
+config(['session.driver' => 'array']);
+config(['session.files' => null]);
+$app['config']->set('session.driver', 'array');
+$app->forgetInstance('session');
+$app->forgetInstance('session.store');
+
 use App\Exports\CiudadanosExport;
 use App\Exports\ImpresionesExport;
 use App\Exports\ListadoAsistenciaExport;
