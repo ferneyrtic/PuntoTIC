@@ -175,8 +175,15 @@ class ListadoAsistenciaExport
                 \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
             );
 
-            // Correo electrónico
-            $sheet->setCellValue("H{$currentRow}", $item->correo ?: 'No registra');
+            // Correo electrónico (sanitizar placeholders antiguos como notienecorreo@gmail.com)
+            $correo = trim((string) ($item->correo ?? ''));
+            $isDummyEmail = empty($correo)
+                || str_contains(strtolower($correo), 'notiene')
+                || str_contains(strtolower($correo), 'sin_correo')
+                || str_contains(strtolower($correo), 'noaplica')
+                || str_contains(strtolower($correo), 'nocorreo');
+
+            $sheet->setCellValue("H{$currentRow}", $isDummyEmail ? 'No registra' : $correo);
 
             // Firma (nombre en mayúsculas o espacio vacío)
             if ($this->incluirFirma) {
