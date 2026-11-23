@@ -22,13 +22,19 @@ class PrestamosExport implements FromCollection, WithHeadings, WithMapping, With
 
     public function collection(): Enumerable
     {
+        $cols = RoomLoan::getTableColumns();
+        $orderCol = in_array('id', $cols, true) ? 'id' : 'id_prestamo';
+
         return RoomLoan::with(['ciudadano', 'punto', 'gestor'])
             ->dateBetween($this->filters['fecha_desde'] ?? null, $this->filters['fecha_hasta'] ?? null)
             ->when($this->filters['id_punto'] ?? null, fn($q, $p) => $q->where(function($sub) use ($p) {
                 $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
             }))
+            ->when($this->filters['id_gestor'] ?? null, fn($q, $g) => $q->where(function($sub) use ($g) {
+                $sub->where('id_gestor', $g)->orWhere('id_gestores', $g);
+            }))
             ->orderByRaw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at)) DESC')
-            ->orderByDesc('id')
+            ->orderByDesc($orderCol)
             ->get();
     }
 
@@ -64,13 +70,19 @@ class PrestamosExport implements FromCollection, WithHeadings, WithMapping, With
     public function map($p): array
     {
         $responsable = $p->ciudadano?->nombre_completo 
-            ?: ($p->nombre_responsable_texto ?: ($p->nombre ?: 'Ciudadano'));
+            ?: ($p->nombre_responsable_texto ?: ($p->nombre ?: 'Sin registrar'));
+
         $puntoNombre = $p->punto?->nombre_punto 
-            ?: (\App\Models\Point::find($p->id_puntos ?? $p->id_punto)?->nombre_punto ?? 'Vive Digital Tradicional');
+            ?: (\App\Models\Point::find($p->id_punto ?? $p->id_puntos)?->nombre_punto ?? 'Sin punto asignado');
+
         $gestorNombre = $p->gestor?->name 
-            ?: ($p->id_gestores ? (\App\Models\User::find($p->id_gestores)?->name ?? 'Martha Viviana Medina Palacio') : 'Martha Viviana Medina Palacio');
+            ?: ($p->id_gestor ? \App\Models\User::find($p->id_gestor)?->name : null)
+            ?: ($p->id_gestores ? \App\Models\User::find($p->id_gestores)?->name : null)
+            ?: 'Sin gestor asignado';
+
         $fechaPrestamo = $p->fecha_prestamo?->toDateString() 
-            ?: ($p->created_at ? $p->created_at->toDateString() : '');
+            ?: ($p->created_at ? $p->created_at->toDateString() : 'N/A');
+
         $observaciones = $p->observaciones ?: ($p->otro ?: '');
 
         return [
@@ -82,8 +94,8 @@ class PrestamosExport implements FromCollection, WithHeadings, WithMapping, With
             $p->tipo_actividad ?: ($p->tipo_prestamo ?: 'Reunión comunitaria'),
             $p->num_asistentes ?? 1,
             $fechaPrestamo,
-            $p->hora_inicio,
-            $p->hora_fin,
+            $p->hora_inicio ?: 'N/A',
+            $p->hora_fin ?: 'N/A',
             $p->estado ?: 'Completado',
             $observaciones,
             $gestorNombre,

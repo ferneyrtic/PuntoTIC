@@ -176,7 +176,7 @@ class ListadoAsistenciaExport
             );
 
             // Correo electrónico
-            $sheet->setCellValue("H{$currentRow}", $item->correo ?: 'notienecorreo@gmail.com');
+            $sheet->setCellValue("H{$currentRow}", $item->correo ?: 'No registra');
 
             // Firma (nombre en mayúsculas o espacio vacío)
             if ($this->incluirFirma) {

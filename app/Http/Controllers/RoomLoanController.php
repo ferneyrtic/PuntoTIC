@@ -53,7 +53,7 @@ class RoomLoanController extends Controller
                 });
             })
             ->orderByRaw('COALESCE(fecha_prestamo, DATE(created_at)) DESC')
-            ->orderByDesc('id')
+            ->orderByDesc(in_array('id', RoomLoan::getTableColumns(), true) ? 'id' : 'id_prestamo')
             ->paginate(15)
             ->withQueryString();
 

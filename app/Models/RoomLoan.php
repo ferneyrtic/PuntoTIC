@@ -135,12 +135,16 @@ class RoomLoan extends Model
 
     public function punto(): BelongsTo
     {
-        return $this->belongsTo(Point::class, 'id_punto', 'id_punto');
+        $fk = in_array('id_punto', static::getTableColumns(), true) ? 'id_punto' : 'id_puntos';
+
+        return $this->belongsTo(Point::class, $fk, 'id_punto');
     }
 
     public function gestor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id_gestor', 'id');
+        $fk = in_array('id_gestor', static::getTableColumns(), true) ? 'id_gestor' : 'id_gestores';
+
+        return $this->belongsTo(User::class, $fk, 'id');
     }
 
     public function participantes(): \Illuminate\Database\Eloquent\Relations\HasMany
