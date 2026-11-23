@@ -18,16 +18,6 @@ return new class extends Migration
                 $table->string('nombre_libre', 150)->nullable();
                 $table->string('documento_libre', 30)->nullable();
                 $table->timestamps();
-
-                $table->foreign('id_prestamo')
-                    ->references('id_prestamo')
-                    ->on('prestamo_sala')
-                    ->cascadeOnDelete();
-
-                $table->foreign('id_form_pvd')
-                    ->references('id_form_pvd')
-                    ->on('form_pvd')
-                    ->nullOnDelete();
             });
         }
     }
