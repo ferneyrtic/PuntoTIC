@@ -32,7 +32,7 @@ class DashboardController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $points = Cache::remember('welcome_points_list_v2', 600, function () {
+        $points = Cache::remember('welcome_points_list_v3', 600, function () {
             $rawPoints = Point::where('activo', true)
                 ->whereNotIn('id_punto', [5, 6])
                 ->get(['id_punto', 'nombre_punto', 'zona', 'direccion', 'barrio_vereda', 'telefono'])
@@ -48,6 +48,7 @@ class DashboardController extends Controller
                     'map_query' => 'Institucion Educativa Juan Rozo, Acacias, Meta',
                     'badge' => 'Sede PLUS Urbana',
                     'tipo_sede' => 'Urbana',
+                    'imagen' => 'images/sedes/sede_juan_rozo.jpg',
                 ],
                 2 => [
                     'alias' => 'Sede Las Colinas (PVD Tradicional)',
@@ -58,6 +59,7 @@ class DashboardController extends Controller
                     'map_query' => 'Barrio Las Colinas, Acacias, Meta',
                     'badge' => 'Sede Urbana',
                     'tipo_sede' => 'Urbana',
+                    'imagen' => 'images/sedes/sede_las_colinas.jpg',
                 ],
                 3 => [
                     'alias' => 'Aula Digital Vereda Dinamarca',
@@ -68,6 +70,7 @@ class DashboardController extends Controller
                     'map_query' => 'Vereda Dinamarca, Acacias, Meta',
                     'badge' => 'Aula Rural',
                     'tipo_sede' => 'Rural',
+                    'imagen' => 'images/sedes/sede_dinamarca.jpg',
                 ],
                 4 => [
                     'alias' => 'Aula Digital Vereda Chichimene',
@@ -78,6 +81,7 @@ class DashboardController extends Controller
                     'map_query' => 'Vereda Chichimene, Acacias, Meta',
                     'badge' => 'Aula Rural',
                     'tipo_sede' => 'Rural',
+                    'imagen' => 'images/sedes/sede_chichimene.jpg',
                 ],
             ];
 

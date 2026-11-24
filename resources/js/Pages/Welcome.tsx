@@ -28,6 +28,7 @@ interface Point {
     badge?: string;
     tipo_sede?: string;
     telefono?: string;
+    imagen?: string;
 }
 
 interface Training {
@@ -389,14 +390,29 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                         {points.map((p, idx) => (
                             <div
                                 key={p.id_punto}
-                                className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between space-y-3"
+                                className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between space-y-3 overflow-hidden group hover:border-slate-300 transition-colors"
                             >
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[11px] font-bold text-[#1B6B35] uppercase">
-                                            {p.zona === 'Rural' ? 'Rural' : 'Urbana'}
-                                        </span>
-                                        <span className="text-xs text-slate-400">Sede {idx + 1}</span>
+                                <div className="space-y-2.5">
+                                    {/* Foto de la Fachada Exterior */}
+                                    <div className="h-36 sm:h-40 w-full overflow-hidden rounded-xl bg-slate-200 relative">
+                                        <img
+                                            src={asset(p.imagen || `images/sedes/sede_${p.id_punto}.jpg`)}
+                                            alt={`Fachada de ${p.alias || p.nombre_punto}`}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                        <div className="absolute top-2 left-2">
+                                            <span className="text-[11px] font-bold text-slate-800 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded shadow-2xs">
+                                                {p.zona === 'Rural' ? 'Rural' : 'Urbana'}
+                                            </span>
+                                        </div>
+                                        <div className="absolute top-2 right-2">
+                                            <span className="text-[11px] font-bold text-slate-700 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded shadow-2xs">
+                                                Sede {idx + 1}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <h3 className="text-sm font-bold text-slate-900 leading-snug">
