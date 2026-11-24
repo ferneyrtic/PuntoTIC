@@ -86,7 +86,7 @@ export default function VisitCreate({
     const [searchingStudents, setSearchingStudents] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<any>(null);
     const [selectedActivity, setSelectedActivity] = useState(
-        'Acceso libre a computador y tareas escolares'
+        'Acceso a computador y tareas escolares'
     );
     const [selectedTime, setSelectedTime] = useState(60);
     const [offlineSavedNotice, setOfflineSavedNotice] = useState(false);
@@ -106,7 +106,7 @@ export default function VisitCreate({
         id_categoria: categories[0]?.id_categoria || null,
         id_subcategoria: categories[0]?.subcategorias?.[0]?.id_subcategoria || null,
         servicio_texto:
-            initialMode === 'aula' ? 'Acceso libre a computador y tareas escolares' : '',
+            initialMode === 'aula' ? 'Acceso a computador y tareas escolares' : '',
         descripcion: '',
         duracion_minutos: initialMode === 'aula' ? 60 : 30,
         campos_dinamicos: {} as Record<number, any>,
@@ -394,7 +394,7 @@ export default function VisitCreate({
                                 ...prev,
                                 es_registro_rapido: true,
                                 duracion_minutos: 60,
-                                servicio_texto: 'Acceso libre a computador y tareas escolares',
+                                servicio_texto: 'Acceso a computador y tareas escolares',
                                 id_punto: userPointId,
                             }));
                         }}
@@ -607,10 +607,9 @@ export default function VisitCreate({
                             <label className="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                                 Actividad Asignada
                             </label>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                 {[
-                                    'Acceso libre a computador y tareas escolares',
-                                    'Investigación y consultas en Internet',
+                                    'Acceso a computador y tareas escolares',
                                     'Clases de informática y mecanografía',
                                     'Lúdica educativa y talleres digitales',
                                 ].map((act) => (
@@ -618,8 +617,8 @@ export default function VisitCreate({
                                         key={act}
                                         type="button"
                                         onClick={() => {
-                                            setSelectedActivity(act);
-                                            setData('servicio_texto', act);
+                                             setSelectedActivity(act);
+                                             setData('servicio_texto', act);
                                         }}
                                         className={`btn-tactile p-3 rounded-2xl border text-left text-xs font-bold transition-all flex items-center gap-2.5 ${
                                             selectedActivity === act

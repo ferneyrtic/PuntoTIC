@@ -196,7 +196,7 @@ class VisitService
                 'id_punto' => $pointId,
                 'id_categoria' => $idCategoria,
                 'id_subcategoria' => $data['id_subcategoria'] ?? null,
-                'servicio_texto' => $data['servicio_texto'] ?? ($isAulaDigital ? 'Acceso Libre a Computadores y Tareas Escolares' : null),
+                'servicio_texto' => $data['servicio_texto'] ?? ($isAulaDigital ? 'Acceso a computador y tareas escolares' : null),
                 'descripcion' => $data['descripcion'] ?? ($isAulaDigital ? 'Ingreso de menor de edad a sala digital' : null),
                 'id_gestor' => Auth::id(),
                 'duracion_minutos' => $data['duracion_minutos'] ?? ($isAulaDigital ? 60 : 30),
