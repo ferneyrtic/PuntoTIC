@@ -1558,12 +1558,12 @@ export default function RoomLoansIndex({
 
             {/* Modal de Edición de Préstamo */}
             {editModalLoan && (
-                <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200/80 max-h-[90vh] flex flex-col overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
+                <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 z-50 overflow-hidden">
+                    <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200/80 max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden">
+                        <div className="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                                    <Edit3 className="w-5 h-5" />
+                                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                    <Edit3 className="w-4 h-4" />
                                 </div>
                                 <div>
                                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
@@ -1576,15 +1576,15 @@ export default function RoomLoansIndex({
                             </div>
                             <button
                                 onClick={() => setEditModalLoan(null)}
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
                             >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={submitEdit} className="flex flex-col flex-1 overflow-hidden">
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                                <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-1.5">
+                        <form onSubmit={submitEdit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-3">
+                                <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-1">
                                     <label className="block text-xs font-bold text-slate-800">
                                         Persona Responsable o Entidad Solicitante *
                                     </label>
@@ -1597,8 +1597,8 @@ export default function RoomLoansIndex({
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-3.5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="space-y-3">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-700 mb-1">Fecha del Préstamo *</label>
                                             <input
@@ -1624,7 +1624,7 @@ export default function RoomLoansIndex({
                                         </div>
                                     </div>
 
-                                    <div className="space-y-3.5">
+                                    <div className="space-y-3">
                                         <div className="grid grid-cols-2 gap-2.5">
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-700 mb-1">N° Asistentes *</label>
@@ -1694,11 +1694,11 @@ export default function RoomLoansIndex({
                                 </div>
                             </div>
 
-                            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
+                            <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
                                 <button
                                     type="button"
                                     onClick={() => setEditModalLoan(null)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-white hover:border-slate-300 transition-colors"
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-white hover:border-slate-300 transition-colors cursor-pointer"
                                 >
                                     Cancelar
                                 </button>
@@ -1718,13 +1718,13 @@ export default function RoomLoansIndex({
 
             {/* Modal de Registro de Préstamo */}
             {modalOpen && (
-                <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200/80 max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 z-50 overflow-hidden">
+                    <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200/80 max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         {/* Header Fijo */}
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
+                        <div className="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                                    <DoorOpen className="w-5 h-5" />
+                                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                    <DoorOpen className="w-4 h-4" />
                                 </div>
                                 <div>
                                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
@@ -1738,17 +1738,17 @@ export default function RoomLoansIndex({
                             <button
                                 type="button"
                                 onClick={() => setModalOpen(false)}
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
                             >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
                         {/* Formulario con Scroll Interno y Footer Fijo */}
-                        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-3">
                                 {/* Persona Responsable Card */}
-                                <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2">
+                                <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2">
                                     <div className="flex flex-wrap items-center justify-between gap-1.5">
                                         <label className="block text-xs font-bold text-slate-700">
                                             Persona Responsable o Entidad Solicitante *
@@ -1829,7 +1829,7 @@ export default function RoomLoansIndex({
                                 </div>
 
                                 {/* Categoría y Sede */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label className="block text-xs font-bold text-slate-700 mb-1">Categoría de Actividad *</label>
                                         <select
@@ -1863,7 +1863,7 @@ export default function RoomLoansIndex({
                                 </div>
 
                                 {/* Fecha, Horas y N° Asistentes en una sola cuadrícula elegante */}
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                                     <div className="col-span-2 sm:col-span-1">
                                         <label className="block text-xs font-bold text-slate-700 mb-1">Fecha *</label>
                                         <input
@@ -1921,7 +1921,7 @@ export default function RoomLoansIndex({
                                 </div>
 
                                 {/* Asociar Participantes Iniciales */}
-                                <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2">
+                                <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2">
                                     <div className="flex items-center justify-between">
                                         <label className="block text-xs font-bold text-slate-700">
                                             Asociar Participantes a la Capacitación (Opcional)
@@ -1984,7 +1984,7 @@ export default function RoomLoansIndex({
                                     )}
 
                                     {data.participantes.length > 0 && (
-                                        <div className="flex flex-wrap gap-1.5 pt-1 max-h-28 overflow-y-auto">
+                                        <div className="flex flex-wrap gap-1.5 pt-1 max-h-24 overflow-y-auto">
                                             {data.participantes.map((part, idx) => (
                                                 <span
                                                     key={idx}
@@ -2007,7 +2007,7 @@ export default function RoomLoansIndex({
                             </div>
 
                             {/* Footer Fijo con Botones Siempre Visibles */}
-                            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
+                            <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
                                 <span className="text-[11px] text-slate-400 font-medium">
                                     Campos marcados con (*) son obligatorios
                                 </span>
