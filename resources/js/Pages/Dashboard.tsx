@@ -31,6 +31,7 @@ import {
     Share2,
     Award,
     X,
+    HelpCircle,
 } from 'lucide-react';
 import {
     ResponsiveContainer,
@@ -441,8 +442,20 @@ export default function Dashboard({
                                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                                     <span className="truncate">Atenciones en el Período</span>
                                 </span>
-                                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
-                                    <Activity className="w-4 h-4" />
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <div className="relative group">
+                                        <button className="w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-emerald-600 transition-colors" type="button">
+                                            <HelpCircle className="w-4 h-4" />
+                                        </button>
+                                        <div className="absolute right-0 top-6 w-64 bg-slate-900 text-white text-[11px] rounded-xl p-3 shadow-xl z-50 hidden group-hover:block leading-relaxed">
+                                            <p className="font-bold mb-1 text-emerald-300">¿Qué cuenta este número?</p>
+                                            <p>Suma total de <strong>visitas registradas</strong> en la plataforma + <strong>asistentes a préstamos de sala</strong> (cursos SENA, talleres, eventos) en el período seleccionado.</p>
+                                            <p className="mt-1 text-slate-400">Cada fila en el módulo de Visitas o cada persona en un préstamo de sala suma 1 atención.</p>
+                                        </div>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
+                                        <Activity className="w-4 h-4" />
+                                    </div>
                                 </div>
                             </div>
                             <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums mt-1">
@@ -479,8 +492,20 @@ export default function Dashboard({
                                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
                                     Ciudadanos Beneficiados
                                 </span>
-                                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0">
-                                    <Users className="w-4 h-4" />
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <div className="relative group">
+                                        <button className="w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-purple-600 transition-colors" type="button">
+                                            <HelpCircle className="w-4 h-4" />
+                                        </button>
+                                        <div className="absolute right-0 top-6 w-64 bg-slate-900 text-white text-[11px] rounded-xl p-3 shadow-xl z-50 hidden group-hover:block leading-relaxed">
+                                            <p className="font-bold mb-1 text-purple-300">¿Qué cuenta este número?</p>
+                                            <p>Cantidad de <strong>personas distintas</strong> (cédulas únicas) atendidas en el período. Si un mismo ciudadano visitó el Punto 3 veces, solo cuenta <strong>1</strong>.</p>
+                                            <p className="mt-1 text-slate-400">"Padrón" muestra el total histórico de ciudadanos registrados en toda la plataforma.</p>
+                                        </div>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center">
+                                        <Users className="w-4 h-4" />
+                                    </div>
                                 </div>
                             </div>
                             <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums mt-1">
@@ -514,8 +539,20 @@ export default function Dashboard({
                                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
                                     Hojas de Impresión / Copias
                                 </span>
-                                <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
-                                    <Printer className="w-4 h-4" />
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <div className="relative group">
+                                        <button className="w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-600 transition-colors" type="button">
+                                            <HelpCircle className="w-4 h-4" />
+                                        </button>
+                                        <div className="absolute right-0 top-6 w-64 bg-slate-900 text-white text-[11px] rounded-xl p-3 shadow-xl z-50 hidden group-hover:block leading-relaxed">
+                                            <p className="font-bold mb-1 text-amber-300">¿Qué cuenta este número?</p>
+                                            <p>Total de <strong>hojas impresas o copiadas</strong> registradas por los gestores en el módulo de Impresiones.</p>
+                                            <p className="mt-1 text-slate-400">Permite controlar el consumo de papel, tóner e insumos en cada sede. Si está en 0, significa que no se han registrado impresiones en el período.</p>
+                                        </div>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center">
+                                        <Printer className="w-4 h-4" />
+                                    </div>
                                 </div>
                             </div>
                             <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight tabular-nums mt-1">
@@ -549,8 +586,21 @@ export default function Dashboard({
                                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
                                     Salas & Espacios Comunitarios
                                 </span>
-                                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
-                                    <DoorOpen className="w-4 h-4" />
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <div className="relative group">
+                                        <button className="w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-emerald-600 transition-colors" type="button">
+                                            <HelpCircle className="w-4 h-4" />
+                                        </button>
+                                        <div className="absolute right-0 top-6 w-64 bg-slate-900 text-white text-[11px] rounded-xl p-3 shadow-xl z-50 hidden group-hover:block leading-relaxed">
+                                            <p className="font-bold mb-1 text-emerald-300">¿Qué cuenta este número?</p>
+                                            <p>Número grande = <strong>eventos o préstamos de sala</strong> registrados (cursos SENA, talleres, reuniones JAC, cine comunitario, etc.).</p>
+                                            <p className="mt-1">Número verde = <strong>asistentes totales</strong> que participaron en esos eventos (suma del campo "N° Asistentes" de cada préstamo).</p>
+                                            <p className="mt-1 text-slate-400">"Hoy en curso" muestra cuántos préstamos tienen fecha de hoy.</p>
+                                        </div>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
+                                        <DoorOpen className="w-4 h-4" />
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex items-baseline gap-2 mt-1">
