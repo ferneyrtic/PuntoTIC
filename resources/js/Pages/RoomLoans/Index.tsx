@@ -259,15 +259,22 @@ export default function RoomLoansIndex({
     const [partSearching, setPartSearching] = useState(false);
     const [partCitizenFound, setPartCitizenFound] = useState<any>(null);
     const [partNotFound, setPartNotFound] = useState(false);
-    const [partFreeName, setPartFreeName] = useState('');
     const [partAdding, setPartAdding] = useState(false);
     const [partError, setPartError] = useState<string | null>(null);
+    // Formulario de registro rápido (modal detalle)
+    const [partRegNombres, setPartRegNombres] = useState('');
+    const [partRegApellidos, setPartRegApellidos] = useState('');
+    const [partRegCorreo, setPartRegCorreo] = useState('');
+    const [partRegTelefono, setPartRegTelefono] = useState('');
 
     // Participantes para el modal de Creación
     const [createPartDoc, setCreatePartDoc] = useState('');
     const [createPartSearching, setCreatePartSearching] = useState(false);
     const [createPartNotFound, setCreatePartNotFound] = useState(false);
-    const [createPartFreeName, setCreatePartFreeName] = useState('');
+    // Formulario de registro rápido (modal crear)
+    const [createPartNombres, setCreatePartNombres] = useState('');
+    const [createPartApellidos, setCreatePartApellidos] = useState('');
+    const [createPartCorreo, setCreatePartCorreo] = useState('');
 
     const searchParticipantForDetail = async () => {
         if (!partDocInput.trim()) return;
@@ -289,7 +296,7 @@ export default function RoomLoansIndex({
         }
     };
 
-    const addParticipantToDetail = async (citizen?: any, freeName?: string) => {
+    const addParticipantToDetail = async (citizen?: any, regData?: { nombres: string; apellidos: string; correo?: string; telefono?: string }) => {
         if (!selectedLoanDetail) return;
         const loanId = selectedLoanDetail.id_prestamo || selectedLoanDetail.id;
         setPartAdding(true);
@@ -298,9 +305,14 @@ export default function RoomLoansIndex({
             const payload: any = {};
             if (citizen) {
                 payload.id_form_pvd = citizen.id_form_pvd;
-            } else if (freeName) {
-                payload.nombre_libre = freeName.trim();
-                payload.documento_libre = partDocInput.trim() || undefined;
+            } else if (regData) {
+                // Auto-registro: crear ciudadano en BD y asociar
+                payload.auto_registrar = true;
+                payload.nombres = regData.nombres.trim();
+                payload.apellidos = regData.apellidos.trim();
+                payload.documento = partDocInput.trim() || undefined;
+                payload.correo = regData.correo?.trim() || undefined;
+                payload.telefono = regData.telefono?.trim() || undefined;
             }
 
             const res = await axios.post(route('prestamos.participantes.store', loanId), payload);
@@ -315,7 +327,10 @@ export default function RoomLoansIndex({
                 setPartDocInput('');
                 setPartCitizenFound(null);
                 setPartNotFound(false);
-                setPartFreeName('');
+                setPartRegNombres('');
+                setPartRegApellidos('');
+                setPartRegCorreo('');
+                setPartRegTelefono('');
             }
         } catch (e: any) {
             if (e.response?.data?.error) {
@@ -380,15 +395,19 @@ export default function RoomLoansIndex({
         }
     };
 
-    const handleAddCreateFreePart = () => {
-        if (!createPartFreeName.trim()) return;
+    const handleAddCreateRegPart = () => {
+        if (!createPartNombres.trim() || !createPartApellidos.trim()) return;
+        const nombreCompleto = `${createPartNombres.trim()} ${createPartApellidos.trim()}`.toUpperCase();
         const newItems = [
             ...data.participantes,
             {
-                nombre: createPartFreeName.trim(),
+                nombre: nombreCompleto,
                 documento: createPartDoc.trim() || undefined,
-                nombre_libre: createPartFreeName.trim(),
-                documento_libre: createPartDoc.trim() || undefined,
+                nombres: createPartNombres.trim(),
+                apellidos: createPartApellidos.trim(),
+                correo: createPartCorreo.trim() || undefined,
+                // Marcamos auto_registrar para que el backend cree el ciudadano al guardar el préstamo
+                auto_registrar: true,
             },
         ];
         setData('participantes', newItems);
@@ -396,7 +415,9 @@ export default function RoomLoansIndex({
             setData('num_asistentes', newItems.length);
         }
         setCreatePartDoc('');
-        setCreatePartFreeName('');
+        setCreatePartNombres('');
+        setCreatePartApellidos('');
+        setCreatePartCorreo('');
         setCreatePartNotFound(false);
     };
 
@@ -462,7 +483,9 @@ export default function RoomLoansIndex({
                 setCitizenFound(null);
                 setDocumentInput('');
                 setCreatePartDoc('');
-                setCreatePartFreeName('');
+                setCreatePartNombres('');
+                setCreatePartApellidos('');
+                setCreatePartCorreo('');
                 setCreatePartNotFound(false);
             },
         });
@@ -1432,30 +1455,71 @@ export default function RoomLoansIndex({
                                         </div>
                                     )}
 
-                                    {/* Si el ciudadano no existe en BD */}
+                                    {/* Si el ciudadano no existe en BD → Mini formulario de registro */}
                                     {partNotFound && (
-                                        <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
-                                            <p className="text-[11px] text-amber-900 font-medium">
-                                                Cédula <strong>{partDocInput}</strong> no encontrada en directorio. Ingrese el nombre para asociarlo:
-                                            </p>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Nombre completo del participante..."
-                                                    value={partFreeName}
-                                                    onChange={(e) => setPartFreeName(e.target.value)}
-                                                    className="flex-1 px-3 py-1.5 rounded-xl border border-amber-300 text-xs font-medium outline-none bg-white"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => addParticipantToDetail(undefined, partFreeName)}
-                                                    disabled={partAdding || !partFreeName.trim()}
-                                                    className="px-3 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition-colors flex items-center gap-1 shrink-0"
-                                                >
-                                                    <Plus className="w-3.5 h-3.5" />
-                                                    <span>{partAdding ? '...' : 'Asociar'}</span>
-                                                </button>
+                                        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 space-y-2.5">
+                                            <div className="flex items-start gap-2">
+                                                <UserPlus className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <p className="text-[11px] text-blue-900 font-bold">
+                                                        CC <strong>{partDocInput}</strong> no está registrada
+                                                    </p>
+                                                    <p className="text-[10px] text-blue-700">
+                                                        Completa los datos para crear el ciudadano en el sistema y agregarlo al préstamo.
+                                                    </p>
+                                                </div>
                                             </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Nombres *</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Ej: Juan David"
+                                                        value={partRegNombres}
+                                                        onChange={(e) => setPartRegNombres(e.target.value)}
+                                                        className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Apellidos *</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Ej: Montes Valencia"
+                                                        value={partRegApellidos}
+                                                        onChange={(e) => setPartRegApellidos(e.target.value)}
+                                                        className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Correo (opcional)</label>
+                                                    <input
+                                                        type="email"
+                                                        placeholder="correo@gmail.com"
+                                                        value={partRegCorreo}
+                                                        onChange={(e) => setPartRegCorreo(e.target.value)}
+                                                        className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Teléfono (opcional)</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="3001234567"
+                                                        value={partRegTelefono}
+                                                        onChange={(e) => setPartRegTelefono(e.target.value)}
+                                                        className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => addParticipantToDetail(undefined, { nombres: partRegNombres, apellidos: partRegApellidos, correo: partRegCorreo, telefono: partRegTelefono })}
+                                                disabled={partAdding || !partRegNombres.trim() || !partRegApellidos.trim()}
+                                                className="w-full px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                            >
+                                                <UserPlus className="w-3.5 h-3.5" />
+                                                <span>{partAdding ? 'Creando y agregando...' : '+ Crear ciudadano y agregar al préstamo'}</span>
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -1959,27 +2023,59 @@ export default function RoomLoansIndex({
                                     </div>
 
                                     {createPartNotFound && (
-                                        <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 space-y-1.5">
-                                            <p className="text-[11px] text-amber-900 font-medium">
-                                                No encontrado con CC <strong>{createPartDoc}</strong>. Escriba el nombre completo para agregarlo:
-                                            </p>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Nombre completo del participante..."
-                                                    value={createPartFreeName}
-                                                    onChange={(e) => setCreatePartFreeName(e.target.value)}
-                                                    className="flex-1 px-3 py-1 rounded-xl border border-amber-300 text-xs font-medium outline-none bg-white shadow-2xs"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={handleAddCreateFreePart}
-                                                    disabled={!createPartFreeName.trim()}
-                                                    className="px-3 py-1 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition-colors shrink-0 cursor-pointer"
-                                                >
-                                                    Agregar
-                                                </button>
+                                        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 space-y-2.5">
+                                            <div className="flex items-start gap-2">
+                                                <UserPlus className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <p className="text-[11px] text-blue-900 font-bold">
+                                                        CC <strong>{createPartDoc}</strong> no está registrada
+                                                    </p>
+                                                    <p className="text-[10px] text-blue-700">
+                                                        Completa los datos para crear el ciudadano en el sistema.
+                                                    </p>
+                                                </div>
                                             </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Nombres *</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Ej: Juan David"
+                                                        value={createPartNombres}
+                                                        onChange={(e) => setCreatePartNombres(e.target.value)}
+                                                        className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Apellidos *</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Ej: Montes Valencia"
+                                                        value={createPartApellidos}
+                                                        onChange={(e) => setCreatePartApellidos(e.target.value)}
+                                                        className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
+                                                    />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Correo (opcional — para enviar certificado)</label>
+                                                    <input
+                                                        type="email"
+                                                        placeholder="correo@gmail.com"
+                                                        value={createPartCorreo}
+                                                        onChange={(e) => setCreatePartCorreo(e.target.value)}
+                                                        className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleAddCreateRegPart}
+                                                disabled={!createPartNombres.trim() || !createPartApellidos.trim()}
+                                                className="w-full px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                                            >
+                                                <UserPlus className="w-3.5 h-3.5" />
+                                                <span>+ Crear ciudadano y agregar</span>
+                                            </button>
                                         </div>
                                     )}
 

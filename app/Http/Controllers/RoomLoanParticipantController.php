@@ -33,7 +33,7 @@ class RoomLoanParticipantController extends Controller
     }
 
     /**
-     * Agregar un participante (ciudadano registrado o libre).
+     * Agregar un participante (ciudadano registrado, auto-registro o libre).
      */
     public function store(Request $request, RoomLoan $prestamo): JsonResponse
     {
@@ -41,7 +41,40 @@ class RoomLoanParticipantController extends Controller
             'id_form_pvd'     => ['nullable', 'exists:form_pvd,id_form_pvd'],
             'nombre_libre'    => ['nullable', 'string', 'max:150'],
             'documento_libre' => ['nullable', 'string', 'max:30'],
+            // Campos para auto-registro de un nuevo ciudadano
+            'auto_registrar'  => ['nullable', 'boolean'],
+            'nombres'         => ['nullable', 'string', 'max:100'],
+            'apellidos'       => ['nullable', 'string', 'max:100'],
+            'documento'       => ['nullable', 'string', 'max:30'],
+            'correo'          => ['nullable', 'email', 'max:150'],
+            'telefono'        => ['nullable', 'string', 'max:30'],
+            'genero'          => ['nullable', 'string', 'max:20'],
         ]);
+
+        // ── Auto-registro: crear ciudadano en BD y luego asociarlo ──────────
+        if (! empty($data['auto_registrar']) && ! empty($data['nombres'])) {
+            $documento = trim($data['documento'] ?? '');
+
+            // Verificar si ya existe (protección contra doble submit)
+            $existing = $documento ? Citizen::where('documento', $documento)->first() : null;
+
+            if (! $existing) {
+                $existing = Citizen::create([
+                    'nombres'   => strtoupper(trim($data['nombres'])),
+                    'apellidos' => strtoupper(trim($data['apellidos'] ?? '')),
+                    'documento' => $documento ?: null,
+                    'correo'    => $data['correo'] ?? null,
+                    'telefono'  => $data['telefono'] ?? null,
+                    'genero'    => $data['genero'] ?? null,
+                    'activo'    => true,
+                    'id_punto'  => $prestamo->id_punto ?? null,
+                    'id_gestor' => \Illuminate\Support\Facades\Auth::id(),
+                ]);
+            }
+
+            // Ahora asignamos como ciudadano registrado
+            $data['id_form_pvd'] = $existing->id_form_pvd ?? $existing->getKey();
+        }
 
         // Evitar duplicados por ciudadano registrado
         if (! empty($data['id_form_pvd'])) {
@@ -59,8 +92,8 @@ class RoomLoanParticipantController extends Controller
         $participante = $prestamo->participantes()->create([
             'id_prestamo'     => $prestamoId,
             'id_form_pvd'     => $data['id_form_pvd'] ?? null,
-            'nombre_libre'    => $data['nombre_libre'] ?? null,
-            'documento_libre' => $data['documento_libre'] ?? null,
+            'nombre_libre'    => null,  // ya no guardamos como libre si fue auto-registrado
+            'documento_libre' => null,
         ]);
 
         $participante->load('ciudadano:id_form_pvd,nombres,apellidos,documento');

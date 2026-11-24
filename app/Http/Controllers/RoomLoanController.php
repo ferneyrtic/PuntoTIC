@@ -143,12 +143,32 @@ class RoomLoanController extends Controller
         if ($request->has('participantes') && is_array($request->participantes)) {
             $prestamoId = $loan->id_prestamo ?? $loan->getKey();
             foreach ($request->participantes as $part) {
-                if (! empty($part['id_form_pvd']) || ! empty($part['nombre_libre'])) {
+                $idFormPvd = $part['id_form_pvd'] ?? null;
+
+                // Auto-registro: crear ciudadano si trae nombres + apellidos + auto_registrar
+                if (! $idFormPvd && ! empty($part['auto_registrar']) && ! empty($part['nombres'])) {
+                    $documento = trim($part['documento'] ?? '');
+                    $existing  = $documento ? \App\Models\Citizen::where('documento', $documento)->first() : null;
+                    if (! $existing) {
+                        $existing = \App\Models\Citizen::create([
+                            'nombres'   => strtoupper(trim($part['nombres'])),
+                            'apellidos' => strtoupper(trim($part['apellidos'] ?? '')),
+                            'documento' => $documento ?: null,
+                            'correo'    => $part['correo'] ?? null,
+                            'activo'    => true,
+                            'id_punto'  => $loan->id_punto ?? null,
+                            'id_gestor' => Auth::id(),
+                        ]);
+                    }
+                    $idFormPvd = $existing->id_form_pvd ?? $existing->getKey();
+                }
+
+                if ($idFormPvd || ! empty($part['nombre_libre'])) {
                     $loan->participantes()->create([
-                        'id_prestamo' => $prestamoId,
-                        'id_form_pvd' => $part['id_form_pvd'] ?? null,
-                        'nombre_libre' => $part['nombre_libre'] ?? null,
-                        'documento_libre' => $part['documento_libre'] ?? null,
+                        'id_prestamo'     => $prestamoId,
+                        'id_form_pvd'     => $idFormPvd,
+                        'nombre_libre'    => $idFormPvd ? null : ($part['nombre_libre'] ?? null),
+                        'documento_libre' => $idFormPvd ? null : ($part['documento_libre'] ?? null),
                     ]);
                 }
             }
