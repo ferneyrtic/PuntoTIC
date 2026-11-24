@@ -7,9 +7,6 @@ import {
     CheckCircle2,
     ArrowRight,
     MapPin,
-    Shield,
-    FileText,
-    Sparkles,
     Phone,
     Mail,
     Clock,
@@ -17,17 +14,17 @@ import {
     LogIn,
     UserPlus,
     Building2,
-    Award,
     Wifi,
     GraduationCap,
     BookOpen,
-    Send,
-    HelpCircle,
     Check,
     Navigation,
     ExternalLink,
     X,
-    Filter,
+    FileText,
+    HelpCircle,
+    Laptop,
+    Sparkles,
 } from 'lucide-react';
 import { asset } from '@/utils/asset';
 
@@ -63,7 +60,6 @@ interface Training {
     cupos_disponibles: number;
     requisitos: string | null;
     dirigido_a: string | null;
-    color_tema: string;
     destacado: boolean;
     punto?: {
         id_punto: number;
@@ -86,11 +82,11 @@ interface Props {
 export default function Welcome({ points = [], capacitaciones = [], statsSummary }: Props) {
     const { flash } = usePage<any>().props;
 
-    // Estado para filtro de capacitaciones
+    // Filtro de categorías amigable
     const [categoriaFilter, setCategoriaFilter] = useState('todas');
     const [selectedCourseForModal, setSelectedCourseForModal] = useState<Training | null>(null);
 
-    // Formulario de preinscripción rápida
+    // Formulario de inscripción simple y claro
     const inscriptionForm = useForm({
         id_capacitacion: '',
         documento: '',
@@ -133,210 +129,269 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
         ? capacitaciones
         : capacitaciones.filter((c) => c.categoria === categoriaFilter);
 
-    // Sede preseleccionada para visualización de mapa
+    // Sede activa para la vista detallada
     const [selectedPointIndex, setSelectedPointIndex] = useState(0);
     const activePoint = points[selectedPointIndex] || points[0];
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white">
-            <Head title="PuntoTIC · Red de Puntos y Aulas Digitales · Alcaldía de Acacías" />
+        <div className="min-h-screen bg-white text-slate-800 font-sans selection:bg-emerald-700 selection:text-white">
+            <Head title="Puntos Vive Digital · Alcaldía de Acacías" />
 
-            {/* MENSAJES FLASH DE CONFIRMACIÓN */}
+            {/* MENSAJES DE CONFIRMACIÓN */}
             {flash?.success && (
-                <div className="bg-emerald-600 text-white text-xs font-bold px-4 py-3 text-center sticky top-0 z-50 shadow-md flex items-center justify-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <div className="bg-emerald-700 text-white text-sm font-semibold px-4 py-3 text-center sticky top-0 z-50 shadow-md flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
                     <span>{flash.success}</span>
                 </div>
             )}
             {flash?.info && (
-                <div className="bg-blue-600 text-white text-xs font-bold px-4 py-3 text-center sticky top-0 z-50 shadow-md flex items-center justify-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <div className="bg-blue-700 text-white text-sm font-semibold px-4 py-3 text-center sticky top-0 z-50 shadow-md flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
                     <span>{flash.info}</span>
                 </div>
             )}
 
             {/* =========================================================================
-                1. HEADER / BARRA DE NAVEGACIÓN SUPERIOR
+                1. ENCABEZADO INSTITUCIONAL CLARO Y CERCANO
                ========================================================================= */}
-            <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-md border-b border-slate-800/80 transition-colors">
+            <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                    {/* Logotipo y Título Oficial */}
-                    <Link href="#inicio" className="flex items-center gap-3 group">
-                        <div className="bg-white p-1.5 px-3 rounded-xl shadow-xs border border-slate-200 flex items-center justify-center transition-transform group-hover:scale-105">
-                            <img
-                                src={asset('images/logo_alcaldia.png')}
-                                alt="Alcaldía de Acacías"
-                                className="h-10 sm:h-11 w-auto object-contain"
-                            />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xl font-black text-white tracking-tight">PuntoTIC</span>
-                                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
-                                    Acacías
-                                </span>
-                            </div>
-                            <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
-                                Red de Puntos Vive Digital y Aulas Digitales
-                            </p>
+                    {/* Logos Institucionales */}
+                    <Link href="#inicio" className="flex items-center gap-3 sm:gap-4">
+                        <img
+                            src={asset('images/logo_alcaldia.png')}
+                            alt="Alcaldía de Acacías"
+                            className="h-10 sm:h-12 w-auto object-contain"
+                        />
+                        <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
+                        <img
+                            src={asset('images/logo_pvd.png')}
+                            alt="Puntos Vive Digital"
+                            className="h-8 sm:h-10 w-auto object-contain"
+                        />
+                        <div className="hidden md:block">
+                            <span className="text-base font-extrabold text-slate-900 leading-tight block">
+                                Puntos Vive Digital
+                            </span>
+                            <span className="text-xs text-slate-500 font-medium">
+                                Alcaldía de Acacías · Secretaría TIC
+                            </span>
                         </div>
                     </Link>
 
-                    {/* Menús de Navegación Exclusivos: Inicio, Capacitaciones, Sedes, Contacto */}
-                    <nav className="hidden md:flex items-center gap-1.5">
+                    {/* Menús de Navegación: Inicio (Préstamo), Capacitaciones, Sedes, Contacto */}
+                    <nav className="hidden lg:flex items-center gap-1 text-sm font-bold text-slate-700">
                         <a
                             href="#inicio"
-                            className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+                            className="px-3.5 py-2 rounded-xl hover:text-emerald-800 hover:bg-slate-100 transition-colors"
                         >
-                            Inicio (Préstamos)
+                            Inicio
+                        </a>
+                        <a
+                            href="#prestamo-salas"
+                            className="px-3.5 py-2 rounded-xl hover:text-emerald-800 hover:bg-slate-100 transition-colors"
+                        >
+                            Préstamo de Salas
                         </a>
                         <a
                             href="#capacitaciones"
-                            className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-900 transition-colors flex items-center gap-1.5"
+                            className="px-3.5 py-2 rounded-xl hover:text-emerald-800 hover:bg-slate-100 transition-colors"
                         >
-                            <span>Capacitaciones</span>
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Cursos y Talleres
                         </a>
                         <a
                             href="#sedes"
-                            className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+                            className="px-3.5 py-2 rounded-xl hover:text-emerald-800 hover:bg-slate-100 transition-colors"
                         >
-                            Sedes (4)
+                            Nuestras 4 Sedes
                         </a>
                         <a
                             href="#contacto"
-                            className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+                            className="px-3.5 py-2 rounded-xl hover:text-emerald-800 hover:bg-slate-100 transition-colors"
                         >
-                            Contacto
+                            Contacto y Trámites
                         </a>
                     </nav>
 
-                    {/* Botones de Acción (Ingreso y Solicitud de Sala) */}
-                    <div className="flex items-center gap-2.5">
+                    {/* Botones de Acción */}
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <Link
                             href={route('login')}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-900 transition-all border border-slate-800"
+                            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-300 transition-all"
                         >
-                            <LogIn className="w-3.5 h-3.5 text-slate-400" />
+                            <LogIn className="w-4 h-4 text-slate-500" />
                             <span>Ingreso</span>
                         </Link>
 
-                        <Link
-                            href={route('register')}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-md shadow-emerald-600/20 transition-all shrink-0"
+                        <a
+                            href="#prestamo-salas"
+                            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#1B6B35] hover:bg-[#145328] text-white shadow-xs transition-all shrink-0"
                         >
-                            <UserPlus className="w-3.5 h-3.5" />
-                            <span>Solicitar Sala</span>
-                        </Link>
+                            <Building2 className="w-4 h-4" />
+                            <span>Apartar Sala</span>
+                        </a>
                     </div>
                 </div>
             </header>
 
             {/* =========================================================================
-                2. SECCIÓN INICIO: HERO PRINCIPAL & SOLICITUD DE PRÉSTAMO DE SALAS
+                2. BIENVENIDA HUMANA A LA CIUDADANÍA
                ========================================================================= */}
-            <section id="inicio" className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 overflow-hidden">
-                {/* Iluminación ambiental de fondo */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[450px] bg-gradient-to-tr from-emerald-600/20 via-teal-500/10 to-transparent blur-3xl pointer-events-none rounded-full"></div>
+            <section id="inicio" className="pt-10 pb-14 sm:pt-16 sm:pb-20 bg-[#F8FAFC] border-b border-slate-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center max-w-3xl mx-auto space-y-4">
+                        <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs sm:text-sm font-bold">
+                            <span>🌱</span>
+                            <span>Servicios públicos 100% gratuitos para la comunidad</span>
+                        </span>
 
-                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Badge y Titular Hero */}
-                    <div className="text-center max-w-4xl mx-auto space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>Alcaldía Municipal de Acacías · Secretaría de las TIC</span>
-                        </div>
-
-                        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
-                            Espacios Tecnológicos y Conectividad para la Comunidad
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                            Salas de computadores, internet gratis y cursos para todos en Acacías
                         </h1>
 
-                        <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                            Reserva salas de cómputo con internet de alta velocidad para capacitaciones, talleres comunitarios, reuniones de JAC y formación digital 100% gratuita en Acacías.
+                        <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
+                            Un espacio cálido de la Alcaldía de Acacías para que niños, jóvenes, estudiantes, adultos mayores y líderes de barrio aprendan, hagan sus tareas o se reúnan sin pagar un solo peso.
                         </p>
+
+                        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                            <a
+                                href="#capacitaciones"
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#1B6B35] hover:bg-[#145328] text-white font-bold text-sm sm:text-base shadow-sm transition-all"
+                            >
+                                <GraduationCap className="w-5 h-5" />
+                                <span>Ver Cursos Disponibles</span>
+                            </a>
+
+                            <a
+                                href="#prestamo-salas"
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-sm sm:text-base border border-slate-300 shadow-2xs transition-all"
+                            >
+                                <Building2 className="w-5 h-5 text-emerald-700" />
+                                <span>Apartar una Sala</span>
+                            </a>
+                        </div>
                     </div>
 
-                    {/* Módulo Interactivo Destacado: Solicitud de Préstamo de Sala */}
-                    <div className="mt-12 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md max-w-4xl mx-auto">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
-                            <div>
-                                <span className="text-[11px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5">
-                                    <Monitor className="w-4 h-4" />
-                                    <span>Servicio Oficial Ciudadano</span>
+                    {/* 4 BENEFICIOS DIRECTOS PARA EL CIUDADANO */}
+                    <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                                <Laptop className="w-5 h-5" />
+                            </div>
+                            <h3 className="text-base font-bold text-slate-900">Uso Libre de Computadores</h3>
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Ven a hacer tus trabajos escolares, consultar internet o revisar trámites en nuestras salas.
+                            </p>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
+                            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold">
+                                <GraduationCap className="w-5 h-5" />
+                            </div>
+                            <h3 className="text-base font-bold text-slate-900">Cursos con Paciencia</h3>
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Aprende desde cómo usar el celular o Word y Excel, hasta robótica para niños y jóvenes.
+                            </p>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
+                            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                                <Building2 className="w-5 h-5" />
+                            </div>
+                            <h3 className="text-base font-bold text-slate-900">Préstamo para Grupos</h3>
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Espacios con proyector y aire acondicionado para juntas de acción comunal, fundaciones y docentes.
+                            </p>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
+                            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
+                                <FileText className="w-5 h-5" />
+                            </div>
+                            <h3 className="text-base font-bold text-slate-900">Ayuda con Trámites</h3>
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Te orientamos con gusto para sacar el certificado del SISBÉN, antecedentes de policía y citas médicas.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* =========================================================================
+                3. SECCIÓN PRÉSTAMO DE SALAS (EXPLICACIÓN CLARA Y COTIDIANA)
+               ========================================================================= */}
+            <section id="prestamo-salas" className="py-14 sm:py-20 bg-white border-b border-slate-200">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="bg-[#F8FAFC] rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-xs">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-200">
+                            <div className="space-y-1.5">
+                                <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200 inline-block">
+                                    Servicio de Préstamo de Instalaciones
                                 </span>
-                                <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
-                                    Solicitar Préstamo de Sala Tecnológica
+                                <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
+                                    ¿Necesitas una sala para tu taller, junta o reunión?
                                 </h2>
-                                <p className="text-xs text-slate-400 mt-1">
-                                    Para líderes comunales, docentes, fundaciones, estudiantes y ciudadanía en general.
+                                <p className="text-xs sm:text-sm text-slate-600 max-w-2xl">
+                                    Si eres presidente de Junta de Acción Comunal (JAC), docente, rector, líder de fundación, grupo de abuelos o asociación comunitaria, te prestamos nuestras salas totalmente gratis.
                                 </p>
                             </div>
 
                             <Link
                                 href={route('register')}
-                                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition-all shrink-0"
+                                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[#1B6B35] hover:bg-[#145328] text-white font-bold text-sm sm:text-base shadow-sm transition-all shrink-0"
                             >
-                                <span>Iniciar Solicitud Online</span>
+                                <span>Solicitar Préstamo de Sala</span>
                                 <ArrowRight className="w-4 h-4" />
                             </Link>
                         </div>
 
-                        {/* Pasos de Reserva */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6">
-                            <div className="flex gap-3.5">
-                                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black text-sm shrink-0 border border-emerald-500/20">
+                        {/* 3 Pasos Claros */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
+                            <div className="flex gap-4 items-start">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-xs">
                                     1
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="text-xs font-bold text-white">Elige la Sede</h3>
-                                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                                        Selecciona Juan Rozo (PLUS), Las Colinas, Chichimene o Dinamarca.
+                                    <h3 className="text-base font-bold text-slate-900">Escoge tu sede</h3>
+                                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                        Tenemos salas disponibles en Juan Rozo (Centro), Las Colinas, Dinamarca y Chichimene.
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="flex gap-3.5">
-                                <div className="w-10 h-10 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center font-black text-sm shrink-0 border border-teal-500/20">
+                            <div className="flex gap-4 items-start">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-xs">
                                     2
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="text-xs font-bold text-white">Define Fecha y Motivo</h3>
-                                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                                        Indica la franja horaria, número de asistentes y propósito del evento.
+                                    <h3 className="text-base font-bold text-slate-900">Indícanos la fecha</h3>
+                                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                        Selecciona qué día, a qué hora y cuántas personas asistirán a la actividad comunitaria.
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="flex gap-3.5">
-                                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-black text-sm shrink-0 border border-blue-500/20">
+                            <div className="flex gap-4 items-start">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-xs">
                                     3
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="text-xs font-bold text-white">Aprobación por el Gestor</h3>
-                                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                                        El gestor valida la disponibilidad y te confirma la reserva oficial.
+                                    <h3 className="text-base font-bold text-slate-900">El gestor te espera</h3>
+                                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                        Te confirmamos la disponibilidad y el facilitador deja listos los equipos y el proyector.
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Beneficios Institucionales */}
-                        <div className="mt-8 pt-6 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                            <div>
-                                <div className="text-lg font-black text-emerald-400">100% Gratuito</div>
-                                <div className="text-[10px] text-slate-400 uppercase font-bold">Sin costo alguno</div>
+                        {/* Recordatorio Comunitario */}
+                        <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-600">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0" />
+                                <span>Salas equipadas con hasta 28 computadores portátiles, proyector y aire acondicionado.</span>
                             </div>
-                            <div>
-                                <div className="text-lg font-black text-white">300 Mbps</div>
-                                <div className="text-[10px] text-slate-400 uppercase font-bold">Fibra Óptica</div>
-                            </div>
-                            <div>
-                                <div className="text-lg font-black text-white">28 Portátiles</div>
-                                <div className="text-[10px] text-slate-400 uppercase font-bold">Por Sala Sede</div>
-                            </div>
-                            <div>
-                                <div className="text-lg font-black text-emerald-400">4 Sedes</div>
-                                <div className="text-[10px] text-slate-400 uppercase font-bold">Urbana & Rural</div>
+                            <div className="font-bold text-slate-800">
+                                Sin costo alguno para la ciudadanía
                             </div>
                         </div>
                     </div>
@@ -344,36 +399,35 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
             </section>
 
             {/* =========================================================================
-                3. SECCIÓN CAPACITACIONES: CATÁLOGO DE CURSOS Y TALLERES PÚBLICOS
+                4. CATÁLOGO DE CURSOS Y CAPACITACIONES
                ========================================================================= */}
-            <section id="capacitaciones" className="py-20 bg-slate-900/60 border-y border-slate-800">
+            <section id="capacitaciones" className="py-14 sm:py-20 bg-[#F8FAFC] border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Encabezado de la Sección */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+                    {/* Encabezado */}
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                         <div>
-                            <span className="text-xs font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <GraduationCap className="w-4 h-4" />
-                                <span>Formación y Alfabetización Digital</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200 inline-block mb-2">
+                                Cursos y Talleres Gratuitos
                             </span>
-                            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-1">
-                                Capacitaciones y Cursos Abiertos
+                            <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
+                                Aprende a tu propio ritmo este mes
                             </h2>
-                            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
-                                Desarrolla habilidades digitales con cursos certificados y talleres prácticos en tu sede PVD más cercana.
+                            <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-xl">
+                                Todos nuestros cursos son prácticos, dictados en sala por facilitadores pacientes y con entrega de constancia al culminar.
                             </p>
                         </div>
 
-                        {/* Filtros por Categoría */}
-                        <div className="flex flex-wrap items-center gap-1.5">
+                        {/* Filtros de Categoría */}
+                        <div className="flex flex-wrap items-center gap-2">
                             {categoriasList.map((cat) => (
                                 <button
                                     key={cat}
                                     type="button"
                                     onClick={() => setCategoriaFilter(cat)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all capitalize ${
+                                    className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all capitalize ${
                                         categoriaFilter === cat
-                                            ? 'bg-emerald-600 text-white shadow-xs'
-                                            : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800'
+                                            ? 'bg-[#1B6B35] text-white shadow-xs'
+                                            : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-300'
                                     }`}
                                 >
                                     {cat === 'todas' ? 'Todos los Cursos' : cat}
@@ -382,74 +436,69 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
                         </div>
                     </div>
 
-                    {/* Grilla Dinámica de Cursos */}
+                    {/* Tarjetas de Cursos */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredCourses.map((c) => (
                             <div
                                 key={c.id_capacitacion}
-                                className="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-950/20 transition-all group"
+                                className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between hover:border-emerald-600 hover:shadow-md transition-all space-y-4"
                             >
-                                <div className="space-y-3.5">
-                                    {/* Insignias de Cabecera */}
+                                <div className="space-y-3">
+                                    {/* Insignia y Categoría */}
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                            {c.tipo}
+                                        <span className="px-2.5 py-1 rounded-full text-xs font-bold uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                            {c.categoria}
                                         </span>
-                                        <span className="text-[10px] font-black uppercase text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
+                                        <span className="text-xs font-extrabold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
                                             100% Gratuito
                                         </span>
                                     </div>
 
-                                    {/* Título y Categoría */}
-                                    <div>
-                                        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                            {c.categoria}
-                                        </div>
-                                        <h3 className="text-base font-black text-white mt-1 group-hover:text-emerald-400 transition-colors leading-snug">
-                                            {c.titulo}
-                                        </h3>
-                                    </div>
+                                    {/* Título del Curso */}
+                                    <h3 className="text-lg font-black text-slate-900 leading-snug">
+                                        {c.titulo}
+                                    </h3>
 
-                                    {/* Descripción */}
-                                    <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
+                                    {/* Descripción sencilla */}
+                                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                                         {c.descripcion}
                                     </p>
 
-                                    {/* Ficha Técnica / Metadatos */}
-                                    <div className="space-y-1.5 pt-2 border-t border-slate-800/80 text-xs text-slate-400">
+                                    {/* Datos Prácticos */}
+                                    <div className="space-y-2 pt-3 border-t border-slate-100 text-xs sm:text-sm text-slate-700">
                                         <div className="flex items-center gap-2">
-                                            <Building2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                            <span className="truncate font-medium">
-                                                {c.punto ? c.punto.nombre_punto : 'Toda la Red / Virtual'}
+                                            <Building2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                                            <span className="font-bold text-slate-900">
+                                                {c.punto ? c.punto.nombre_punto : 'Todas las Sedes de Acacías'}
                                             </span>
                                         </div>
 
                                         {c.horario && (
-                                            <div className="flex items-center gap-2">
-                                                <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                                <span className="truncate">{c.horario}</span>
+                                            <div className="flex items-center gap-2 text-slate-600">
+                                                <Clock className="w-4 h-4 text-slate-500 shrink-0" />
+                                                <span>{c.horario}</span>
                                             </div>
                                         )}
 
-                                        {c.instructor && (
-                                            <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                                                <span className="text-slate-500">Instructor:</span>
-                                                <span className="truncate font-semibold text-slate-300">{c.instructor}</span>
+                                        {c.dirigido_a && (
+                                            <div className="flex items-center gap-2 text-slate-600">
+                                                <Users className="w-4 h-4 text-slate-500 shrink-0" />
+                                                <span>Para: {c.dirigido_a}</span>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Barra de Cupos Disponibles */}
-                                    <div className="pt-2">
-                                        <div className="flex items-center justify-between text-[11px] font-bold mb-1">
-                                            <span className="text-slate-400">Cupos restantes:</span>
-                                            <span className="text-emerald-400">
-                                                {c.cupos_disponibles} de {c.cupos_totales} disponibles
+                                    {/* Cupos */}
+                                    <div className="pt-1">
+                                        <div className="flex items-center justify-between text-xs font-bold text-slate-600 mb-1">
+                                            <span>Cupos disponibles:</span>
+                                            <span className="text-emerald-800 font-extrabold">
+                                                {c.cupos_disponibles} libres
                                             </span>
                                         </div>
-                                        <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                        <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                                             <div
-                                                className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+                                                className="h-full bg-emerald-600 rounded-full"
                                                 style={{
                                                     width: `${Math.min(
                                                         100,
@@ -461,25 +510,25 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
                                     </div>
                                 </div>
 
-                                {/* Botón de Preinscripción */}
-                                <div className="pt-5 mt-4 border-t border-slate-800/80">
+                                {/* Botón de Inscripción Directa */}
+                                <div className="pt-2">
                                     <button
                                         type="button"
                                         onClick={() => openInscriptionModal(c)}
-                                        className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm group-hover:bg-emerald-600"
+                                        className="w-full py-2.5 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
                                     >
-                                        <BookOpen className="w-3.5 h-3.5" />
-                                        <span>Preinscribirme Gratis</span>
+                                        <BookOpen className="w-4 h-4" />
+                                        <span>Quiero Inscribirme Gratis</span>
                                     </button>
                                 </div>
                             </div>
                         ))}
 
                         {filteredCourses.length === 0 && (
-                            <div className="col-span-full p-12 text-center text-slate-400 bg-slate-900 rounded-3xl border border-slate-800">
-                                <GraduationCap className="w-10 h-10 mx-auto text-slate-600 mb-2" />
-                                <div className="text-sm font-bold text-white">No hay cursos disponibles en esta categoría</div>
-                                <p className="text-xs text-slate-500 mt-1">Pronto publicaremos nuevas capacitaciones para la comunidad.</p>
+                            <div className="col-span-full p-10 text-center text-slate-500 bg-white rounded-3xl border border-slate-200">
+                                <GraduationCap className="w-10 h-10 mx-auto text-slate-400 mb-2" />
+                                <div className="text-base font-bold text-slate-800">No hay cursos en esta categoría por ahora</div>
+                                <p className="text-xs sm:text-sm text-slate-500 mt-1">Pronto estaremos publicando nuevas fechas y temáticas.</p>
                             </div>
                         )}
                     </div>
@@ -487,74 +536,73 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
             </section>
 
             {/* =========================================================================
-                4. SECCIÓN SEDES: LAS 4 SEDES PVD Y AULAS DIGITALES CON UBICACIÓN
+                5. NUESTRAS 4 SEDES EN ACACÍAS (CON DIRECCIÓN Y GOOGLE MAPS)
                ========================================================================= */}
-            <section id="sedes" className="py-20">
+            <section id="sedes" className="py-14 sm:py-20 bg-white border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center max-w-3xl mx-auto mb-12">
-                        <span className="text-xs font-black text-emerald-400 uppercase tracking-widest flex items-center justify-center gap-1.5">
-                            <MapPin className="w-4 h-4" />
-                            <span>Presencia en el Territorio</span>
+                    <div className="text-center max-w-3xl mx-auto mb-10">
+                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200 inline-block mb-2">
+                            Presencia en el Municipio
                         </span>
-                        <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-1">
+                        <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
                             Nuestras 4 Sedes en Acacías
                         </h2>
-                        <p className="text-xs sm:text-sm text-slate-400 mt-2">
-                            Puntos Vive Digital urbanos y Aulas Digitales rurales equipadas para el acceso a la tecnología.
+                        <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                            Dos sedes en el casco urbano y dos aulas en el sector rural para que no tengas que desplazarte lejos de tu casa.
                         </p>
                     </div>
 
                     {/* Tarjetas de las 4 Sedes */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {points.map((p, idx) => (
                             <div
                                 key={p.id_punto}
-                                className={`rounded-3xl p-6 border transition-all flex flex-col justify-between cursor-pointer ${
+                                className={`rounded-3xl p-5 border transition-all flex flex-col justify-between cursor-pointer ${
                                     selectedPointIndex === idx
-                                        ? 'bg-slate-900 border-emerald-500 shadow-xl shadow-emerald-950/30 ring-2 ring-emerald-500/20'
-                                        : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                                        ? 'bg-[#F8FAFC] border-emerald-600 shadow-md ring-2 ring-emerald-600/20'
+                                        : 'bg-white border-slate-200 hover:border-slate-300'
                                 }`}
                                 onClick={() => setSelectedPointIndex(idx)}
                             >
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <span
-                                            className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                                            className={`text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${
                                                 p.zona === 'Rural'
-                                                    ? 'bg-amber-400/10 text-amber-400 border-amber-400/20'
-                                                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                             }`}
                                         >
-                                            {p.badge || (p.zona === 'Rural' ? 'Aula Rural' : 'Sede Urbana')}
+                                            {p.badge || (p.zona === 'Rural' ? 'Sector Rural' : 'Sector Urbano')}
                                         </span>
-                                        <span className="text-[11px] font-bold text-slate-500">Sede #{idx + 1}</span>
+                                        <span className="text-xs font-bold text-slate-400">Sede {idx + 1}</span>
                                     </div>
 
-                                    <h3 className="text-base font-black text-white leading-snug">
+                                    <h3 className="text-base font-black text-slate-900 leading-snug">
                                         {p.alias || p.nombre_punto}
                                     </h3>
 
-                                    <div className="space-y-2 text-xs text-slate-400 pt-1">
+                                    <div className="space-y-2 text-xs sm:text-sm text-slate-600 pt-1">
                                         <div className="flex items-start gap-2">
-                                            <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                                            <span>{p.direccion}</span>
+                                            <MapPin className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                                            <span className="font-semibold text-slate-900">{p.direccion}</span>
                                         </div>
 
-                                        <div className="flex items-start gap-2">
-                                            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                                            <span className="text-[11px]">{p.horario || 'Lunes a Viernes 8:00 AM - 5:00 PM'}</span>
+                                        <div className="flex items-start gap-2 text-slate-600">
+                                            <Clock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                                            <span>{p.horario || 'Lunes a Viernes 8:00 AM - 5:00 PM'}</span>
                                         </div>
 
-                                        <div className="flex items-start gap-2">
-                                            <Wifi className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" />
-                                            <span className="text-[11px] text-slate-300">
-                                                {p.equipos || 'Equipos de cómputo y conectividad de alta velocidad'}
+                                        <div className="flex items-start gap-2 text-slate-600">
+                                            <Wifi className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                                            <span className="text-xs text-slate-500">
+                                                {p.equipos || 'Computadores portátiles e internet veloz'}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="pt-5 mt-4 border-t border-slate-800">
+                                <div className="pt-4 mt-4 border-t border-slate-100">
                                     <a
                                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                                             p.map_query || `${p.nombre_punto}, Acacias, Meta`
@@ -562,38 +610,38 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         onClick={(e) => e.stopPropagation()}
-                                        className="inline-flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold transition-colors"
+                                        className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold transition-colors"
                                     >
-                                        <ExternalLink className="w-3 h-3 text-emerald-400" />
-                                        <span>Ver Ubicación en Maps</span>
+                                        <ExternalLink className="w-4 h-4 text-emerald-700" />
+                                        <span>Cómo Llegar (Google Maps)</span>
                                     </a>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    {/* Ficha Detallada de la Sede Seleccionada */}
+                    {/* Ficha Resumida de la Sede Seleccionada */}
                     {activePoint && (
-                        <div className="mt-8 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="mt-8 bg-[#F8FAFC] border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xs">
                             <div className="space-y-2 flex-1">
-                                <div className="text-xs font-black text-emerald-400 uppercase tracking-widest">
-                                    Detalle de la Sede Seleccionada
-                                </div>
-                                <h3 className="text-xl sm:text-2xl font-black text-white">
+                                <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200 inline-block">
+                                    Sede Seleccionada
+                                </span>
+                                <h3 className="text-xl sm:text-2xl font-black text-slate-900">
                                     {activePoint.alias || activePoint.nombre_punto}
                                 </h3>
-                                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
-                                    Ubicada en <strong className="text-white">{activePoint.direccion}</strong> ({activePoint.barrio}). Equipada con {activePoint.equipos}. Ideal para cursos certificados, trámites en línea y préstamo de sala a juntas comunales.
+                                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-2xl">
+                                    Ubicada en <strong className="text-slate-900">{activePoint.direccion}</strong> ({activePoint.barrio}). Abierta para consulta libre de estudiantes y comunidad, o para préstamo a grupos comunitarios.
                                 </p>
                             </div>
 
                             <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
                                 <Link
                                     href={route('register')}
-                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#1B6B35] hover:bg-[#145328] text-white font-bold text-xs sm:text-sm shadow-xs transition-all"
                                 >
-                                    <UserPlus className="w-3.5 h-3.5" />
-                                    <span>Solicitar Sala en esta Sede</span>
+                                    <Building2 className="w-4 h-4" />
+                                    <span>Apartar Sala en esta Sede</span>
                                 </Link>
 
                                 <a
@@ -602,10 +650,10 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
                                     )}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-all"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs sm:text-sm border border-slate-300 transition-all shadow-2xs"
                                 >
-                                    <Navigation className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>Cómo Llegar</span>
+                                    <Navigation className="w-4 h-4 text-emerald-700" />
+                                    <span>Abrir en Google Maps</span>
                                 </a>
                             </div>
                         </div>
@@ -614,82 +662,85 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
             </section>
 
             {/* =========================================================================
-                5. SECCIÓN CONTACTO & CANALES DE ATENCIÓN CIUDADANA
+                6. APOYO EN TRÁMITES Y ATENCIÓN AL CIUDADANO
                ========================================================================= */}
-            <section id="contacto" className="py-20 bg-slate-900/60 border-t border-slate-800">
+            <section id="contacto" className="py-14 sm:py-20 bg-[#F8FAFC]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
                         <div className="space-y-4">
-                            <span className="text-xs font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <Phone className="w-4 h-4" />
-                                <span>Atención y Soporte al Ciudadano</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200 inline-block">
+                                Orientación Ciudadana
                             </span>
-                            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-                                ¿Tienes Dudas sobre los Cursos o el Préstamo de Salas?
+                            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                                ¿Tienes que hacer un trámite y no tienes computador o internet en casa?
                             </h2>
-                            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                                Nuestro equipo de facilitadores de la Secretaría de las TIC está disponible para orientarte en la inscripción de talleres, trámites gubernamentales o en la reserva de salas para tu comunidad.
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Acércate a tu Punto Vive Digital más cercano. Nuestros facilitadores te orientan con gusto y paciencia para que puedas realizar tus consultas sin intermediarios ni cobros.
                             </p>
 
-                            <div className="space-y-3 pt-3">
-                                <div className="flex items-center gap-3 text-xs text-slate-300">
-                                    <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
-                                        <Mail className="w-4 h-4" />
+                            <div className="space-y-3 pt-2">
+                                <div className="flex items-center gap-3 text-xs sm:text-sm text-slate-700">
+                                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                                        <Mail className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Correo Electrónico</span>
-                                        <span className="font-bold text-white">tic@acacias.gov.co</span>
+                                        <span className="text-slate-500 block text-xs uppercase font-bold">Correo Institucional</span>
+                                        <span className="font-bold text-slate-900">tic@acacias.gov.co</span>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-3 text-xs text-slate-300">
-                                    <div className="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center shrink-0">
-                                        <Building2 className="w-4 h-4" />
+                                <div className="flex items-center gap-3 text-xs sm:text-sm text-slate-700">
+                                    <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+                                        <Building2 className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Secretaría TIC</span>
-                                        <span className="font-bold text-white">Alcaldía Municipal de Acacías · Meta</span>
+                                        <span className="text-slate-500 block text-xs uppercase font-bold">Secretaría de las TIC</span>
+                                        <span className="font-bold text-slate-900">Alcaldía Municipal de Acacías · Meta</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Caja Informativa de Trámites */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4">
-                            <h3 className="text-base font-black text-white flex items-center gap-2">
-                                <Shield className="w-4 h-4 text-emerald-400" />
-                                <span>Trámites Gratuitos en tu PuntoTIC</span>
+                        {/* Caja de Trámites Frecuentes */}
+                        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-4 shadow-sm">
+                            <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-emerald-700" />
+                                <span>Trámites que puedes hacer con nuestra ayuda</span>
                             </h3>
-                            <p className="text-xs text-slate-400 leading-relaxed">
-                                En cualquier sede PVD puedes solicitar el acompañamiento de nuestros facilitadores para:
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                En cualquiera de las 4 sedes te facilitamos el acceso sin costo a:
                             </p>
 
-                            <ul className="space-y-2 text-xs text-slate-300">
-                                <li className="flex items-center gap-2">
-                                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Consulta y certificado del SISBÉN IV</span>
+                            <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700">
+                                <li className="flex items-center gap-2.5">
+                                    <Check className="w-4 h-4 text-emerald-700 shrink-0" />
+                                    <span>Descargar y consultar el certificado del <strong>SISBÉN IV</strong></span>
                                 </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Certificados de antecedentes (Policía, Procuraduría, Contraloría)</span>
+                                <li className="flex items-center gap-2.5">
+                                    <Check className="w-4 h-4 text-emerald-700 shrink-0" />
+                                    <span>Certificados de <strong>Policía, Contraloría y Procuraduría</strong></span>
                                 </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Consulta de RUNT, comparendos y estado tributario municipal</span>
+                                <li className="flex items-center gap-2.5">
+                                    <Check className="w-4 h-4 text-emerald-700 shrink-0" />
+                                    <span>Consulta de afiliación en salud (<strong>ADRES / Fosyga</strong>)</span>
                                 </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Impresión y copiado de documentos educativos o de salud</span>
+                                <li className="flex items-center gap-2.5">
+                                    <Check className="w-4 h-4 text-emerald-700 shrink-0" />
+                                    <span>Consultas del <strong>RUNT</strong> y citas de tránsito</span>
+                                </li>
+                                <li className="flex items-center gap-2.5">
+                                    <Check className="w-4 h-4 text-emerald-700 shrink-0" />
+                                    <span>Tareas escolares, consultas universitarias e impresión de trabajos</span>
                                 </li>
                             </ul>
 
-                            <div className="pt-4 border-t border-slate-800">
+                            <div className="pt-4 border-t border-slate-100">
                                 <Link
                                     href={route('login')}
-                                    className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors"
+                                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition-colors"
                                 >
-                                    <span>Acceder como Gestor o Funcionario</span>
-                                    <ChevronRight className="w-3.5 h-3.5" />
+                                    <span>Acceso para Gestores y Funcionarios</span>
+                                    <ChevronRight className="w-4 h-4" />
                                 </Link>
                             </div>
                         </div>
@@ -698,42 +749,42 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
             </section>
 
             {/* =========================================================================
-                6. FOOTER INSTITUCIONAL
+                7. PIE DE PÁGINA INSTITUCIONAL SOBRIO
                ========================================================================= */}
-            <footer className="border-t border-slate-800 bg-slate-950 py-10 text-xs text-slate-500">
+            <footer className="border-t border-slate-200 bg-white py-8 text-xs sm:text-sm text-slate-500">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-400">PuntoTIC Acacías</span>
+                    <div className="flex items-center gap-2 text-center sm:text-left">
+                        <span className="font-bold text-slate-800">Alcaldía Municipal de Acacías</span>
                         <span>·</span>
                         <span>Red de Puntos Vive Digital y Aulas Digitales</span>
                     </div>
 
-                    <div className="text-[11px] text-slate-500">
-                        Alcaldía Municipal de Acacías · Secretaría de las Tecnologías de la Información y las Comunicaciones (TIC)
+                    <div className="text-xs text-slate-500 text-center sm:text-right">
+                        Secretaría de las Tecnologías de la Información y las Comunicaciones (TIC)
                     </div>
                 </div>
             </footer>
 
             {/* =========================================================================
-                7. MODAL DE PREINSCRIPCIÓN RÁPIDA A CAPACITACIONES
+                8. MODAL DE INSCRIPCIÓN SIMPLE Y CLARO
                ========================================================================= */}
             {selectedCourseForModal && (
-                <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 max-w-lg w-full space-y-4 shadow-2xl animate-scale-in">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full space-y-4 shadow-xl border border-slate-200">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                                    <GraduationCap className="w-4 h-4" />
+                                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                                    <GraduationCap className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-black text-white">Preinscripción Gratuita</h3>
-                                    <p className="text-[11px] text-slate-400 truncate max-w-xs">{selectedCourseForModal.titulo}</p>
+                                    <h3 className="text-base font-black text-slate-900">Inscripción al Curso</h3>
+                                    <p className="text-xs text-slate-500 truncate max-w-xs">{selectedCourseForModal.titulo}</p>
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setSelectedCourseForModal(null)}
-                                className="text-slate-400 hover:text-white p-1"
+                                className="text-slate-400 hover:text-slate-700 p-1"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -741,8 +792,8 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
 
                         <form onSubmit={handleInscriptionSubmit} className="space-y-3">
                             <div>
-                                <label className="block text-xs font-bold text-slate-300 mb-1">
-                                    Número de Documento (Cédula o T.I.) *
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Número de Documento (Cédula o Tarjeta de Identidad) *
                                 </label>
                                 <input
                                     type="text"
@@ -750,80 +801,80 @@ export default function Welcome({ points = [], capacitaciones = [], statsSummary
                                     placeholder="Ej: 1121890123"
                                     value={inscriptionForm.data.documento}
                                     onChange={(e) => inscriptionForm.setData('documento', e.target.value)}
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white font-bold"
+                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm text-slate-900 font-bold focus:bg-white focus:border-emerald-600 focus:outline-none"
                                 />
                                 {inscriptionForm.errors.documento && (
-                                    <div className="text-[11px] text-rose-400 mt-1">{inscriptionForm.errors.documento}</div>
+                                    <div className="text-xs text-rose-600 mt-1">{inscriptionForm.errors.documento}</div>
                                 )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-300 mb-1">Nombres *</label>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Nombres *</label>
                                     <input
                                         type="text"
                                         required
                                         placeholder="Tus nombres"
                                         value={inscriptionForm.data.nombres}
                                         onChange={(e) => inscriptionForm.setData('nombres', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-300 mb-1">Apellidos *</label>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Apellidos *</label>
                                     <input
                                         type="text"
                                         required
                                         placeholder="Tus apellidos"
                                         value={inscriptionForm.data.apellidos}
                                         onChange={(e) => inscriptionForm.setData('apellidos', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
                                     />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-300 mb-1">Teléfono / WhatsApp *</label>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Celular o WhatsApp *</label>
                                     <input
                                         type="tel"
                                         required
                                         placeholder="Ej: 3101234567"
                                         value={inscriptionForm.data.telefono}
                                         onChange={(e) => inscriptionForm.setData('telefono', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-300 mb-1">Correo Electrónico</label>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Correo Electrónico</label>
                                     <input
                                         type="email"
                                         placeholder="tu@correo.com"
                                         value={inscriptionForm.data.correo}
                                         onChange={(e) => inscriptionForm.setData('correo', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
                                     />
                                 </div>
                             </div>
 
-                            <p className="text-[11px] text-slate-400 pt-1 leading-relaxed">
-                                Al preinscribirte, autorizas el tratamiento de datos personales conforme a la política municipal para fines educativos y confirmación de cupo.
+                            <p className="text-xs text-slate-500 pt-1 leading-relaxed">
+                                Este registro es 100% gratuito. El facilitador de la sede te escribirá por WhatsApp o te llamará para darte la bienvenida y confirmar el inicio del curso.
                             </p>
 
-                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                                 <button
                                     type="button"
                                     onClick={() => setSelectedCourseForModal(null)}
-                                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white"
+                                    className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={inscriptionForm.processing}
-                                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 transition-all disabled:opacity-50"
+                                    className="px-5 py-2.5 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-xs sm:text-sm font-bold shadow-xs transition-all disabled:opacity-50"
                                 >
-                                    Confirmar Preinscripción
+                                    Apartar mi Cupo
                                 </button>
                             </div>
                         </form>
