@@ -244,16 +244,57 @@ class StatsService
         $visitasHoy = (clone $visitasQuery)->whereBetween('created_at', [$todayStart, $todayEnd])->count();
         $visitasAyer = (clone $visitasQuery)->whereBetween('created_at', [$yesterdayStart, $yesterdayEnd])->count();
 
-        $deltaVisitasHoy = $visitasAyer > 0
-            ? round((($visitasHoy - $visitasAyer) / $visitasAyer) * 100)
-            : ($visitasHoy > 0 ? 100 : 0);
+        // Préstamos de salas en el período
+        $prestamosQuery = RoomLoan::query();
+        if ($targetPointIds) {
+            $prestamosQuery->where(function ($sub) use ($targetPointIds) {
+                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+            });
+        }
+        $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
+        $prestamosPeriodo = (clone $prestamosQuery)
+            ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
+            ->count();
+        $asistentesPeriodo = (int) (clone $prestamosQuery)
+            ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
+            ->sum('num_asistentes');
+        $asistentesHoy = (int) (clone $prestamosQuery)
+            ->whereDate($dateLoanCol, Carbon::today())
+            ->sum('num_asistentes');
+        $asistentesAyer = (int) (clone $prestamosQuery)
+            ->whereDate($dateLoanCol, Carbon::yesterday())
+            ->sum('num_asistentes');
+        $prestamosHoy = (clone $prestamosQuery)
+            ->whereDate($dateLoanCol, Carbon::today())
+            ->count();
 
-        // Ciudadanos únicos en el período
-        $ciudadanosUnicos = (clone $visitasQuery)
+        // Total consolidado de atenciones (visitas individuales + asistentes a capacitaciones/cursos)
+        $totalAtencionesPeriodo = $visitasPeriodo + $asistentesPeriodo;
+        $totalAtencionesHoy = $visitasHoy + $asistentesHoy;
+        $totalAtencionesAyer = $visitasAyer + $asistentesAyer;
+
+        $deltaVisitasHoy = $totalAtencionesAyer > 0
+            ? round((($totalAtencionesHoy - $totalAtencionesAyer) / $totalAtencionesAyer) * 100)
+            : ($totalAtencionesHoy > 0 ? 100 : 0);
+
+        // Ciudadanos únicos en el período (visitas individuales + participantes de capacitaciones)
+        $ciudadanosVisitas = (clone $visitasQuery)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereNotNull('id_form_pvd')
-            ->distinct('id_form_pvd')
-            ->count('id_form_pvd');
+            ->distinct()
+            ->pluck('id_form_pvd');
+
+        $prestamoIdsEnPeriodo = (clone $prestamosQuery)
+            ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
+            ->pluck('id');
+
+        $ciudadanosPrestamos = DB::table('prestamo_sala_participantes')
+            ->whereIn('id_prestamo', $prestamoIdsEnPeriodo)
+            ->whereNotNull('id_form_pvd')
+            ->distinct()
+            ->pluck('id_form_pvd');
+
+        $ciudadanosUnicos = $ciudadanosVisitas->merge($ciudadanosPrestamos)->unique()->count();
 
         // Total histórico de ciudadanos registrados en este ámbito
         $ciudadanosQuery = Citizen::query();
@@ -274,27 +315,10 @@ class StatsService
             ->whereBetween('created_at', [$todayStart, $todayEnd])
             ->sum('numero_hojas');
 
-        // Préstamos de salas en el período
-        $prestamosQuery = RoomLoan::query();
-        if ($targetPointIds) {
-            $prestamosQuery->where(function ($sub) use ($targetPointIds) {
-                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
-            });
-        }
-        $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
-        $prestamosPeriodo = (clone $prestamosQuery)
-            ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
-            ->count();
-        $asistentesPeriodo = (int) (clone $prestamosQuery)
-            ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
-            ->sum('num_asistentes');
-        $prestamosHoy = (clone $prestamosQuery)
-            ->whereDate($dateLoanCol, Carbon::today())
-            ->count();
-
         return [
-            'visitas_periodo' => $visitasPeriodo,
-            'visitas_hoy' => $visitasHoy,
+            'visitas_periodo' => $totalAtencionesPeriodo,
+            'visitas_individuales' => $visitasPeriodo,
+            'visitas_hoy' => $totalAtencionesHoy,
             'delta_visitas_hoy' => $deltaVisitasHoy,
             'ciudadanos_unicos' => $ciudadanosUnicos,
             'total_ciudadanos' => $totalCiudadanos,
@@ -305,7 +329,7 @@ class StatsService
             'asistentes_salas' => $asistentesPeriodo,
             'prestamos_hoy' => $prestamosHoy,
             // Retrocompatibilidad
-            'visitas_mes' => $visitasPeriodo,
+            'visitas_mes' => $totalAtencionesPeriodo,
             'ciudadanos_esta_semana' => $ciudadanosUnicos,
         ];
     }
@@ -441,7 +465,9 @@ class StatsService
             ->get()
             ->keyBy('id_punto');
 
-        $totalMunicipal = array_sum($visitsByPoint) ?: 1;
+        $totalMunicipalVisitas = array_sum($visitsByPoint) ?: 0;
+        $totalMunicipalAsistentes = (int) $loansByPoint->sum('total_asistentes');
+        $totalMunicipal = ($totalMunicipalVisitas + $totalMunicipalAsistentes) ?: 1;
 
         return $allPoints->map(function ($p) use ($visitsByPoint, $printsByPoint, $loansByPoint, $totalMunicipal) {
             $visitas = $visitsByPoint[$p->id_punto] ?? 0;
@@ -449,7 +475,8 @@ class StatsService
             $prestamoInfo = $loansByPoint->get($p->id_punto);
             $prestamos = $prestamoInfo ? (int) $prestamoInfo->total_prestamos : 0;
             $asistentes = $prestamoInfo ? (int) $prestamoInfo->total_asistentes : 0;
-            $porcentaje = round(($visitas / $totalMunicipal) * 100, 1);
+            $totalAtencionesPunto = $visitas + $asistentes;
+            $porcentaje = round(($totalAtencionesPunto / $totalMunicipal) * 100, 1);
 
             return [
                 'id_punto' => $p->id_punto,
@@ -457,7 +484,8 @@ class StatsService
                 'codigo' => $p->codigo,
                 'zona' => $p->zona,
                 'es_aula_digital' => $p->es_aula_digital,
-                'total_visitas' => $visitas,
+                'total_visitas' => $totalAtencionesPunto,
+                'visitas_individuales' => $visitas,
                 'total_hojas' => $hojas,
                 'total_prestamos' => $prestamos,
                 'total_asistentes' => $asistentes,
@@ -809,6 +837,21 @@ class StatsService
             if ($targetCat) {
                 $catCounts[$targetCat->id_categoria] += $count;
             }
+        }
+
+        // Sumar los asistentes a cursos y préstamos de sala a la categoría de Salas
+        if (isset($catByKey['salas']) && isset($catCounts[$catByKey['salas']->id_categoria])) {
+            $loansQuery = RoomLoan::query();
+            if ($targetPointIds) {
+                $loansQuery->where(function ($sub) use ($targetPointIds) {
+                    $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+                });
+            }
+            $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
+            $asistentesSalas = (int) $loansQuery
+                ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
+                ->sum('num_asistentes');
+            $catCounts[$catByKey['salas']->id_categoria] += $asistentesSalas;
         }
 
         return $categories

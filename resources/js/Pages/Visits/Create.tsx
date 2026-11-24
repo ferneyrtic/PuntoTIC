@@ -1084,11 +1084,12 @@ export default function VisitCreate({
                                     onChange={(e) => {
                                         const catId = Number(e.target.value);
                                         const cat = categories.find((c) => c.id_categoria === catId);
+                                        const firstSub = cat?.subcategorias?.[0];
                                         setData((prev) => ({
                                             ...prev,
                                             id_categoria: catId,
-                                            id_subcategoria:
-                                                cat?.subcategorias?.[0]?.id_subcategoria || null,
+                                            id_subcategoria: firstSub?.id_subcategoria || null,
+                                            servicio_texto: firstSub?.nombre || cat?.nombre || prev.servicio_texto,
                                         }));
                                     }}
                                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:border-emerald-600 outline-none"
@@ -1107,9 +1108,15 @@ export default function VisitCreate({
                                 </label>
                                 <select
                                     value={data.id_subcategoria || ''}
-                                    onChange={(e) =>
-                                        setData('id_subcategoria', Number(e.target.value))
-                                    }
+                                    onChange={(e) => {
+                                        const subId = Number(e.target.value);
+                                        const subObj = currentCategory?.subcategorias?.find((s: any) => s.id_subcategoria === subId);
+                                        setData((prev) => ({
+                                            ...prev,
+                                            id_subcategoria: subId,
+                                            servicio_texto: subObj?.nombre || prev.servicio_texto,
+                                        }));
+                                    }}
                                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none"
                                 >
                                     <option value="">Seleccione subcategoría...</option>

@@ -119,6 +119,27 @@ class CategoryController extends Controller
             ->with('success', 'Subcategoría agregada con éxito.');
     }
 
+    public function updateSubcategory(Request $request, SubCategory $subcategoria): RedirectResponse
+    {
+        $this->checkAuthorizedUser($request);
+
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:150'],
+            'descripcion' => ['nullable', 'string', 'max:255'],
+            'orden' => ['nullable', 'integer'],
+            'activo' => ['nullable', 'boolean'],
+        ]);
+
+        $validated['nombre'] = strip_tags($validated['nombre']);
+        $anteriores = $subcategoria->toArray();
+        $subcategoria->update($validated);
+
+        AuditLog::registrar('ACTUALIZAR_SUBCATEGORIA', 'Categorias', (string) $subcategoria->id_subcategoria, $anteriores, $validated);
+
+        return redirect()->route('categorias.index')
+            ->with('success', 'Subcategoría actualizada con éxito.');
+    }
+
     public function deleteSubcategory(Request $request, SubCategory $subcategoria): RedirectResponse
     {
         $this->checkAuthorizedUser($request);

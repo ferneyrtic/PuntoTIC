@@ -181,6 +181,21 @@ class VisitService
                         'id_punto' => $pointId,
                         'id_gestor' => Auth::id(),
                     ]);
+                } else {
+                    // Actualizar datos de aseguramiento / Sisbén o contacto si se proporcionaron nuevos
+                    $updatable = array_filter([
+                        'telefono' => $data['telefono'] ?? null,
+                        'correo' => $data['correo'] ?? null,
+                        't_aseguramiento' => $data['t_aseguramiento'] ?? null,
+                        'nivel_educativo' => $data['nivel_educativo'] ?? null,
+                        'ocupacion' => $data['ocupacion'] ?? null,
+                        'barrio' => $data['barrio'] ?? null,
+                        'estrato' => $data['estrato'] ?? null,
+                    ], fn ($val) => ! is_null($val) && $val !== '');
+
+                    if (! empty($updatable)) {
+                        $citizen->update($updatable);
+                    }
                 }
                 $citizenId = $citizen->id ?: $citizen->id_form_pvd;
             }
@@ -191,12 +206,23 @@ class VisitService
                 $idCategoria = \App\Models\Category::where('activo', true)->first()?->id_categoria ?? 1;
             }
 
+            // Si servicio_texto viene vacío, tomar el nombre de la subcategoría seleccionada
+            $subId = $data['id_subcategoria'] ?? null;
+            $servicioTexto = ! empty($data['servicio_texto']) ? $data['servicio_texto'] : null;
+            if (! $servicioTexto && $subId) {
+                $sub = \App\Models\SubCategory::find($subId);
+                $servicioTexto = $sub?->nombre;
+            }
+            if (! $servicioTexto && $isAulaDigital) {
+                $servicioTexto = 'Acceso a computador y tareas escolares';
+            }
+
             $visit = Visit::create([
                 'id_form_pvd' => $citizenId,
                 'id_punto' => $pointId,
                 'id_categoria' => $idCategoria,
-                'id_subcategoria' => $data['id_subcategoria'] ?? null,
-                'servicio_texto' => $data['servicio_texto'] ?? ($isAulaDigital ? 'Acceso a computador y tareas escolares' : null),
+                'id_subcategoria' => $subId,
+                'servicio_texto' => $servicioTexto,
                 'descripcion' => $data['descripcion'] ?? ($isAulaDigital ? 'Ingreso de menor de edad a sala digital' : null),
                 'id_gestor' => Auth::id(),
                 'duracion_minutos' => $data['duracion_minutos'] ?? ($isAulaDigital ? 60 : 30),

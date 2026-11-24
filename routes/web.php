@@ -80,6 +80,7 @@ Route::middleware(['auth'])->group(function () {
         Route::match(['delete', 'post'], 'categorias/{categoria}/delete', [CategoryController::class, 'destroy'])->name('categorias.destroy.post');
         Route::delete('categorias/{categoria}', [CategoryController::class, 'destroy'])->name('categorias.destroy');
         Route::post('/categorias/{categoria}/subcategorias', [CategoryController::class, 'storeSubcategory'])->name('categorias.subcategorias.store');
+        Route::match(['put', 'patch', 'post'], '/subcategorias/{subcategoria}', [CategoryController::class, 'updateSubcategory'])->name('categorias.subcategorias.update');
         Route::match(['delete', 'post'], '/subcategorias/{subcategoria}/delete', [CategoryController::class, 'deleteSubcategory'])->name('categorias.subcategorias.destroy.post');
         Route::delete('/subcategorias/{subcategoria}', [CategoryController::class, 'deleteSubcategory'])->name('categorias.subcategorias.destroy');
 

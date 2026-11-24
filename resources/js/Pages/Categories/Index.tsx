@@ -17,6 +17,7 @@ export default function CategoriesIndex({
     legacyCount = 12,
 }: Props) {
     const [selectedCategoryForSub, setSelectedCategoryForSub] = useState<any>(null);
+    const [editingSubcategory, setEditingSubcategory] = useState<any>(null);
     const [newCatModal, setNewCatModal] = useState(false);
     const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
     const [searchTerms, setSearchTerms] = useState<Record<number, string>>({});
@@ -49,6 +50,12 @@ export default function CategoriesIndex({
         orden: 1,
     });
 
+    const subEditForm = useForm({
+        nombre: '',
+        descripcion: '',
+        orden: 1,
+    });
+
     const handleCreateCategory = (e: React.FormEvent) => {
         e.preventDefault();
         catForm.post(route('categorias.store'), {
@@ -66,6 +73,26 @@ export default function CategoriesIndex({
             onSuccess: () => {
                 setSelectedCategoryForSub(null);
                 subForm.reset();
+            },
+        });
+    };
+
+    const handleOpenEditSub = (sub: any) => {
+        setEditingSubcategory(sub);
+        subEditForm.setData({
+            nombre: sub.nombre || '',
+            descripcion: sub.descripcion || '',
+            orden: sub.orden || 1,
+        });
+    };
+
+    const handleUpdateSubcategory = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingSubcategory) return;
+        subEditForm.post(route('categorias.subcategorias.update', editingSubcategory.id_subcategoria), {
+            onSuccess: () => {
+                setEditingSubcategory(null);
+                subEditForm.reset();
             },
         });
     };
@@ -236,6 +263,14 @@ export default function CategoriesIndex({
                                                             <span className="text-[10px] text-slate-400 font-bold">
                                                                 {sub.visitas_count || 0} usos
                                                             </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleOpenEditSub(sub)}
+                                                                className="text-slate-300 hover:text-emerald-600 transition-colors"
+                                                                title="Editar subcategoría"
+                                                            >
+                                                                <Edit2 className="w-3.5 h-3.5" />
+                                                            </button>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleDeleteSubcategory(sub.id_subcategoria)}
@@ -433,6 +468,52 @@ export default function CategoriesIndex({
                                     className="px-5 py-2 rounded-xl bg-alcaldia-green hover:bg-alcaldia-green-dark text-white text-xs font-bold shadow-sm"
                                 >
                                     {subForm.processing ? 'Guardando...' : 'Agregar Subcategoría'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Modal: Editar Subcategoría */}
+            {editingSubcategory && (
+                <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+                        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Editar Subcategoría</h3>
+                                <p className="text-[11px] text-slate-500">ID: {editingSubcategory.id_subcategoria}</p>
+                            </div>
+                            <button onClick={() => setEditingSubcategory(null)} className="text-slate-400 hover:text-slate-700">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleUpdateSubcategory} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Nombre del Trámite o Servicio *</label>
+                                <input
+                                    type="text"
+                                    value={subEditForm.data.nombre}
+                                    onChange={(e) => subEditForm.setData('nombre', e.target.value)}
+                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                    required
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingSubcategory(null)}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={subEditForm.processing}
+                                    className="px-5 py-2 rounded-xl bg-alcaldia-green hover:bg-alcaldia-green-dark text-white text-xs font-bold shadow-sm"
+                                >
+                                    {subEditForm.processing ? 'Guardando...' : 'Guardar Cambios'}
                                 </button>
                             </div>
                         </form>

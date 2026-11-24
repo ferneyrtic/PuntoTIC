@@ -67,12 +67,15 @@ class RoomLoanParticipantController extends Controller
 
         return response()->json([
             'participante' => [
-                'id'              => $participante->id,
-                'id_form_pvd'     => $participante->id_form_pvd,
-                'nombre'          => $participante->nombre_display,
-                'documento'       => $participante->documento_display,
-                'nombre_libre'    => $participante->nombre_libre,
-                'documento_libre' => $participante->documento_libre,
+                'id'                => $participante->id,
+                'id_form_pvd'       => $participante->id_form_pvd,
+                'nombre'            => $participante->nombre_display,
+                'documento'         => $participante->documento_display,
+                'nombre_display'    => $participante->nombre_display,
+                'documento_display' => $participante->documento_display,
+                'nombre_libre'      => $participante->nombre_libre,
+                'documento_libre'   => $participante->documento_libre,
+                'ciudadano'         => $participante->ciudadano,
             ],
         ], 201);
     }

@@ -1474,14 +1474,14 @@ export default function RoomLoansIndex({
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-[10px] shrink-0">
-                                                        {(p.nombre_display || p.ciudadano?.nombre_completo || p.nombre_libre || 'P').charAt(0).toUpperCase()}
+                                                        {(p.nombre || p.nombre_display || p.ciudadano?.nombre_completo || p.nombre_libre || 'P').charAt(0).toUpperCase()}
                                                     </div>
                                                     <div className="truncate">
                                                         <span className="font-bold text-slate-800 truncate block">
-                                                            {p.nombre_display || p.ciudadano?.nombre_completo || p.nombre_libre}
+                                                            {p.nombre || p.nombre_display || p.ciudadano?.nombre_completo || p.nombre_libre || 'Participante'}
                                                         </span>
                                                         <span className="text-[10px] text-slate-400 font-mono">
-                                                            {p.documento_display || (p.ciudadano ? `CC ${p.ciudadano.documento}` : p.documento_libre ? `CC ${p.documento_libre}` : 'Sin documento')}
+                                                            {p.documento ? (String(p.documento).includes('CC') ? p.documento : `CC ${p.documento}`) : p.documento_display ? (String(p.documento_display).includes('CC') ? p.documento_display : `CC ${p.documento_display}`) : (p.ciudadano ? `CC ${p.ciudadano.documento}` : p.documento_libre ? `CC ${p.documento_libre}` : 'Sin documento')}
                                                         </span>
                                                     </div>
                                                 </div>
