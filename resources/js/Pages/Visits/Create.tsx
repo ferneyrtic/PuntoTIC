@@ -86,7 +86,7 @@ export default function VisitCreate({
     const [searchingStudents, setSearchingStudents] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<any>(null);
     const [selectedActivity, setSelectedActivity] = useState(
-        'Acceso a computador y tareas escolares'
+        'Acceso a computador'
     );
     const [selectedTime, setSelectedTime] = useState(60);
     const [offlineSavedNotice, setOfflineSavedNotice] = useState(false);
@@ -106,7 +106,7 @@ export default function VisitCreate({
         id_categoria: categories[0]?.id_categoria || null,
         id_subcategoria: categories[0]?.subcategorias?.[0]?.id_subcategoria || null,
         servicio_texto:
-            initialMode === 'aula' ? 'Acceso a computador y tareas escolares' : '',
+            initialMode === 'aula' ? 'Acceso a computador' : '',
         descripcion: '',
         duracion_minutos: initialMode === 'aula' ? 60 : 30,
         campos_dinamicos: {} as Record<number, any>,
@@ -394,7 +394,7 @@ export default function VisitCreate({
                                 ...prev,
                                 es_registro_rapido: true,
                                 duracion_minutos: 60,
-                                servicio_texto: 'Acceso a computador y tareas escolares',
+                                servicio_texto: 'Acceso a computador',
                                 id_punto: userPointId,
                             }));
                         }}
@@ -609,9 +609,9 @@ export default function VisitCreate({
                             </label>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                 {[
-                                    'Acceso a computador y tareas escolares',
-                                    'Clases de informática y mecanografía',
-                                    'Lúdica educativa y talleres digitales',
+                                    'Acceso a computador',
+                                    'Uso para tareas escolares',
+                                    'Capacitaciones (Alcaldía, Gestora o JAC)',
                                 ].map((act) => (
                                     <button
                                         key={act}
