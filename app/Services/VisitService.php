@@ -200,21 +200,34 @@ class VisitService
                 $citizenId = $citizen->id ?: $citizen->id_form_pvd;
             }
 
-            // Categoría por defecto si es aula digital y no se seleccionó
+            // Categoría y subcategoría por defecto si es registro rápido / aula digital
             $idCategoria = $data['id_categoria'] ?? null;
-            if (! $idCategoria && $isAulaDigital) {
-                $idCategoria = \App\Models\Category::where('activo', true)->first()?->id_categoria ?? 1;
-            }
-
-            // Si servicio_texto viene vacío, tomar el nombre de la subcategoría seleccionada
             $subId = $data['id_subcategoria'] ?? null;
             $servicioTexto = ! empty($data['servicio_texto']) ? $data['servicio_texto'] : null;
-            if (! $servicioTexto && $subId) {
-                $sub = \App\Models\SubCategory::find($subId);
-                $servicioTexto = $sub?->nombre;
-            }
-            if (! $servicioTexto && $isAulaDigital) {
-                $servicioTexto = 'Acceso a computador y tareas escolares';
+
+            if (! empty($data['es_registro_rapido'])) {
+                $lowerTxt = mb_strtolower((string) $servicioTexto);
+                if (str_contains($lowerTxt, 'clase') || str_contains($lowerTxt, 'lúdica') || str_contains($lowerTxt, 'ludica') || str_contains($lowerTxt, 'taller')) {
+                    $idCategoria = 66; // Capacitación y Formación Digital
+                    $subId = null;
+                } else {
+                    $idCategoria = 64; // Conectividad y Gobierno Digital
+                    $subId = 366;      // Consultas académicas y tareas estudiantiles
+                    if (! $servicioTexto) {
+                        $servicioTexto = 'Acceso a computador y tareas escolares';
+                    }
+                }
+            } else {
+                if (! $idCategoria && $isAulaDigital) {
+                    $idCategoria = 64;
+                }
+                if (! $servicioTexto && $subId) {
+                    $sub = \App\Models\SubCategory::find($subId);
+                    $servicioTexto = $sub?->nombre;
+                }
+                if (! $servicioTexto && $isAulaDigital) {
+                    $servicioTexto = 'Acceso a computador y tareas escolares';
+                }
             }
 
             $visit = Visit::create([

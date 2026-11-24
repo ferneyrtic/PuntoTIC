@@ -94,6 +94,13 @@ export default function VisitCreate({
     // Tiempo personalizado
     const [customMinutos, setCustomMinutos] = useState<number | ''>('');
 
+    const aulaDefaultCat =
+        categories.find((c) => c.id_categoria === 64 || c.nombre.toLowerCase().includes('conectividad')) ||
+        categories[0];
+    const aulaDefaultSub =
+        aulaDefaultCat?.subcategorias?.find((s: any) => s.id_subcategoria === 366 || s.nombre.toLowerCase().includes('tarea')) ||
+        aulaDefaultCat?.subcategorias?.[0];
+
     const { data, setData, post, processing, errors, reset } = useForm({
         id_form_pvd: initialCitizen?.id_form_pvd || null,
         documento: prefillDocument || '',
@@ -103,10 +110,14 @@ export default function VisitCreate({
         nombre_completo: '',
         es_registro_rapido: initialMode === 'aula',
         id_punto: userPointId,
-        id_categoria: categories[0]?.id_categoria || null,
-        id_subcategoria: categories[0]?.subcategorias?.[0]?.id_subcategoria || null,
+        id_categoria:
+            (initialMode === 'aula' ? aulaDefaultCat?.id_categoria : categories[0]?.id_categoria) || null,
+        id_subcategoria:
+            (initialMode === 'aula'
+                ? aulaDefaultSub?.id_subcategoria
+                : categories[0]?.subcategorias?.[0]?.id_subcategoria) || null,
         servicio_texto:
-            initialMode === 'aula' ? 'Acceso a computador' : '',
+            initialMode === 'aula' ? 'Acceso a computador y tareas escolares' : '',
         descripcion: '',
         duracion_minutos: initialMode === 'aula' ? 60 : 30,
         campos_dinamicos: {} as Record<number, any>,
