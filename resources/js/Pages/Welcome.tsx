@@ -49,6 +49,7 @@ interface Training {
     requisitos: string | null;
     dirigido_a: string | null;
     destacado: boolean;
+    imagen_url?: string | null;
     punto?: {
         id_punto: number;
         nombre_punto: string;
@@ -308,57 +309,88 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                     {filteredCourses.map((c) => (
                         <div
                             key={c.id_capacitacion}
-                            className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-300 transition-colors shadow-2xs space-y-4"
+                            className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-300 transition-colors shadow-2xs group"
                         >
-                            <div className="space-y-2.5">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="font-semibold text-[#1B6B35] bg-emerald-50 px-2 py-0.5 rounded">
-                                        {c.categoria}
-                                    </span>
-                                    <span className="text-slate-500 font-medium">Gratis</span>
-                                </div>
-
-                                <h3 className="text-base font-bold text-slate-900 leading-snug">
-                                    {c.titulo}
-                                </h3>
-
-                                <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
-                                    {c.descripcion}
-                                </p>
-
-                                <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600">
-                                    <div className="flex items-center gap-1.5">
-                                        <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                        <span className="font-medium text-slate-800">
-                                            {c.punto ? c.punto.nombre_punto : 'Todas las sedes'}
+                            {/* Portada temática del curso */}
+                            {c.imagen_url ? (
+                                <div className="h-40 w-full overflow-hidden bg-slate-100 relative">
+                                    <img
+                                        src={asset(c.imagen_url)}
+                                        alt={c.titulo}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLElement;
+                                            if (target && target.parentElement) {
+                                                target.parentElement.style.display = 'none';
+                                            }
+                                        }}
+                                    />
+                                    <div className="absolute top-2.5 left-2.5">
+                                        <span className="text-[11px] font-semibold text-slate-800 bg-white/95 px-2 py-0.5 rounded shadow-2xs">
+                                            {c.categoria}
                                         </span>
                                     </div>
-                                    {c.horario && (
-                                        <div className="flex items-center gap-1.5 text-slate-500">
-                                            <Clock className="w-3.5 h-3.5 shrink-0" />
-                                            <span>{c.horario}</span>
-                                        </div>
-                                    )}
-                                    {c.dirigido_a && (
-                                        <div className="flex items-center gap-1.5 text-slate-500">
-                                            <Users className="w-3.5 h-3.5 shrink-0" />
-                                            <span>{c.dirigido_a}</span>
-                                        </div>
-                                    )}
+                                    <div className="absolute top-2.5 right-2.5">
+                                        <span className="text-[11px] font-semibold text-[#1B6B35] bg-white/95 px-2 py-0.5 rounded shadow-2xs">
+                                            Gratis
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : null}
 
-                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                                <span className="text-xs text-slate-500">
-                                    <strong>{c.cupos_disponibles}</strong> cupos libres
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => openInscriptionModal(c)}
-                                    className="px-3.5 py-1.5 rounded-lg bg-[#1B6B35] hover:bg-[#145328] text-white text-xs font-semibold transition-colors"
-                                >
-                                    Inscribirme
-                                </button>
+                            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                                <div className="space-y-2.5">
+                                    {!c.imagen_url && (
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="font-semibold text-[#1B6B35] bg-emerald-50 px-2 py-0.5 rounded">
+                                                {c.categoria}
+                                            </span>
+                                            <span className="text-slate-500 font-medium">Gratis</span>
+                                        </div>
+                                    )}
+
+                                    <h3 className="text-base font-bold text-slate-900 leading-snug">
+                                        {c.titulo}
+                                    </h3>
+
+                                    <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                                        {c.descripcion}
+                                    </p>
+
+                                    <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600">
+                                        <div className="flex items-center gap-1.5">
+                                            <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                            <span className="font-medium text-slate-800">
+                                                {c.punto ? c.punto.nombre_punto : 'Todas las sedes'}
+                                            </span>
+                                        </div>
+                                        {c.horario && (
+                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                <Clock className="w-3.5 h-3.5 shrink-0" />
+                                                <span>{c.horario}</span>
+                                            </div>
+                                        )}
+                                        {c.dirigido_a && (
+                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                <Users className="w-3.5 h-3.5 shrink-0" />
+                                                <span>{c.dirigido_a}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                    <span className="text-xs text-slate-500">
+                                        <strong>{c.cupos_disponibles}</strong> cupos libres
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => openInscriptionModal(c)}
+                                        className="px-3.5 py-1.5 rounded-lg bg-[#1B6B35] hover:bg-[#145328] text-white text-xs font-semibold transition-colors"
+                                    >
+                                        Inscribirme
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -498,9 +530,22 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                 <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-lg border border-slate-200">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900">Inscripción</h3>
-                                <p className="text-xs text-slate-500 truncate max-w-xs">{selectedCourseForModal.titulo}</p>
+                            <div className="flex items-center gap-3 min-w-0">
+                                {selectedCourseForModal.imagen_url && (
+                                    <img
+                                        src={asset(selectedCourseForModal.imagen_url)}
+                                        alt={selectedCourseForModal.titulo}
+                                        className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLElement;
+                                            if (target) target.style.display = 'none';
+                                        }}
+                                    />
+                                )}
+                                <div className="min-w-0">
+                                    <h3 className="text-base font-bold text-slate-900">Inscripción</h3>
+                                    <p className="text-xs text-slate-500 truncate">{selectedCourseForModal.titulo}</p>
+                                </div>
                             </div>
                             <button
                                 type="button"

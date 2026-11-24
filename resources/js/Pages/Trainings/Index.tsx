@@ -20,7 +20,9 @@ import {
     X,
     UserCheck,
     ChevronRight,
+    Image as ImageIcon,
 } from 'lucide-react';
+import { asset } from '@/utils/asset';
 
 interface Point {
     id_punto: number;
@@ -45,6 +47,7 @@ interface Training {
     cupos_disponibles: number;
     requisitos: string | null;
     dirigido_a: string | null;
+    imagen_url?: string | null;
     color_tema: string;
     activo: boolean;
     destacado: boolean;
@@ -90,6 +93,7 @@ export default function TrainingsIndex({ trainings, points, categorias, filters 
         cupos_totales: 25,
         requisitos: '',
         dirigido_a: 'Comunidad en general',
+        imagen_url: '',
         color_tema: 'emerald',
         activo: true,
         destacado: false,
@@ -118,6 +122,7 @@ export default function TrainingsIndex({ trainings, points, categorias, filters 
             cupos_totales: t.cupos_totales || 25,
             requisitos: t.requisitos || '',
             dirigido_a: t.dirigido_a || '',
+            imagen_url: t.imagen_url || '',
             color_tema: t.color_tema || 'emerald',
             activo: t.activo,
             destacado: t.destacado,
@@ -289,8 +294,24 @@ export default function TrainingsIndex({ trainings, points, categorias, filters 
                                 key={t.id_capacitacion}
                                 className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
                             >
-                                <div className="space-y-2 flex-1">
-                                    <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex items-start gap-4 flex-1">
+                                    {t.imagen_url ? (
+                                        <img
+                                            src={asset(t.imagen_url)}
+                                            alt={t.titulo}
+                                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0 hidden sm:block"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLElement;
+                                                if (target) target.style.display = 'none';
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 items-center justify-center shrink-0 hidden sm:flex text-slate-400">
+                                            <GraduationCap className="w-7 h-7 opacity-50" />
+                                        </div>
+                                    )}
+                                    <div className="space-y-2 flex-1">
+                                        <div className="flex flex-wrap items-center gap-2">
                                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                                             {t.tipo}
                                         </span>
@@ -351,8 +372,9 @@ export default function TrainingsIndex({ trainings, points, categorias, filters 
                                         )}
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* ACCIONES */}
+                            {/* ACCIONES */}
                                 <div className="flex items-center gap-2 self-start md:self-center shrink-0">
                                     <button
                                         type="button"
@@ -597,6 +619,22 @@ export default function TrainingsIndex({ trainings, points, categorias, filters 
                                         className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-slate-100"
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+                                    Imagen / Foto de Portada (opcional)
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: images/cursos/curso_excel_empleo.jpg o https://..."
+                                    value={form.data.imagen_url}
+                                    onChange={(e) => form.setData('imagen_url', e.target.value)}
+                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-slate-100"
+                                />
+                                <p className="text-[11px] text-slate-500 mt-1">
+                                    Ruta en public/ (ej: images/cursos/curso_excel_empleo.jpg) o URL externa.
+                                </p>
                             </div>
 
                             <div className="flex items-center gap-6 pt-2">
