@@ -11,6 +11,7 @@ import {
     FileSpreadsheet,
     Layers,
     SlidersHorizontal,
+    GraduationCap,
     Settings,
     LogOut,
     Menu,
@@ -284,6 +285,12 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                                             href: route('campos-dinamicos.index'),
                                             icon: SlidersHorizontal,
                                             active: currentUrl.startsWith('/campos-dinamicos'),
+                                        },
+                                        {
+                                            name: 'Capacitaciones & Cursos',
+                                            href: route('capacitaciones.index'),
+                                            icon: GraduationCap,
+                                            active: currentUrl.startsWith('/capacitaciones'),
                                         },
                                     ]
                                   : []),
