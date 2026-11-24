@@ -1562,137 +1562,153 @@ export default function RoomLoansIndex({
             {/* Modal de Edición de Préstamo */}
             {editModalLoan && (
                 <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
-                        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-                            <div className="flex items-center gap-2">
-                                <Edit3 className="w-5 h-5 text-emerald-600" />
-                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                                    Editar Préstamo #{editModalLoan.id_prestamo}
-                                </h3>
+                    <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200/80 max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                    <Edit3 className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                                        Editar Préstamo #{editModalLoan.id_prestamo}
+                                    </h3>
+                                    <p className="text-[11px] text-slate-500 font-medium">
+                                        Actualice los datos generales, horario o estado de la reserva
+                                    </p>
+                                </div>
                             </div>
                             <button
                                 onClick={() => setEditModalLoan(null)}
-                                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
                             >
-                                <X className="w-4 h-4" />
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={submitEdit} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Persona Responsable o Entidad Solicitante *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editModalLoan.nombre_responsable_texto}
-                                    onChange={(e) => setEditModalLoan({ ...editModalLoan, nombre_responsable_texto: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Fecha del Préstamo *</label>
+                        <form onSubmit={submitEdit} className="flex flex-col flex-1 overflow-hidden">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                                <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-1.5">
+                                    <label className="block text-xs font-bold text-slate-800">
+                                        Persona Responsable o Entidad Solicitante *
+                                    </label>
                                     <input
-                                        type="date"
-                                        value={editModalLoan.fecha_prestamo}
-                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, fecha_prestamo: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
+                                        type="text"
+                                        value={editModalLoan.nombre_responsable_texto}
+                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, nombre_responsable_texto: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-xs"
                                         required
                                     />
                                 </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-3.5">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1">Fecha del Préstamo *</label>
+                                            <input
+                                                type="date"
+                                                value={editModalLoan.fecha_prestamo}
+                                                onChange={(e) => setEditModalLoan({ ...editModalLoan, fecha_prestamo: e.target.value })}
+                                                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-xs"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1">Categoría de Actividad *</label>
+                                            <select
+                                                value={editModalLoan.tipo_actividad}
+                                                onChange={(e) => setEditModalLoan({ ...editModalLoan, tipo_actividad: e.target.value })}
+                                                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-xs"
+                                                required
+                                            >
+                                                {CATEGORIAS_PRESTAMO.map((c) => (
+                                                    <option key={c} value={c}>{c}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3.5">
+                                        <div className="grid grid-cols-2 gap-2.5">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-700 mb-1">N° Asistentes *</label>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    value={editModalLoan.num_asistentes}
+                                                    onChange={(e) => setEditModalLoan({ ...editModalLoan, num_asistentes: parseInt(e.target.value) || 1 })}
+                                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-xs"
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-700 mb-1">Estado *</label>
+                                                <select
+                                                    value={editModalLoan.estado}
+                                                    onChange={(e) => setEditModalLoan({ ...editModalLoan, estado: e.target.value })}
+                                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-xs"
+                                                    required
+                                                >
+                                                    <option value="Completado">Completado</option>
+                                                    <option value="Reservado">Reservado</option>
+                                                    <option value="Pendiente">Pendiente</option>
+                                                    <option value="En curso">En curso</option>
+                                                    <option value="Cancelado">Cancelado</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1">Horario</label>
+                                            <div className="grid grid-cols-2 gap-2.5">
+                                                <div>
+                                                    <span className="block text-[10px] text-slate-400 mb-0.5">Hora Inicio</span>
+                                                    <input
+                                                        type="time"
+                                                        value={editModalLoan.hora_inicio || ''}
+                                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, hora_inicio: e.target.value })}
+                                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-xs"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <span className="block text-[10px] text-slate-400 mb-0.5">Hora Fin</span>
+                                                    <input
+                                                        type="time"
+                                                        value={editModalLoan.hora_fin || ''}
+                                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, hora_fin: e.target.value })}
+                                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-xs"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">N° Asistentes *</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        value={editModalLoan.num_asistentes}
-                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, num_asistentes: parseInt(e.target.value) || 1 })}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                        required
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                        Detalle / Tema de la Actividad u Observaciones
+                                    </label>
+                                    <textarea
+                                        rows={2}
+                                        value={editModalLoan.observaciones}
+                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, observaciones: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-xs"
+                                        placeholder="Descripción del taller, curso o actividad realizada..."
                                     />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Inicio</label>
-                                    <input
-                                        type="time"
-                                        value={editModalLoan.hora_inicio || ''}
-                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, hora_inicio: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Fin</label>
-                                    <input
-                                        type="time"
-                                        value={editModalLoan.hora_fin || ''}
-                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, hora_fin: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Categoría de Actividad *</label>
-                                    <select
-                                        value={editModalLoan.tipo_actividad}
-                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, tipo_actividad: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                        required
-                                    >
-                                        {CATEGORIAS_PRESTAMO.map((c) => (
-                                            <option key={c} value={c}>{c}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Estado *</label>
-                                    <select
-                                        value={editModalLoan.estado}
-                                        onChange={(e) => setEditModalLoan({ ...editModalLoan, estado: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                        required
-                                    >
-                                        <option value="Completado">Completado</option>
-                                        <option value="Reservado">Reservado</option>
-                                        <option value="Pendiente">Pendiente</option>
-                                        <option value="En curso">En curso</option>
-                                        <option value="Cancelado">Cancelado</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Detalle / Tema de la Actividad u Observaciones
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    value={editModalLoan.observaciones}
-                                    onChange={(e) => setEditModalLoan({ ...editModalLoan, observaciones: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                    placeholder="Descripción del taller, curso o actividad realizada..."
-                                />
-                            </div>
-
-                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
                                 <button
                                     type="button"
                                     onClick={() => setEditModalLoan(null)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-white hover:border-slate-300 transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingEdit}
-                                    className="px-5 py-2 rounded-xl bg-alcaldia-green hover:bg-alcaldia-green-dark text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
+                                    className="px-5 py-2 rounded-xl bg-alcaldia-green hover:bg-alcaldia-green-dark text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                                 >
                                     <Save className="w-3.5 h-3.5" />
                                     <span>{savingEdit ? 'Guardando...' : 'Guardar Cambios'}</span>
@@ -1706,290 +1722,315 @@ export default function RoomLoansIndex({
             {/* Modal de Registro de Préstamo */}
             {modalOpen && (
                 <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
-                        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-                            <div className="flex items-center gap-2">
-                                <DoorOpen className="w-5 h-5 text-emerald-600" />
-                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Registrar Préstamo de Sala</h3>
+                    <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200/80 max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                        {/* Header Fijo */}
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                    <DoorOpen className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                                        Registrar Préstamo de Sala
+                                    </h3>
+                                    <p className="text-[11px] text-slate-500 font-medium">
+                                        Reserve la sala o registre una actividad comunitaria / formativa con sus asistentes
+                                    </p>
+                                </div>
                             </div>
-                            <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-700">
+                            <button
+                                type="button"
+                                onClick={() => setModalOpen(false)}
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+                            >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <div className="flex items-center justify-between mb-1">
-                                    <label className="block text-xs font-bold text-slate-700">
-                                        Persona Responsable o Entidad Solicitante *
-                                    </label>
-                                    {currentUser?.name && !citizenFound && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setData('nombre_responsable_texto', currentUser.name)}
-                                            className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 underline flex items-center gap-1 cursor-pointer"
-                                        >
-                                            <UserCheck className="w-3.5 h-3.5" />
-                                            <span>Asignarme a mí ({currentUser.name})</span>
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Cédula del ciudadano (opcional si es entidad o particular)..."
-                                        value={documentInput}
-                                        onChange={(e) => setDocumentInput(e.target.value)}
-                                        className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => verifyCitizen(documentInput)}
-                                        className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
-                                    >
-                                        Buscar Cédula
-                                    </button>
-                                </div>
-                                {citizenFound ? (
-                                    <div className="mt-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
-                                        <p className="text-xs text-emerald-800 font-bold flex items-center gap-1.5">
-                                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                                            <span>{citizenFound.nombre_completo} (CC {citizenFound.documento})</span>
-                                        </p>
-                                        <div className="flex items-center gap-2">
-                                            {citizenFound.id_form_pvd && (
-                                                <a
-                                                    href={route('ciudadanos.edit', citizenFound.id_form_pvd)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-bold shadow-xs transition-colors"
-                                                    title="Modificar datos del ciudadano en una nueva pestaña"
-                                                >
-                                                    <Edit3 className="w-3 h-3 text-amber-600" />
-                                                    <span>Editar datos</span>
-                                                </a>
-                                            )}
+                        {/* Formulario con Scroll Interno y Footer Fijo */}
+                        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                                {/* Persona Responsable Card */}
+                                <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2">
+                                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                                        <label className="block text-xs font-bold text-slate-700">
+                                            Persona Responsable o Entidad Solicitante *
+                                        </label>
+                                        {currentUser?.name && !citizenFound && (
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    setCitizenFound(null);
-                                                    setData('id_form_pvd', null);
-                                                }}
-                                                className="text-[11px] text-slate-500 hover:text-rose-600 font-bold"
+                                                onClick={() => setData('nombre_responsable_texto', currentUser.name)}
+                                                className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 px-2 py-0.5 rounded-lg border border-emerald-200/60 flex items-center gap-1 cursor-pointer transition-colors"
                                             >
-                                                Cambiar
+                                                <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                                <span>Asignarme a mí ({currentUser.name})</span>
                                             </button>
-                                        </div>
+                                        )}
                                     </div>
-                                ) : (
-                                    <div className="mt-2 space-y-1">
+                                    <div className="flex gap-2">
                                         <input
                                             type="text"
-                                            placeholder="Nombre completo de la persona o entidad (ej: Martha Viviana Medina / SENA / Personería)"
-                                            value={data.nombre_responsable_texto}
-                                            onChange={(e) => setData('nombre_responsable_texto', e.target.value)}
-                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                            required
+                                            placeholder="Cédula del ciudadano (opcional si es entidad o particular)..."
+                                            value={documentInput}
+                                            onChange={(e) => setDocumentInput(e.target.value)}
+                                            className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
                                         />
-                                        <p className="text-[10px] text-slate-400">
-                                            💡 Ingrese aquí el nombre de la persona responsable. El tema del taller o curso va en el campo <strong>Detalle / Tema de la Actividad</strong> abajo.
-                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => verifyCitizen(documentInput)}
+                                            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-colors shrink-0 shadow-2xs"
+                                        >
+                                            Buscar Cédula
+                                        </button>
                                     </div>
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Categoría de Actividad *</label>
-                                <select
-                                    value={data.tipo_actividad}
-                                    onChange={(e) => setData('tipo_actividad', e.target.value)}
-                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                    required
-                                >
-                                    {CATEGORIAS_PRESTAMO.map((c) => (
-                                        <option key={c} value={c}>
-                                            {c}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Sede PVD *</label>
-                                    <select
-                                        value={data.id_punto}
-                                        onChange={(e) => setData('id_punto', parseInt(e.target.value))}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                        required
-                                    >
-                                        {points.map((p) => (
-                                            <option key={p.id_punto} value={p.id_punto}>
-                                                {p.nombre_punto}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">N° Asistentes *</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        value={data.num_asistentes}
-                                        onChange={(e) => setData('num_asistentes', parseInt(e.target.value))}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Fecha del Préstamo *</label>
-                                <input
-                                    type="date"
-                                    value={data.fecha_prestamo}
-                                    onChange={(e) => setData('fecha_prestamo', e.target.value)}
-                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Inicio *</label>
-                                    <input
-                                        type="time"
-                                        value={data.hora_inicio}
-                                        onChange={(e) => setData('hora_inicio', e.target.value)}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Hora de Fin *</label>
-                                    <input
-                                        type="time"
-                                        value={data.hora_fin}
-                                        onChange={(e) => setData('hora_fin', e.target.value)}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Detalle / Tema de la Actividad u Observaciones *
-                                </label>
-                                <textarea
-                                    rows={2}
-                                    placeholder="Ej: Finalizamos el Taller Exploradores Digitales 'Alfabetización', inducción de robótica, capacitación SENA..."
-                                    value={data.observaciones}
-                                    onChange={(e) => setData('observaciones', e.target.value)}
-                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green"
-                                    required
-                                />
-                            </div>
-
-                            {/* Asociar Participantes Iniciales */}
-                            <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="block text-xs font-bold text-slate-700">
-                                        Asociar Participantes a la Capacitación (Opcional)
-                                    </label>
-                                    <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                                        {data.participantes.length} agregados
-                                    </span>
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Cédula del participante..."
-                                        value={createPartDoc}
-                                        onChange={(e) => {
-                                            setCreatePartDoc(e.target.value);
-                                            setCreatePartNotFound(false);
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleSearchCreatePart();
-                                            }
-                                        }}
-                                        className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleSearchCreatePart}
-                                        disabled={createPartSearching || !createPartDoc.trim()}
-                                        className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-colors disabled:opacity-50 shrink-0"
-                                    >
-                                        {createPartSearching ? '...' : 'Buscar y Agregar'}
-                                    </button>
-                                </div>
-
-                                {createPartNotFound && (
-                                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 space-y-1.5">
-                                        <p className="text-[11px] text-amber-900">
-                                            No encontrado con CC <strong>{createPartDoc}</strong>. Escriba el nombre completo para agregarlo:
-                                        </p>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Nombre completo del participante..."
-                                                value={createPartFreeName}
-                                                onChange={(e) => setCreatePartFreeName(e.target.value)}
-                                                className="flex-1 px-3 py-1 rounded-xl border border-amber-300 text-xs font-medium outline-none bg-white"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={handleAddCreateFreePart}
-                                                disabled={!createPartFreeName.trim()}
-                                                className="px-3 py-1 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition-colors shrink-0"
-                                            >
-                                                Agregar
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {data.participantes.length > 0 && (
-                                    <div className="flex flex-wrap gap-1.5 pt-1 max-h-28 overflow-y-auto">
-                                        {data.participantes.map((part, idx) => (
-                                            <span
-                                                key={idx}
-                                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-xs"
-                                            >
-                                                <span>{part.nombre} {part.documento ? `(CC ${part.documento})` : ''}</span>
+                                    {citizenFound ? (
+                                        <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+                                            <p className="text-xs text-emerald-800 font-bold flex items-center gap-1.5">
+                                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                                <span>{citizenFound.nombre_completo} (CC {citizenFound.documento})</span>
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                {citizenFound.id_form_pvd && (
+                                                    <a
+                                                        href={route('ciudadanos.edit', citizenFound.id_form_pvd)}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-bold shadow-xs transition-colors"
+                                                        title="Modificar datos del ciudadano en una nueva pestaña"
+                                                    >
+                                                        <Edit3 className="w-3 h-3 text-amber-600" />
+                                                        <span>Editar datos</span>
+                                                    </a>
+                                                )}
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleRemoveCreatePart(idx)}
-                                                    className="text-slate-400 hover:text-rose-600 p-0.5"
-                                                    title="Quitar"
+                                                    onClick={() => {
+                                                        setCitizenFound(null);
+                                                        setData('id_form_pvd', null);
+                                                    }}
+                                                    className="text-[11px] text-slate-500 hover:text-rose-600 font-bold cursor-pointer"
                                                 >
-                                                    <X className="w-3 h-3" />
+                                                    Cambiar
                                                 </button>
-                                            </span>
-                                        ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-1">
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre completo de la persona o entidad (ej: Martha Viviana Medina / SENA / Personería)"
+                                                value={data.nombre_responsable_texto}
+                                                onChange={(e) => setData('nombre_responsable_texto', e.target.value)}
+                                                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
+                                                required
+                                            />
+                                            <p className="text-[10px] text-slate-500 font-medium">
+                                                💡 Ingrese aquí el nombre de la persona o entidad solicitante. El detalle de la actividad va en el campo de abajo.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Categoría y Sede */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Categoría de Actividad *</label>
+                                        <select
+                                            value={data.tipo_actividad}
+                                            onChange={(e) => setData('tipo_actividad', e.target.value)}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
+                                            required
+                                        >
+                                            {CATEGORIAS_PRESTAMO.map((c) => (
+                                                <option key={c} value={c}>
+                                                    {c}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-                                )}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Sede PVD *</label>
+                                        <select
+                                            value={data.id_punto}
+                                            onChange={(e) => setData('id_punto', parseInt(e.target.value))}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
+                                            required
+                                        >
+                                            {points.map((p) => (
+                                                <option key={p.id_punto} value={p.id_punto}>
+                                                    {p.nombre_punto}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Fecha, Horas y N° Asistentes en una sola cuadrícula elegante */}
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Fecha *</label>
+                                        <input
+                                            type="date"
+                                            value={data.fecha_prestamo}
+                                            onChange={(e) => setData('fecha_prestamo', e.target.value)}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Hora Inicio *</label>
+                                        <input
+                                            type="time"
+                                            value={data.hora_inicio}
+                                            onChange={(e) => setData('hora_inicio', e.target.value)}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Hora Fin *</label>
+                                        <input
+                                            type="time"
+                                            value={data.hora_fin}
+                                            onChange={(e) => setData('hora_fin', e.target.value)}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
+                                        />
+                                    </div>
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">N° Asistentes *</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={data.num_asistentes}
+                                            onChange={(e) => setData('num_asistentes', parseInt(e.target.value))}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Detalle u Observaciones */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                        Detalle / Tema de la Actividad u Observaciones *
+                                    </label>
+                                    <textarea
+                                        rows={2}
+                                        placeholder="Ej: Finalizamos el Taller Exploradores Digitales 'Alfabetización', inducción de robótica, capacitación SENA..."
+                                        value={data.observaciones}
+                                        onChange={(e) => setData('observaciones', e.target.value)}
+                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Asociar Participantes Iniciales */}
+                                <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="block text-xs font-bold text-slate-700">
+                                            Asociar Participantes a la Capacitación (Opcional)
+                                        </label>
+                                        <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                            {data.participantes.length} agregados
+                                        </span>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Cédula del participante..."
+                                            value={createPartDoc}
+                                            onChange={(e) => {
+                                                setCreatePartDoc(e.target.value);
+                                                setCreatePartNotFound(false);
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleSearchCreatePart();
+                                                }
+                                            }}
+                                            className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleSearchCreatePart}
+                                            disabled={createPartSearching || !createPartDoc.trim()}
+                                            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-colors disabled:opacity-50 shrink-0 cursor-pointer shadow-2xs"
+                                        >
+                                            {createPartSearching ? '...' : 'Buscar y Agregar'}
+                                        </button>
+                                    </div>
+
+                                    {createPartNotFound && (
+                                        <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 space-y-1.5">
+                                            <p className="text-[11px] text-amber-900 font-medium">
+                                                No encontrado con CC <strong>{createPartDoc}</strong>. Escriba el nombre completo para agregarlo:
+                                            </p>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nombre completo del participante..."
+                                                    value={createPartFreeName}
+                                                    onChange={(e) => setCreatePartFreeName(e.target.value)}
+                                                    className="flex-1 px-3 py-1 rounded-xl border border-amber-300 text-xs font-medium outline-none bg-white shadow-2xs"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddCreateFreePart}
+                                                    disabled={!createPartFreeName.trim()}
+                                                    className="px-3 py-1 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition-colors shrink-0 cursor-pointer"
+                                                >
+                                                    Agregar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {data.participantes.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5 pt-1 max-h-28 overflow-y-auto">
+                                            {data.participantes.map((part, idx) => (
+                                                <span
+                                                    key={idx}
+                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-2xs"
+                                                >
+                                                    <span>{part.nombre} {part.documento ? `(CC ${part.documento})` : ''}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveCreatePart(idx)}
+                                                        className="text-slate-400 hover:text-rose-600 p-0.5 cursor-pointer"
+                                                        title="Quitar"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                                <button
-                                    type="button"
-                                    onClick={() => setModalOpen(false)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="px-5 py-2 rounded-xl bg-alcaldia-green hover:bg-alcaldia-green-dark text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
-                                >
-                                    <Save className="w-3.5 h-3.5" />
-                                    <span>{processing ? 'Guardando...' : 'Guardar Préstamo'}</span>
-                                </button>
+                            {/* Footer Fijo con Botones Siempre Visibles */}
+                            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
+                                <span className="text-[11px] text-slate-400 font-medium">
+                                    Campos marcados con (*) son obligatorios
+                                </span>
+                                <div className="flex items-center gap-2.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setModalOpen(false)}
+                                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-white hover:border-slate-300 transition-colors cursor-pointer"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="px-5 py-2 rounded-xl bg-alcaldia-green hover:bg-alcaldia-green-dark text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                    >
+                                        <Save className="w-3.5 h-3.5" />
+                                        <span>{processing ? 'Guardando...' : 'Guardar Préstamo'}</span>
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
