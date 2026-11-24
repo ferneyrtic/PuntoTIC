@@ -48,12 +48,9 @@ const CATEGORIAS_PRESTAMO = [
     'ICBF y Programas de Niñez / Primera Infancia',
     'Juntas de Acción Comunal (JAC) y Asambleas Barriales',
     'Cine Comunitario, Cineclub y Proyecciones Audiovisuales',
-    'Talleres de Emprendimiento y Desarrollo Económico',
-    'Ensayos Artísticos, Danza y Expresiones Culturales',
-    'Asambleas y Reuniones de Organizaciones Sociales',
-    'Capacitaciones de Entidades Gubernamentales',
-    'Acceso Comunitario TIC y Práctica Libre',
-    'Otro Tipo de Actividad',
+    'Expresiones Culturales, Arte, Deporte y Danza',
+    'Reuniones y Eventos Institucionales de la Alcaldía',
+    'Otras Actividades Comunitarias',
 ];
 
 interface RoomLoanItem {

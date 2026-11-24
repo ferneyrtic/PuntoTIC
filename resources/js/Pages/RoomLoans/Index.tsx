@@ -54,10 +54,7 @@ const CATEGORIAS_PRESTAMO = [
     'ICBF y Programas de Niñez / Primera Infancia',
     'Juntas de Acción Comunal (JAC) y Asambleas Barriales',
     'Cine Comunitario, Cineclub y Proyecciones Audiovisuales',
-    'Programas Sociales, Paz y Fundaciones Comunitarias',
     'Expresiones Culturales, Arte, Deporte y Danza',
-    'Jornadas de Salud, Vacunación y Brigadas',
-    'Emprendimiento, Comercio Local y Empleo',
     'Reuniones y Eventos Institucionales de la Alcaldía',
     'Otras Actividades Comunitarias',
 ];
