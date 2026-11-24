@@ -59,6 +59,34 @@ const CATEGORIAS_PRESTAMO = [
     'Otras Actividades Comunitarias',
 ];
 
+const SALAS_POR_PUNTO: Record<number, string[]> = {
+    1: [
+        'Sala de Informática / Capacitación',
+        'Emisora',
+        'Sala de Producción / Multimedia',
+        'Sala de Entretenimiento',
+        'Salón Múltiple',
+    ],
+    2: [
+        'Auditorio',
+        'Sala de Informática / Capacitación',
+        'Emisora',
+        'Sala de Gobierno Digital',
+        'Sala de Entretenimiento',
+    ],
+    3: [
+        'Aula Digital / Sala de Informática',
+        'Salón Comunal / Capacitación',
+    ],
+    4: [
+        'Aula Digital / Sala de Informática',
+        'Salón de Capacitación',
+    ],
+};
+
+const getSalasForPunto = (puntoId: number): string[] =>
+    SALAS_POR_PUNTO[puntoId] || ['Sala de Informática / Capacitación', 'Salón Múltiple'];
+
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 const QUICK_REASONS: Record<'Reservado' | 'Cancelado', string[]> = {
@@ -234,11 +262,13 @@ export default function RoomLoansIndex({
     const [dateFrom, setDateFrom] = useState(filters.fecha_desde || '');
     const [dateTo, setDateTo] = useState(filters.fecha_hasta || '');
 
+    const defaultPuntoId = points[0]?.id_punto || 1;
     const { data, setData, post, processing, reset, errors } = useForm({
         id_form_pvd: null as number | null,
         nombre_responsable_texto: '',
-        id_punto: points[0]?.id_punto || 1,
+        id_punto: defaultPuntoId,
         tipo_actividad: CATEGORIAS_PRESTAMO[0],
+        sala_espacio: getSalasForPunto(defaultPuntoId)[0],
         num_asistentes: 15,
         fecha_prestamo: new Date().toISOString().substring(0, 10),
         hora_inicio: '08:00',
@@ -1249,8 +1279,13 @@ export default function RoomLoansIndex({
                         <div className="space-y-3.5 text-xs">
                             <div>
                                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Categoría de Actividad</span>
-                                <div className="font-bold text-slate-900 text-sm mt-0.5">
-                                    {selectedLoanDetail.tipo_actividad}
+                                <div className="font-bold text-slate-900 text-sm mt-0.5 flex flex-wrap items-center gap-2">
+                                    <span>{selectedLoanDetail.tipo_actividad}</span>
+                                    {selectedLoanDetail.sala_espacio && (
+                                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                                            {selectedLoanDetail.sala_espacio}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
@@ -1913,7 +1948,14 @@ export default function RoomLoansIndex({
                                         <label className="block text-xs font-bold text-slate-700 mb-1">Sede PVD *</label>
                                         <select
                                             value={data.id_punto}
-                                            onChange={(e) => setData('id_punto', parseInt(e.target.value))}
+                                            onChange={(e) => {
+                                                const newPunto = parseInt(e.target.value);
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    id_punto: newPunto,
+                                                    sala_espacio: getSalasForPunto(newPunto)[0],
+                                                }));
+                                            }}
                                             className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium outline-none focus:border-alcaldia-green bg-white shadow-2xs"
                                             required
                                         >
@@ -1923,6 +1965,37 @@ export default function RoomLoansIndex({
                                                 </option>
                                             ))}
                                         </select>
+                                    </div>
+                                </div>
+
+                                {/* Selector de Sala / Espacio específico de la sede */}
+                                <div className="p-3 bg-emerald-50/50 rounded-2xl border border-emerald-200/70 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="block text-xs font-bold text-emerald-950">
+                                            Sala o Espacio a Prestar (según sede)
+                                        </label>
+                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                            {points.find((p) => p.id_punto === data.id_punto)?.nombre_punto || 'Sede'}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {getSalasForPunto(data.id_punto).map((sala) => {
+                                            const selected = data.sala_espacio === sala;
+                                            return (
+                                                <button
+                                                    key={sala}
+                                                    type="button"
+                                                    onClick={() => setData('sala_espacio', sala)}
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                                                        selected
+                                                            ? 'bg-alcaldia-green text-white border-alcaldia-green shadow-xs'
+                                                            : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50'
+                                                    }`}
+                                                >
+                                                    {sala}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 

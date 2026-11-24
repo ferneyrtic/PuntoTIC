@@ -519,6 +519,16 @@ class StatsService
         $merged = [];
         $totalAtenciones = 0;
 
+        $legacyLabelMap = [
+            'acceso a sala de informática' => 'Navegación libre e investigación en internet',
+            'acceso a sala de informatica' => 'Navegación libre e investigación en internet',
+            'refuerzo de tareas'           => 'Acceso a computador y tareas escolares',
+            'gobierno digital'             => 'Gobierno Digital y Trámites Municipales',
+            'capacitaciones'               => 'Capacitación y Formación Digital',
+            'acceso a salón comunitario'   => 'Préstamo de Salas y Espacios',
+            'acceso a salon comunitario'   => 'Préstamo de Salas y Espacios',
+        ];
+
         foreach ($groupedRows as $row) {
             $count = (int) $row->total;
             if ($row->id_subcategoria && isset($subNames[$row->id_subcategoria])) {
@@ -530,6 +540,10 @@ class StatsService
                 $label = trim(preg_replace('/\s+/u', ' ', str_replace("\u{00A0}", ' ', $rawText)));
                 if ($label === '') {
                     $label = 'Atención PuntoTIC';
+                }
+                $lower = mb_strtolower($label);
+                if (isset($legacyLabelMap[$lower])) {
+                    $label = $legacyLabelMap[$lower];
                 }
                 $subId = null;
             }
@@ -544,6 +558,38 @@ class StatsService
             }
             $merged[$key]['total'] += $count;
             $totalAtenciones += $count;
+        }
+
+        // Incluir asistentes de Préstamos de Salas / Capacitaciones en el ranking
+        $loansQuery = RoomLoan::query();
+        if ($targetPointIds) {
+            $loansQuery->where(function ($sub) use ($targetPointIds) {
+                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+            });
+        }
+        $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
+        $loanRows = $loansQuery
+            ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
+            ->select('tipo_actividad', DB::raw('SUM(num_asistentes) as total_asistentes'))
+            ->groupBy('tipo_actividad')
+            ->get();
+
+        foreach ($loanRows as $lr) {
+            $asist = (int) $lr->total_asistentes;
+            if ($asist <= 0) {
+                continue;
+            }
+            $label = trim((string) ($lr->tipo_actividad ?: 'Préstamo de Salas y Espacios'));
+            $key = mb_strtolower($label);
+            if (! isset($merged[$key])) {
+                $merged[$key] = [
+                    'id_subcategoria' => null,
+                    'nombre' => $label,
+                    'total' => 0,
+                ];
+            }
+            $merged[$key]['total'] += $asist;
+            $totalAtenciones += $asist;
         }
 
         uasort($merged, fn ($a, $b) => $b['total'] <=> $a['total']);
@@ -576,7 +622,7 @@ class StatsService
             $visitsQuery->whereIn('id_punto', $targetPointIds);
         }
 
-        // Visitas de formación (categoría 4/66 o servicios de capacitación/talleres/tareas)
+        // Visitas de formación reales (categoría 4/66 o servicios de capacitación/talleres/cursos, excluyendo refuerzo de tareas)
         $formacionVisitas = (clone $visitsQuery)
             ->where(function ($q) {
                 $q->whereIn('id_categoria', [4, 66])
@@ -584,12 +630,32 @@ class StatsService
                     ->orWhere('servicio_texto', 'like', '%capacita%')
                     ->orWhere('servicio', 'like', '%taller%')
                     ->orWhere('servicio_texto', 'like', '%taller%')
-                    ->orWhere('servicio', 'like', '%tarea%')
-                    ->orWhere('servicio_texto', 'like', '%tarea%')
                     ->orWhere('servicio', 'like', '%curso%')
                     ->orWhere('servicio_texto', 'like', '%curso%');
             })
             ->count();
+
+        // Sumar asistentes de préstamos de sala de tipo formativo (SENA, cursos, talleres, instituciones educativas)
+        $loansFormacionQuery = RoomLoan::query();
+        if ($targetPointIds) {
+            $loansFormacionQuery->where(function ($sub) use ($targetPointIds) {
+                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+            });
+        }
+        $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
+        $asistentesFormacionSalas = (int) $loansFormacionQuery
+            ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
+            ->where(function ($q) {
+                $q->where('tipo_actividad', 'like', '%curso%')
+                    ->orWhere('tipo_actividad', 'like', '%formativ%')
+                    ->orWhere('tipo_actividad', 'like', '%capacita%')
+                    ->orWhere('tipo_actividad', 'like', '%taller%')
+                    ->orWhere('tipo_actividad', 'like', '%sena%')
+                    ->orWhere('tipo_actividad', 'like', '%educativ%');
+            })
+            ->sum('num_asistentes');
+
+        $formacionVisitas += $asistentesFormacionSalas;
 
         // Obtenemos los ciudadanos únicos atendidos en este período para la analítica demográfica
         $cols = Citizen::getTableColumns();

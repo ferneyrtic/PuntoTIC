@@ -123,6 +123,7 @@ class RoomLoanController extends Controller
             'nombre_responsable_texto' => ['nullable', 'string', 'max:150'],
             'id_punto' => ['required', 'exists:puntos_vd,id_punto'],
             'tipo_actividad' => ['required', 'string', 'max:150'],
+            'sala_espacio' => ['nullable', 'string', 'max:120'],
             'num_asistentes' => ['required', 'integer', 'min:1', 'max:500'],
             'fecha_prestamo' => ['required', 'date'],
             'hora_inicio' => ['nullable', 'string'],
@@ -205,6 +206,7 @@ class RoomLoanController extends Controller
         $validated = $request->validate([
             'estado' => ['required', 'in:Pendiente,Reservado,En curso,Completado,Cancelado'],
             'tipo_actividad' => ['nullable', 'string', 'max:150'],
+            'sala_espacio' => ['nullable', 'string', 'max:120'],
             'observaciones' => ['nullable', 'string'],
             'respuesta_gestor' => ['nullable', 'string', 'max:1000'],
             'nombre_responsable_texto' => ['nullable', 'string', 'max:150'],

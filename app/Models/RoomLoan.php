@@ -92,6 +92,7 @@ class RoomLoan extends Model
         'id_punto',
         'id_gestor',
         'tipo_actividad',
+        'sala_espacio',
         'num_asistentes',
         'fecha_prestamo',
         'hora_inicio',
