@@ -1,309 +1,480 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import React, { useState } from 'react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
-    Monitor,
+    Calendar,
     Users,
-    ArrowRight,
+    CheckCircle2,
     MapPin,
-    FileText,
-    Printer,
-    Sparkles,
-    Phone,
-    Mail,
     Clock,
-    ChevronRight,
     LogIn,
-    UserPlus,
     Building2,
-    Award,
-    Wifi,
+    GraduationCap,
+    ExternalLink,
+    X,
+    Mail,
 } from 'lucide-react';
 import { asset } from '@/utils/asset';
 
 interface Point {
     id_punto: number;
     nombre_punto: string;
+    alias?: string;
+    barrio?: string;
     zona?: string;
     direccion?: string;
+    equipos?: string;
+    horario?: string;
+    map_query?: string;
+    badge?: string;
+    tipo_sede?: string;
+    telefono?: string;
+    imagen?: string;
+}
+
+interface Training {
+    id_capacitacion: number;
+    id_punto: number | null;
+    titulo: string;
+    slug: string;
+    descripcion: string;
+    categoria: string;
+    tipo: string;
+    instructor: string | null;
+    fecha_inicio: string | null;
+    fecha_fin: string | null;
+    horario: string | null;
+    duracion_horas: number;
+    cupos_totales: number;
+    cupos_disponibles: number;
+    requisitos: string | null;
+    dirigido_a: string | null;
+    destacado: boolean;
+    imagen_url?: string | null;
+    punto?: {
+        id_punto: number;
+        nombre_punto: string;
+        zona: string;
+    } | null;
 }
 
 interface Props {
     points: Point[];
+    capacitaciones: Training[];
+    statsSummary?: {
+        ciudadanos: number;
+        atenciones: number;
+        sedes_activas: number;
+        costo: string;
+    };
 }
 
-export default function Welcome({ points = [] }: Props) {
-    return (
-        <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-emerald-500 selection:text-white">
-            <Head title="PuntoTIC · Red de Puntos y Aulas Digitales · Alcaldía de Acacías" />
+export default function Welcome({ points = [], capacitaciones = [] }: Props) {
+    const { flash } = usePage<any>().props;
 
-            {/* Barra Superior Institucional */}
-            <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+    // Filtro de categorías simple
+    const [categoriaFilter, setCategoriaFilter] = useState('todas');
+    const [selectedCourseForModal, setSelectedCourseForModal] = useState<Training | null>(null);
+
+    // Formulario de inscripción sencillo
+    const inscriptionForm = useForm({
+        id_capacitacion: '',
+        documento: '',
+        nombres: '',
+        apellidos: '',
+        telefono: '',
+        correo: '',
+    });
+
+    const openInscriptionModal = (course: Training) => {
+        setSelectedCourseForModal(course);
+        inscriptionForm.setData({
+            id_capacitacion: String(course.id_capacitacion),
+            documento: '',
+            nombres: '',
+            apellidos: '',
+            telefono: '',
+            correo: '',
+        });
+        inscriptionForm.clearErrors();
+    };
+
+    const handleInscriptionSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        inscriptionForm.post(route('capacitaciones.inscribirse'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSelectedCourseForModal(null);
+                inscriptionForm.reset();
+            },
+        });
+    };
+
+    const categoriasList = [
+        'todas',
+        ...Array.from(new Set(capacitaciones.map((c) => c.categoria))),
+    ];
+
+    const filteredCourses = categoriaFilter === 'todas'
+        ? capacitaciones
+        : capacitaciones.filter((c) => c.categoria === categoriaFilter);
+
+    return (
+        <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
+            <Head title="Puntos Vive Digital · Alcaldía de Acacías" />
+
+            {/* ALERTA DE MENSAJES */}
+            {flash?.success && (
+                <div className="bg-[#1B6B35] text-white text-sm font-semibold px-4 py-3 text-center sticky top-0 z-50 flex items-center justify-center gap-2 shadow-xs">
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
+                    <span>{flash.success}</span>
+                </div>
+            )}
+            {flash?.info && (
+                <div className="bg-slate-700 text-white text-sm font-semibold px-4 py-3 text-center sticky top-0 z-50 flex items-center justify-center gap-2 shadow-xs">
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
+                    <span>{flash.info}</span>
+                </div>
+            )}
+
+            {/* =========================================================================
+                1. HEADER: LIMPIO, EXACTO Y SIN TEXTO DE MÁS
+               ========================================================================= */}
+            <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+                    {/* Logos */}
+                    <Link href="#inicio" className="flex items-center gap-3">
                         <img
                             src={asset('images/logo_alcaldia.png')}
                             alt="Alcaldía de Acacías"
-                            className="h-10 sm:h-12 w-auto object-contain"
+                            className="h-9 sm:h-10 w-auto object-contain"
                         />
-                        <div className="h-8 w-px bg-slate-200"></div>
+                        <div className="h-6 w-px bg-slate-200"></div>
                         <img
                             src={asset('images/logo_pvd.png')}
                             alt="Puntos Vive Digital"
-                            className="h-9 sm:h-11 w-auto object-contain"
+                            className="h-8 sm:h-9 w-auto object-contain"
                         />
-                        <div className="border-l border-slate-200 pl-3 hidden sm:block">
-                            <span className="text-lg font-black text-slate-900 tracking-tight block">
-                                PuntoTIC
-                            </span>
-                            <span className="text-[11px] text-slate-500 font-medium block">
-                                Red de Puntos y Aulas Digitales
-                            </span>
-                        </div>
-                    </div>
+                    </Link>
 
-                    <nav className="flex items-center gap-2 sm:gap-3">
+                    {/* Menú Superior: SOLO Inicio, Capacitaciones, Sedes, Contacto */}
+                    <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600">
+                        <a href="#inicio" className="hover:text-[#1B6B35] transition-colors">
+                            Inicio
+                        </a>
+                        <a href="#capacitaciones" className="hover:text-[#1B6B35] transition-colors">
+                            Capacitaciones
+                        </a>
+                        <a href="#sedes" className="hover:text-[#1B6B35] transition-colors">
+                            Sedes
+                        </a>
+                        <a href="#contacto" className="hover:text-[#1B6B35] transition-colors">
+                            Contacto
+                        </a>
+                    </nav>
+
+                    {/* Botón Ingresar */}
+                    <div>
                         <Link
                             href={route('login')}
-                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 transition-all border border-slate-200"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-300 transition-colors"
                         >
-                            <LogIn className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Ingreso Gestores / Admin</span>
+                            <LogIn className="w-4 h-4 text-slate-500" />
+                            <span>Ingresar</span>
                         </Link>
-                        <Link
-                            href={route('register')}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#01A300] hover:bg-[#018e00] text-white shadow-md shadow-emerald-700/20 transition-all"
-                        >
-                            <UserPlus className="w-3.5 h-3.5" />
-                            <span>Reservar Sala / Registro</span>
-                        </Link>
-                    </nav>
+                    </div>
                 </div>
             </header>
 
-            {/* Sección Principal */}
-            <section className="relative overflow-hidden pt-12 pb-16 sm:pt-16 sm:pb-24 bg-gradient-to-b from-emerald-50/70 via-slate-50/50 to-white">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-emerald-200/30 via-teal-100/20 to-transparent blur-3xl pointer-events-none rounded-full"></div>
-
-                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-emerald-100/80 border border-emerald-300/60 text-emerald-800 text-xs font-bold mb-6 shadow-xs animate-fade-in-down">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-                        <span>Alcaldía Municipal de Acacías · Secretaría de las TIC</span>
-                    </div>
-
-                    <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight max-w-4xl mx-auto leading-tight">
-                        <span className="text-[#01A300]">Tecnología y Conectividad</span> al Servicio de Nuestra Comunidad
+            {/* =========================================================================
+                2. INICIO & PRÉSTAMO DE SALAS
+               ========================================================================= */}
+            <section id="inicio" className="bg-white border-b border-slate-200 py-12 sm:py-16">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-4">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                        Puntos Vive Digital Acacías
                     </h1>
-
-                    <p className="mt-5 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                        Accede a salas de cómputo modernas, internet de alta velocidad y reserva espacios para capacitaciones, reuniones comunitarias o talleres educativos en el municipio de Acacías.
+                    <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                        Salas de cómputo, internet y capacitaciones gratuitas de la Alcaldía de Acacías para toda la comunidad.
                     </p>
 
-                    <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-md mx-auto">
-                        <Link
-                            href={route('register')}
-                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[#01A300] hover:bg-[#018e00] text-white font-bold text-sm shadow-xl shadow-emerald-700/20 transition-all"
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                        <a
+                            href="#capacitaciones"
+                            className="px-5 py-2.5 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-sm font-semibold transition-colors shadow-2xs"
                         >
-                            <span>Solicitar Préstamo de Sala</span>
-                            <ArrowRight className="w-4 h-4" />
-                        </Link>
-                        <Link
-                            href={route('login')}
-                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm border border-slate-200 shadow-sm hover:border-slate-300 transition-all"
+                            Ver Capacitaciones
+                        </a>
+                        <a
+                            href="#prestamo-salas"
+                            className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold transition-colors"
                         >
-                            <LogIn className="w-4 h-4 text-emerald-600" />
-                            <span>Iniciar Sesión (Cédula o Email)</span>
-                        </Link>
+                            Préstamo de Salas
+                        </a>
                     </div>
+                </div>
 
-                    <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
-                        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center justify-center flex-shrink-0">
-                                <Award className="w-5 h-5" />
-                            </div>
+                {/* BLOQUE PRÉSTAMO DE SALAS (DENTRO DE INICIO) */}
+                <div id="prestamo-salas" className="max-w-4xl mx-auto px-4 sm:px-6 mt-12">
+                    <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 sm:p-8">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
                             <div>
-                                <h4 className="text-xs font-bold text-slate-900">100% Gratuito</h4>
-                                <p className="text-[11px] text-slate-500">Espacios públicos del municipio</p>
+                                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                    <Building2 className="w-5 h-5 text-[#1B6B35]" />
+                                    <span>Préstamo de Salas</span>
+                                </h2>
+                                <p className="text-sm text-slate-600 mt-1">
+                                    Espacios con computadores y proyector para reuniones comunitarias, juntas de acción comunal o talleres.
+                                </p>
                             </div>
+                            <Link
+                                href={route('register')}
+                                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-sm font-semibold transition-colors shrink-0"
+                            >
+                                Apartar Sala
+                            </Link>
                         </div>
 
-                        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-100 flex items-center justify-center flex-shrink-0">
-                                <Wifi className="w-5 h-5" />
+                        {/* 3 Pasos Simples */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 text-sm">
+                            <div className="flex items-start gap-3">
+                                <span className="w-7 h-7 rounded-full bg-[#1B6B35] text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                                    1
+                                </span>
+                                <div>
+                                    <strong className="block text-slate-900">Elige la sede</strong>
+                                    <span className="text-slate-600 text-xs">Juan Rozo, Las Colinas, Chichimene o Dinamarca.</span>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="text-xs font-bold text-slate-900">Alta Conectividad</h4>
-                                <p className="text-[11px] text-slate-500">Fibra óptica y equipos actualizados</p>
-                            </div>
-                        </div>
 
-                        <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-700 border border-sky-100 flex items-center justify-center flex-shrink-0">
-                                <Users className="w-5 h-5" />
+                            <div className="flex items-start gap-3">
+                                <span className="w-7 h-7 rounded-full bg-[#1B6B35] text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                                    2
+                                </span>
+                                <div>
+                                    <strong className="block text-slate-900">Fecha y horario</strong>
+                                    <span className="text-slate-600 text-xs">Indícanos el día y cuántas personas asistirán.</span>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="text-xs font-bold text-slate-900">Gestores en Sede</h4>
-                                <p className="text-[11px] text-slate-500">Acompañamiento y soporte técnico</p>
+
+                            <div className="flex items-start gap-3">
+                                <span className="w-7 h-7 rounded-full bg-[#1B6B35] text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                                    3
+                                </span>
+                                <div>
+                                    <strong className="block text-slate-900">Usa el espacio</strong>
+                                    <span className="text-slate-600 text-xs">El gestor te espera con los equipos listos.</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Franja Institucional Alcaldía de Acacías y Puntos Vive Digital */}
-            <section className="bg-[#01A300] text-white py-10 px-4 sm:px-6 lg:px-8 shadow-sm">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
-                        <img
-                            src={asset('images/escudo_acacias.png')}
-                            alt="Escudo de Acacías"
-                            className="h-20 sm:h-24 w-auto object-contain drop-shadow-md"
-                        />
-                        <div className="h-16 w-0.5 bg-yellow-400 rounded-full hidden sm:block"></div>
-                        <div>
-                            <span className="text-xs font-black tracking-[0.2em] text-emerald-100 uppercase block">
-                                Alcaldía de
-                            </span>
-                            <span className="text-2xl sm:text-3xl font-black tracking-tight text-white block leading-none">
-                                ACACÍAS
-                            </span>
-                            <p className="text-xs text-emerald-100 font-medium mt-1">
-                                Red de Puntos y Aulas Digitales · Secretaría de las TIC
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl py-3 px-6 shadow-xl flex items-center justify-center border border-white/30">
-                        <img
-                            src={asset('images/logo_pvd.png')}
-                            alt="Puntos Vive Digital para la gente"
-                            className="h-12 sm:h-14 w-auto object-contain"
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* Cómo funciona el préstamo de salas */}
-            <section className="py-16 bg-white border-b border-slate-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center max-w-2xl mx-auto mb-12">
-                        <span className="text-xs font-black text-emerald-700 uppercase tracking-widest">
-                            Proceso Simple y Transparente
-                        </span>
-                        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-                            ¿Cómo Solicitar una Sala Tecnológica?
+            {/* =========================================================================
+                3. SECCIÓN CAPACITACIONES
+               ========================================================================= */}
+            <section id="capacitaciones" className="py-12 sm:py-16 max-w-6xl mx-auto px-4 sm:px-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            <GraduationCap className="w-6 h-6 text-[#1B6B35]" />
+                            <span>Capacitaciones</span>
                         </h2>
-                        <p className="mt-2 text-xs sm:text-sm text-slate-500">
-                            Diseñado para líderes de JAC, rectores, docentes, fundaciones y comunidad acacireña.
+                        <p className="text-sm text-slate-600 mt-1">
+                            Cursos y talleres gratuitos dictados en las sedes de Acacías.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {/* Paso 1 */}
-                        <div className="relative p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 hover:shadow-md transition-all">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-lg mb-5 border border-emerald-200">
-                                1
-                            </div>
-                            <h3 className="text-base font-bold text-slate-900 mb-2">
-                                Regístrate con tu Cédula
-                            </h3>
-                            <p className="text-xs text-slate-600 leading-relaxed">
-                                Crea tu cuenta ciudadana con tus datos básicos y correo electrónico. Tu cédula será tu llave de acceso para todas las gestiones.
-                            </p>
-                        </div>
-
-                        {/* Paso 2 */}
-                        <div className="relative p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 hover:shadow-md transition-all">
-                            <div className="w-12 h-12 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center font-black text-lg mb-5 border border-teal-200">
-                                2
-                            </div>
-                            <h3 className="text-base font-bold text-slate-900 mb-2">
-                                Elige Sede, Sala y Horario
-                            </h3>
-                            <p className="text-xs text-slate-600 leading-relaxed">
-                                Selecciona el Punto TIC deseado (Dinamarca, Las Colinas, Malecón, etc.), la fecha, hora y el propósito comunitario o educativo del evento.
-                            </p>
-                        </div>
-
-                        {/* Paso 3 */}
-                        <div className="relative p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 hover:shadow-md transition-all">
-                            <div className="w-12 h-12 rounded-2xl bg-sky-100 text-sky-800 flex items-center justify-center font-black text-lg mb-5 border border-sky-200">
-                                3
-                            </div>
-                            <h3 className="text-base font-bold text-slate-900 mb-2">
-                                Confirmación por el Gestor
-                            </h3>
-                            <p className="text-xs text-slate-600 leading-relaxed">
-                                El gestor de la sede valida la disponibilidad, confirma tu reserva y recibes la respuesta oficial con sus observaciones en tu correo.
-                            </p>
-                        </div>
+                    {/* Filtros simples */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        {categoriasList.map((cat) => (
+                            <button
+                                key={cat}
+                                type="button"
+                                onClick={() => setCategoriaFilter(cat)}
+                                className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-colors ${
+                                    categoriaFilter === cat
+                                        ? 'bg-[#1B6B35] text-white'
+                                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                                }`}
+                            >
+                                {cat === 'todas' ? 'Todos' : cat}
+                            </button>
+                        ))}
                     </div>
+                </div>
 
-                    <div className="mt-10 text-center">
-                        <Link
-                            href={route('register')}
-                            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#01A300] hover:bg-[#018e00] text-white font-bold text-xs shadow-lg shadow-emerald-700/20 transition-all"
+                {/* Listado de Cursos */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {filteredCourses.map((c) => (
+                        <div
+                            key={c.id_capacitacion}
+                            className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-300 transition-colors shadow-2xs group"
                         >
-                            <span>Comenzar mi Solicitud Ahora</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                    </div>
+                            {/* Portada temática del curso */}
+                            {c.imagen_url ? (
+                                <div className="h-40 w-full overflow-hidden bg-slate-100 relative">
+                                    <img
+                                        src={asset(c.imagen_url)}
+                                        alt={c.titulo}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLElement;
+                                            if (target && target.parentElement) {
+                                                target.parentElement.style.display = 'none';
+                                            }
+                                        }}
+                                    />
+                                    <div className="absolute top-2.5 left-2.5">
+                                        <span className="text-[11px] font-semibold text-slate-800 bg-white/95 px-2 py-0.5 rounded shadow-2xs">
+                                            {c.categoria}
+                                        </span>
+                                    </div>
+                                    <div className="absolute top-2.5 right-2.5">
+                                        <span className="text-[11px] font-semibold text-[#1B6B35] bg-white/95 px-2 py-0.5 rounded shadow-2xs">
+                                            Gratis
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : null}
+
+                            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                                <div className="space-y-2.5">
+                                    {!c.imagen_url && (
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="font-semibold text-[#1B6B35] bg-emerald-50 px-2 py-0.5 rounded">
+                                                {c.categoria}
+                                            </span>
+                                            <span className="text-slate-500 font-medium">Gratis</span>
+                                        </div>
+                                    )}
+
+                                    <h3 className="text-base font-bold text-slate-900 leading-snug">
+                                        {c.titulo}
+                                    </h3>
+
+                                    <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                                        {c.descripcion}
+                                    </p>
+
+                                    <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600">
+                                        <div className="flex items-center gap-1.5">
+                                            <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                            <span className="font-medium text-slate-800">
+                                                {c.punto ? c.punto.nombre_punto : 'Todas las sedes'}
+                                            </span>
+                                        </div>
+                                        {c.horario && (
+                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                <Clock className="w-3.5 h-3.5 shrink-0" />
+                                                <span>{c.horario}</span>
+                                            </div>
+                                        )}
+                                        {c.dirigido_a && (
+                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                <Users className="w-3.5 h-3.5 shrink-0" />
+                                                <span>{c.dirigido_a}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                    <span className="text-xs text-slate-500">
+                                        <strong>{c.cupos_disponibles}</strong> cupos libres
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => openInscriptionModal(c)}
+                                        className="px-3.5 py-1.5 rounded-lg bg-[#1B6B35] hover:bg-[#145328] text-white text-xs font-semibold transition-colors"
+                                    >
+                                        Inscribirme
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+
+                    {filteredCourses.length === 0 && (
+                        <div className="col-span-full p-8 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 text-sm">
+                            No hay capacitaciones disponibles en esta categoría actualmente.
+                        </div>
+                    )}
                 </div>
             </section>
 
-            {/* Sedes y Puntos Digitales */}
-            <section className="py-16 bg-slate-50/70">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-                        <div>
-                            <span className="text-xs font-black text-emerald-700 uppercase tracking-widest">
-                                Cobertura Municipal
-                            </span>
-                            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-                                Red de Puntos y Aulas Digitales
-                            </h2>
-                            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                                Sedes urbanas y rurales al servicio de los acacireños.
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-600 font-semibold bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
-                            <Building2 className="w-4 h-4 text-emerald-600" />
-                            <span>{points.length > 0 ? `${points.length} Sedes Activas` : 'Sedes Disponibles'}</span>
-                        </div>
+            {/* =========================================================================
+                4. SECCIÓN SEDES (LAS 4 DE ACACÍAS CON UBICACIÓN)
+               ========================================================================= */}
+            <section id="sedes" className="bg-white border-t border-b border-slate-200 py-12 sm:py-16">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <div className="mb-8">
+                        <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            <MapPin className="w-6 h-6 text-[#1B6B35]" />
+                            <span>Sedes</span>
+                        </h2>
+                        <p className="text-sm text-slate-600 mt-1">
+                            Las 4 sedes de Puntos Vive Digital en el municipio de Acacías.
+                        </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {points.map((p) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {points.map((p, idx) => (
                             <div
                                 key={p.id_punto}
-                                className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-emerald-400 transition-all flex flex-col justify-between"
+                                className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between space-y-3 overflow-hidden group hover:border-slate-300 transition-colors"
                             >
-                                <div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                                            p.zona === 'Rural'
-                                                ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                                                : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                        }`}>
-                                            Zona {p.zona || 'Urbana'}
-                                        </span>
-                                        <span className="text-[11px] text-slate-400 font-mono">Sede #{p.id_punto}</span>
+                                <div className="space-y-2.5">
+                                    {/* Foto de la Fachada Exterior */}
+                                    <div className="h-36 sm:h-40 w-full overflow-hidden rounded-xl bg-slate-200 relative">
+                                        <img
+                                            src={asset(p.imagen || `images/sedes/sede_${p.id_punto}.jpg`)}
+                                            alt={`Fachada de ${p.alias || p.nombre_punto}`}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                        <div className="absolute top-2 left-2">
+                                            <span className="text-[11px] font-bold text-slate-800 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded shadow-2xs">
+                                                {p.zona === 'Rural' ? 'Rural' : 'Urbana'}
+                                            </span>
+                                        </div>
+                                        <div className="absolute top-2 right-2">
+                                            <span className="text-[11px] font-bold text-slate-700 bg-white/95 backdrop-blur-xs px-2 py-0.5 rounded shadow-2xs">
+                                                Sede {idx + 1}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <h3 className="text-base font-bold text-slate-900 mb-1.5">{p.nombre_punto}</h3>
-                                    <p className="text-xs text-slate-500 flex items-start gap-1.5 mb-4">
-                                        <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
-                                        <span>{p.direccion || 'Municipio de Acacías, Meta'}</span>
-                                    </p>
+
+                                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                                        {p.alias || p.nombre_punto}
+                                    </h3>
+
+                                    <div className="space-y-1 text-xs text-slate-600">
+                                        <p className="flex items-start gap-1">
+                                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                                            <span>{p.direccion}</span>
+                                        </p>
+                                        <p className="flex items-start gap-1 text-slate-500">
+                                            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                                            <span>{p.horario || 'Lunes a Viernes 8:00 AM - 5:00 PM'}</span>
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                                    <span className="text-slate-500 text-[11px]">Salas de Cómputo & Aulas</span>
-                                    <Link
-                                        href={route('register')}
-                                        className="font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                                <div className="pt-2 border-t border-slate-200">
+                                    <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                            p.map_query || `${p.nombre_punto}, Acacias, Meta`
+                                        )}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors"
                                     >
-                                        <span>Solicitar</span>
-                                        <ChevronRight className="w-3.5 h-3.5" />
-                                    </Link>
+                                        <ExternalLink className="w-3 h-3 text-[#1B6B35]" />
+                                        <span>Ver en Google Maps</span>
+                                    </a>
                                 </div>
                             </div>
                         ))}
@@ -311,140 +482,167 @@ export default function Welcome({ points = [] }: Props) {
                 </div>
             </section>
 
-            {/* Servicios presenciales en las sedes */}
-            <section className="py-16 bg-white border-t border-slate-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center max-w-2xl mx-auto mb-12">
-                        <span className="text-xs font-black text-emerald-700 uppercase tracking-widest">
-                            Atención en Ventanilla
-                        </span>
-                        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-                            Servicios Presenciales en las Sedes
-                        </h2>
-                        <p className="mt-2 text-xs sm:text-sm text-slate-500">
-                            Cualquier ciudadano puede acercarse a nuestras sedes sin necesidad de cita previa.
-                        </p>
-                    </div>
+            {/* =========================================================================
+                5. SECCIÓN CONTACTO
+               ========================================================================= */}
+            <section id="contacto" className="py-12 max-w-4xl mx-auto px-4 sm:px-6">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8">
+                    <h2 className="text-xl font-bold text-slate-900">Contacto</h2>
+                    <p className="text-sm text-slate-600 mt-1">
+                        Para mayor información sobre cursos, horarios o salas, comunícate con nosotros:
+                    </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 text-center hover:shadow-sm transition-all">
-                            <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mb-4 border border-emerald-200">
-                                <Monitor className="w-6 h-6" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 text-sm text-slate-700">
+                        <div className="flex items-start gap-3">
+                            <Mail className="w-5 h-5 text-[#1B6B35] shrink-0 mt-0.5" />
+                            <div>
+                                <strong className="block text-slate-900">Correo Electrónico</strong>
+                                <a href="mailto:tic@acacias.gov.co" className="text-[#1B6B35] hover:underline">
+                                    tic@acacias.gov.co
+                                </a>
                             </div>
-                            <h3 className="text-sm font-bold text-slate-900 mb-1.5">Navegación e Internet</h3>
-                            <p className="text-xs text-slate-600 leading-relaxed">
-                                Acceso libre a computadores para tareas escolares, consultas y proyectos.
-                            </p>
                         </div>
 
-                        <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 text-center hover:shadow-sm transition-all">
-                            <div className="w-12 h-12 mx-auto rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center mb-4 border border-teal-200">
-                                <FileText className="w-6 h-6" />
+                        <div className="flex items-start gap-3">
+                            <Building2 className="w-5 h-5 text-[#1B6B35] shrink-0 mt-0.5" />
+                            <div>
+                                <strong className="block text-slate-900">Secretaría TIC</strong>
+                                <span>Alcaldía Municipal de Acacías · Meta</span>
                             </div>
-                            <h3 className="text-sm font-bold text-slate-900 mb-1.5">Gobierno Digital</h3>
-                            <p className="text-xs text-slate-600 leading-relaxed">
-                                Asistencia para trámites en línea: SISBÉN, Fosyga, certificados y citas médicas.
-                            </p>
-                        </div>
-
-                        <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 text-center hover:shadow-sm transition-all">
-                            <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-100 text-sky-800 flex items-center justify-center mb-4 border border-sky-200">
-                                <Printer className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-sm font-bold text-slate-900 mb-1.5">Impresiones Comunitarias</h3>
-                            <p className="text-xs text-slate-600 leading-relaxed">
-                                Servicio de impresión para documentos escolares y trámites institucionales.
-                            </p>
-                        </div>
-
-                        <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 text-center hover:shadow-sm transition-all">
-                            <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mb-4 border border-amber-200">
-                                <Award className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-sm font-bold text-slate-900 mb-1.5">Capacitaciones TIC</h3>
-                            <p className="text-xs text-slate-600 leading-relaxed">
-                                Cursos de alfabetización digital para niños, jóvenes y adultos mayores.
-                            </p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Pie de página institucional */}
-            <footer className="bg-slate-900 text-slate-300 py-12 text-xs">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-                        <div className="md:col-span-2">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="bg-white p-1.5 px-3 rounded-xl flex items-center gap-3 shadow-xs">
+            {/* =========================================================================
+                6. PIE DE PÁGINA
+               ========================================================================= */}
+            <footer className="border-t border-slate-200 bg-white py-6 text-xs text-slate-500 text-center">
+                <div className="max-w-6xl mx-auto px-4">
+                    Alcaldía Municipal de Acacías · Red de Puntos Vive Digital
+                </div>
+            </footer>
+
+            {/* =========================================================================
+                7. MODAL DE INSCRIPCIÓN SIMPLE
+               ========================================================================= */}
+            {selectedCourseForModal && (
+                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-lg border border-slate-200">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                                {selectedCourseForModal.imagen_url && (
                                     <img
-                                        src={asset('images/logo_alcaldia.png')}
-                                        alt="Alcaldía de Acacías"
-                                        className="h-9 w-auto object-contain"
+                                        src={asset(selectedCourseForModal.imagen_url)}
+                                        alt={selectedCourseForModal.titulo}
+                                        className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLElement;
+                                            if (target) target.style.display = 'none';
+                                        }}
                                     />
-                                    <div className="h-5 w-px bg-slate-200"></div>
-                                    <img
-                                        src={asset('images/logo_pvd.png')}
-                                        alt="Puntos Vive Digital"
-                                        className="h-8 w-auto object-contain"
+                                )}
+                                <div className="min-w-0">
+                                    <h3 className="text-base font-bold text-slate-900">Inscripción</h3>
+                                    <p className="text-xs text-slate-500 truncate">{selectedCourseForModal.titulo}</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedCourseForModal(null)}
+                                className="text-slate-400 hover:text-slate-700 p-1"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleInscriptionSubmit} className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                    Documento de Identidad *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Cédula o tarjeta de identidad"
+                                    value={inscriptionForm.data.documento}
+                                    onChange={(e) => inscriptionForm.setData('documento', e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:bg-white focus:border-[#1B6B35] focus:outline-none"
+                                />
+                                {inscriptionForm.errors.documento && (
+                                    <div className="text-xs text-rose-600 mt-1">{inscriptionForm.errors.documento}</div>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Nombres *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Tus nombres"
+                                        value={inscriptionForm.data.nombres}
+                                        onChange={(e) => inscriptionForm.setData('nombres', e.target.value)}
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:bg-white focus:border-[#1B6B35] focus:outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-white text-sm">Alcaldía Municipal de Acacías</h4>
-                                    <p className="text-[11px] text-slate-400">Secretaría de las TIC · Red PuntoTIC</p>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Apellidos *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Tus apellidos"
+                                        value={inscriptionForm.data.apellidos}
+                                        onChange={(e) => inscriptionForm.setData('apellidos', e.target.value)}
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:bg-white focus:border-[#1B6B35] focus:outline-none"
+                                    />
                                 </div>
                             </div>
-                            <p className="text-slate-400 max-w-md text-xs leading-relaxed">
-                                Comprometidos con el cierre de la brecha digital y el empoderamiento tecnológico de todas las comunidades urbanas y rurales de Acacías.
-                            </p>
-                        </div>
 
-                        <div>
-                            <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-3">Canales de Contacto</h4>
-                            <ul className="space-y-2 text-xs">
-                                <li className="flex items-center gap-2">
-                                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>WhatsApp Ciudadano: +57 321 361 8632</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Mail className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>tic@acacias.gov.co</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                                    <span>Lun a Vie: 8am-12m / 2pm-6pm</span>
-                                </li>
-                            </ul>
-                        </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Celular / WhatsApp *</label>
+                                    <input
+                                        type="tel"
+                                        required
+                                        placeholder="Ej: 3101234567"
+                                        value={inscriptionForm.data.telefono}
+                                        onChange={(e) => inscriptionForm.setData('telefono', e.target.value)}
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:bg-white focus:border-[#1B6B35] focus:outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Correo Electrónico</label>
+                                    <input
+                                        type="email"
+                                        placeholder="Opcional"
+                                        value={inscriptionForm.data.correo}
+                                        onChange={(e) => inscriptionForm.setData('correo', e.target.value)}
+                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:bg-white focus:border-[#1B6B35] focus:outline-none"
+                                    />
+                                </div>
+                            </div>
 
-                        <div>
-                            <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-3">Accesos del Sistema</h4>
-                            <ul className="space-y-2 text-xs">
-                                <li>
-                                    <Link href={route('login')} className="hover:text-emerald-400 transition-colors">
-                                        Acceso Gestores y Coordinadores
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href={route('register')} className="hover:text-emerald-400 transition-colors">
-                                        Registro de Ciudadanos para Salas
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href={route('login')} className="hover:text-emerald-400 transition-colors">
-                                        Portal Ciudadano (Mis Solicitudes)
-                                    </Link>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
-                        <p>© {new Date().getFullYear()} Alcaldía de Acacías · Todos los derechos reservados.</p>
-                        <p className="text-slate-500">Plataforma Oficial PuntoTIC v2.0</p>
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedCourseForModal(null)}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={inscriptionForm.processing}
+                                    className="px-4 py-2 rounded-lg bg-[#1B6B35] hover:bg-[#145328] text-white text-xs font-semibold transition-colors disabled:opacity-50"
+                                >
+                                    Inscribirme
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </footer>
+            )}
         </div>
     );
 }

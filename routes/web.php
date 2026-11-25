@@ -13,6 +13,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoomLoanController;
 use App\Http\Controllers\RoomLoanParticipantController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\VisitController;
 use App\Models\Citizen;
 use App\Models\Point;
@@ -23,6 +24,11 @@ use Inertia\Inertia;
 
 // Redirección inicial: Landing Page para visitantes, o Dashboard/Portal para usuarios autenticados
 Route::get('/', [DashboardController::class, 'welcome'])->name('home');
+
+// Preinscripción pública a capacitaciones ciudadanas
+Route::post('/capacitaciones/inscribirse', [TrainingController::class, 'inscribirsePublico'])
+    ->middleware('throttle:30,1')
+    ->name('capacitaciones.inscribirse');
 
 // Rutas autenticadas del sistema PVD
 Route::middleware(['auth'])->group(function () {
@@ -88,6 +94,13 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('campos-dinamicos', DynamicFieldController::class)
             ->parameters(['campos-dinamicos' => 'campo'])
             ->only(['index', 'store', 'destroy']);
+
+        // Gestión de Capacitaciones y Talleres (Espacio de administración para publicar cursos)
+        Route::resource('capacitaciones', TrainingController::class)
+            ->parameters(['capacitaciones' => 'capacitacione'])
+            ->except(['show', 'create', 'edit']);
+        Route::patch('capacitaciones/{capacitacion}/toggle', [TrainingController::class, 'toggleActive'])
+            ->name('capacitaciones.toggle');
         Route::post('campos-dinamicos/{campo}/delete', [DynamicFieldController::class, 'destroy'])->name('campos-dinamicos.destroy.post');
     });
 
