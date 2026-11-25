@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Head, useForm, router, Link, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import BarrioInput from '@/Components/BarrioInput';
+import GrupoPoblacionalSelect from '@/Components/GrupoPoblacionalSelect';
 import {
     DoorOpen,
     Plus,
@@ -298,6 +300,7 @@ export default function RoomLoansIndex({
     const [partRegCorreo, setPartRegCorreo] = useState('');
     const [partRegTelefono, setPartRegTelefono] = useState('');
     const [partRegGenero, setPartRegGenero] = useState('Femenino');
+    const [partRegBarrio, setPartRegBarrio] = useState('');
     const [partRegGrupo, setPartRegGrupo] = useState('Ninguno');
 
     // Participantes para el modal de Creación
@@ -310,6 +313,7 @@ export default function RoomLoansIndex({
     const [createPartApellidos, setCreatePartApellidos] = useState('');
     const [createPartCorreo, setCreatePartCorreo] = useState('');
     const [createPartGenero, setCreatePartGenero] = useState('Femenino');
+    const [createPartBarrio, setCreatePartBarrio] = useState('');
     const [createPartGrupo, setCreatePartGrupo] = useState('Ninguno');
 
     const searchParticipantForDetail = async () => {
@@ -341,6 +345,7 @@ export default function RoomLoansIndex({
             correo?: string;
             telefono?: string;
             genero?: string;
+            barrio?: string;
             g_poblacional?: string;
         }
     ) => {
@@ -362,6 +367,7 @@ export default function RoomLoansIndex({
                 payload.correo = regData.correo?.trim() || undefined;
                 payload.telefono = regData.telefono?.trim() || undefined;
                 payload.genero = regData.genero || 'Femenino';
+                payload.barrio = regData.barrio?.trim() || undefined;
                 payload.g_poblacional = regData.g_poblacional || 'Ninguno';
             }
 
@@ -383,6 +389,7 @@ export default function RoomLoansIndex({
                 setPartRegCorreo('');
                 setPartRegTelefono('');
                 setPartRegGenero('Femenino');
+                setPartRegBarrio('');
                 setPartRegGrupo('Ninguno');
             }
         } catch (e: any) {
@@ -461,6 +468,7 @@ export default function RoomLoansIndex({
                 apellidos: createPartApellidos.trim(),
                 correo: createPartCorreo.trim() || undefined,
                 genero: createPartGenero,
+                barrio: createPartBarrio.trim() || undefined,
                 g_poblacional: createPartGrupo,
                 // Marcamos auto_registrar para que el backend cree el ciudadano al guardar el préstamo
                 auto_registrar: true,
@@ -476,6 +484,7 @@ export default function RoomLoansIndex({
         setCreatePartApellidos('');
         setCreatePartCorreo('');
         setCreatePartGenero('Femenino');
+        setCreatePartBarrio('');
         setCreatePartGrupo('Ninguno');
         setCreatePartNotFound(false);
     };
@@ -1579,23 +1588,22 @@ export default function RoomLoansIndex({
                                                         className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
                                                     />
                                                 </div>
-                                                <div className="col-span-2">
-                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Grupo Poblacional *</label>
-                                                    <select
-                                                        value={partRegGrupo}
-                                                        onChange={(e) => setPartRegGrupo(e.target.value)}
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Barrio o Vereda</label>
+                                                    <BarrioInput
+                                                        value={partRegBarrio}
+                                                        onChange={setPartRegBarrio}
+                                                        placeholder="Buscar barrio o vereda..."
                                                         className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
-                                                    >
-                                                        <option value="Ninguno">Ninguno / Población General</option>
-                                                        <option value="Joven">Joven</option>
-                                                        <option value="Estudiante">Estudiante</option>
-                                                        <option value="Mujer Cabeza de Familia">Mujer Cabeza de Familia</option>
-                                                        <option value="Adulto Mayor">Adulto Mayor</option>
-                                                        <option value="Víctima del Conflicto">Víctima del Conflicto</option>
-                                                        <option value="Persona con Discapacidad">Persona con Discapacidad</option>
-                                                        <option value="Indígena">Indígena</option>
-                                                        <option value="Afrocolombiano / NARP">Afrocolombiano / NARP</option>
-                                                    </select>
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Grupo Poblacional *</label>
+                                                    <GrupoPoblacionalSelect
+                                                        value={partRegGrupo}
+                                                        onChange={setPartRegGrupo}
+                                                        className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
+                                                    />
                                                 </div>
                                                 <div>
                                                     <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Correo (opcional)</label>
@@ -1620,7 +1628,7 @@ export default function RoomLoansIndex({
                                             </div>
                                             <button
                                                 type="button"
-                                                onClick={() => addParticipantToDetail(undefined, { id_tipo: partRegTipoId, nombres: partRegNombres, apellidos: partRegApellidos, correo: partRegCorreo, telefono: partRegTelefono, genero: partRegGenero, g_poblacional: partRegGrupo })}
+                                                onClick={() => addParticipantToDetail(undefined, { id_tipo: partRegTipoId, nombres: partRegNombres, apellidos: partRegApellidos, correo: partRegCorreo, telefono: partRegTelefono, genero: partRegGenero, barrio: partRegBarrio, g_poblacional: partRegGrupo })}
                                                 disabled={partAdding || !partRegNombres.trim() || !partRegApellidos.trim()}
                                                 className="w-full px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
                                             >
@@ -2226,23 +2234,22 @@ export default function RoomLoansIndex({
                                                         className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
                                                     />
                                                 </div>
-                                                <div className="col-span-2">
-                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Grupo Poblacional *</label>
-                                                    <select
-                                                        value={createPartGrupo}
-                                                        onChange={(e) => setCreatePartGrupo(e.target.value)}
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Barrio o Vereda</label>
+                                                    <BarrioInput
+                                                        value={createPartBarrio}
+                                                        onChange={setCreatePartBarrio}
+                                                        placeholder="Buscar barrio o vereda..."
                                                         className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
-                                                    >
-                                                        <option value="Ninguno">Ninguno / Población General</option>
-                                                        <option value="Joven">Joven</option>
-                                                        <option value="Estudiante">Estudiante</option>
-                                                        <option value="Mujer Cabeza de Familia">Mujer Cabeza de Familia</option>
-                                                        <option value="Adulto Mayor">Adulto Mayor</option>
-                                                        <option value="Víctima del Conflicto">Víctima del Conflicto</option>
-                                                        <option value="Persona con Discapacidad">Persona con Discapacidad</option>
-                                                        <option value="Indígena">Indígena</option>
-                                                        <option value="Afrocolombiano / NARP">Afrocolombiano / NARP</option>
-                                                    </select>
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Grupo Poblacional *</label>
+                                                    <GrupoPoblacionalSelect
+                                                        value={createPartGrupo}
+                                                        onChange={setCreatePartGrupo}
+                                                        className="w-full px-2.5 py-1.5 rounded-xl border border-blue-200 text-xs font-medium outline-none bg-white focus:border-blue-400"
+                                                    />
                                                 </div>
                                                 <div className="col-span-2">
                                                     <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Correo (opcional — para enviar certificado)</label>

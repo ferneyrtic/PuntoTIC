@@ -45,12 +45,15 @@ class StoreVisitRequest extends FormRequest
             'telefono' => ['nullable', 'string', 'max:50'],
             'correo' => ['nullable', 'email', 'max:150'],
             'fecha_nac' => ['nullable', 'date'],
+            'id_tipo' => ['nullable', 'integer'],
             'genero' => ['nullable', 'string', 'max:30'],
             'barrio' => ['nullable', 'string', 'max:100'],
             'zona' => ['nullable', 'string', 'max:30'],
             'estrato' => ['nullable', 'integer', 'min:1', 'max:6'],
             'nivel_educativo' => ['nullable', 'string', 'max:100'],
             'ocupacion' => ['nullable', 'string', 'max:100'],
+            'grupo_etnico' => ['nullable', 'string', 'max:100'],
+            'g_poblacional' => ['nullable', 'string', 'max:120'],
             't_aseguramiento' => ['nullable', 'string', 'max:100'],
         ];
     }

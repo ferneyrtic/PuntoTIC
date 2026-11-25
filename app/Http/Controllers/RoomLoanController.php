@@ -161,6 +161,7 @@ class RoomLoanController extends Controller
                             'correo'        => $part['correo'] ?? null,
                             'telefono'      => $part['telefono'] ?? null,
                             'genero'        => $part['genero'] ?? null,
+                            'barrio'        => $part['barrio'] ?? null,
                             'g_poblacional' => $part['g_poblacional'] ?? 'Ninguno',
                             'activo'        => true,
                             'id_punto'      => $loan->id_punto ?? null,

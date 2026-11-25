@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Category;
 use App\Models\Point;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -48,6 +49,34 @@ class HandleInertiaRequests extends Middleware
                 600,
                 fn () => Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona'])->toArray()
             ),
+            'catalogs' => fn () => $user ? Cache::remember(
+                'shared_demographics_catalogs_v1',
+                600,
+                function () {
+                    $barrios = Category::with('subcategorias')->find(35)?->subcategorias
+                        ?->pluck('nombre')
+                        ->map(fn ($n) => trim((string) $n))
+                        ->filter()
+                        ->unique(fn ($n) => mb_strtoupper($n))
+                        ->sort()
+                        ->values()
+                        ->toArray() ?? [];
+
+                    $grupos = Category::with('subcategorias')->find(48)?->subcategorias
+                        ?->pluck('nombre')
+                        ->map(fn ($n) => trim((string) $n))
+                        ->filter()
+                        ->unique(fn ($n) => mb_strtoupper($n))
+                        ->sortBy(fn ($n) => mb_strtolower($n) === 'ninguno' ? '000' : mb_strtolower($n))
+                        ->values()
+                        ->toArray() ?? ['Ninguno'];
+
+                    return [
+                        'barrios' => $barrios,
+                        'grupos_poblacionales' => $grupos,
+                    ];
+                }
+            ) : ['barrios' => [], 'grupos_poblacionales' => []],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

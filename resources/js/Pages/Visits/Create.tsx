@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import BarrioInput from '@/Components/BarrioInput';
+import GrupoPoblacionalSelect from '@/Components/GrupoPoblacionalSelect';
 import {
     ArrowLeft,
     Search,
@@ -131,6 +133,7 @@ export default function VisitCreate({
         estrato: 1,
         nivel_educativo: 'Bachillerato completo',
         ocupacion: 'Empleado',
+        g_poblacional: 'Ninguno',
         t_aseguramiento: 'Subsidiado',
     });
 
@@ -944,11 +947,10 @@ export default function VisitCreate({
                                             <label className="block text-[11px] font-bold text-slate-700 mb-1">
                                                 Barrio o Vereda
                                             </label>
-                                            <input
-                                                type="text"
+                                            <BarrioInput
                                                 value={data.barrio}
-                                                onChange={(e) => setData('barrio', e.target.value)}
-                                                placeholder="Ej: Mancera, Centro, Dinamarca..."
+                                                onChange={(val) => setData('barrio', val)}
+                                                placeholder="Buscar o escribir barrio / vereda..."
                                                 className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
                                             />
                                         </div>
@@ -1040,6 +1042,17 @@ export default function VisitCreate({
                                                 <option value="Docente">Docente / Educador</option>
                                                 <option value="Otro">Otro</option>
                                             </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Grupo Poblacional
+                                            </label>
+                                            <GrupoPoblacionalSelect
+                                                value={data.g_poblacional}
+                                                onChange={(val) => setData('g_poblacional', val)}
+                                                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
+                                            />
                                         </div>
                                     </div>
                                 )}

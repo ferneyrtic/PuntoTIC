@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import BarrioInput from '@/Components/BarrioInput';
+import GrupoPoblacionalSelect from '@/Components/GrupoPoblacionalSelect';
 import { ArrowLeft, Save, UserCheck, AlertCircle, Sparkles, Database } from 'lucide-react';
 import { addToOfflineQueue } from '@/services/pwaService';
 
@@ -281,12 +283,11 @@ export default function CitizenCreate({ points, documentTypes }: Props) {
 
                         <div>
                             <label className="block text-xs font-bold text-slate-700 mb-1">Barrio o Vereda</label>
-                            <input
-                                type="text"
-                                placeholder="Ej: Centro, Dinamarca, Chichimene..."
+                            <BarrioInput
                                 value={data.barrio}
-                                onChange={(e) => setData('barrio', e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green focus:ring-1 focus:ring-alcaldia-green outline-none"
+                                onChange={(val) => setData('barrio', val)}
+                                placeholder="Buscar o escribir barrio / vereda..."
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green focus:ring-1 focus:ring-alcaldia-green outline-none bg-white"
                             />
                         </div>
 
@@ -386,18 +387,11 @@ export default function CitizenCreate({ points, documentTypes }: Props) {
 
                         <div>
                             <label className="block text-xs font-bold text-slate-700 mb-1">Grupo Poblacional / Enfoque</label>
-                            <select
+                            <GrupoPoblacionalSelect
                                 value={data.g_poblacional}
-                                onChange={(e) => setData('g_poblacional', e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green focus:ring-1 focus:ring-alcaldia-green outline-none"
-                            >
-                                <option value="Ninguno">Ninguno</option>
-                                <option value="Madre Cabeza de Hogar">Madre Cabeza de Hogar</option>
-                                <option value="Adulto Mayor">Adulto Mayor</option>
-                                <option value="Víctima del Conflicto">Víctima del Conflicto</option>
-                                <option value="Persona con Discapacidad">Persona con Discapacidad</option>
-                                <option value="Jóvenes">Jóvenes</option>
-                            </select>
+                                onChange={(val) => setData('g_poblacional', val)}
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green focus:ring-1 focus:ring-alcaldia-green outline-none bg-white"
+                            />
                         </div>
 
                         <div>

@@ -50,6 +50,7 @@ class RoomLoanParticipantController extends Controller
             'correo'          => ['nullable', 'email', 'max:150'],
             'telefono'        => ['nullable', 'string', 'max:30'],
             'genero'          => ['nullable', 'string', 'max:20'],
+            'barrio'          => ['nullable', 'string', 'max:120'],
             'g_poblacional'   => ['nullable', 'string', 'max:100'],
         ]);
 
@@ -71,6 +72,7 @@ class RoomLoanParticipantController extends Controller
                     'correo'        => $data['correo'] ?? null,
                     'telefono'      => $data['telefono'] ?? null,
                     'genero'        => $data['genero'] ?? null,
+                    'barrio'        => $data['barrio'] ?? null,
                     'g_poblacional' => $data['g_poblacional'] ?? 'Ninguno',
                     'activo'        => true,
                     'id_punto'      => $prestamo->id_punto ?? null,
