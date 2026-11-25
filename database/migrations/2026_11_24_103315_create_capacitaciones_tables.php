@@ -31,11 +31,6 @@ return new class extends Migration
                 $table->boolean('activo')->default(true);
                 $table->boolean('destacado')->default(false);
                 $table->timestamps();
-
-                $table->foreign('id_punto')
-                    ->references('id_punto')
-                    ->on('puntos_vd')
-                    ->nullOnDelete();
             });
         }
 
