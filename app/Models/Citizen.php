@@ -62,11 +62,11 @@ class Citizen extends Model
                 $citizen->attributes['id_form_pvd'] = $citizen->attributes['id'] ?? null;
             }
 
-            if (in_array('tipo_id', $cols, true) && empty($citizen->tipo_id) && ! empty($citizen->id_tipo)) {
-                $citizen->attributes['tipo_id'] = $citizen->id_tipo;
-            }
             if (in_array('id_tipo', $cols, true) && empty($citizen->id_tipo)) {
                 $citizen->attributes['id_tipo'] = $citizen->attributes['tipo_id'] ?? 1;
+            }
+            if (in_array('tipo_id', $cols, true) && empty($citizen->tipo_id)) {
+                $citizen->attributes['tipo_id'] = $citizen->attributes['id_tipo'] ?? 1;
             }
 
             foreach ($citizen->attributes as $key => $val) {

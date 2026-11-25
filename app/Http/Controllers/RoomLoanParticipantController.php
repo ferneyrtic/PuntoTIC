@@ -43,12 +43,14 @@ class RoomLoanParticipantController extends Controller
             'documento_libre' => ['nullable', 'string', 'max:30'],
             // Campos para auto-registro de un nuevo ciudadano
             'auto_registrar'  => ['nullable', 'boolean'],
+            'id_tipo'         => ['nullable', 'integer'],
             'nombres'         => ['nullable', 'string', 'max:100'],
             'apellidos'       => ['nullable', 'string', 'max:100'],
             'documento'       => ['nullable', 'string', 'max:30'],
             'correo'          => ['nullable', 'email', 'max:150'],
             'telefono'        => ['nullable', 'string', 'max:30'],
             'genero'          => ['nullable', 'string', 'max:20'],
+            'g_poblacional'   => ['nullable', 'string', 'max:100'],
         ]);
 
         // ── Auto-registro: crear ciudadano en BD y luego asociarlo ──────────
@@ -59,16 +61,20 @@ class RoomLoanParticipantController extends Controller
             $existing = $documento ? Citizen::where('documento', $documento)->first() : null;
 
             if (! $existing) {
+                $tipoId = (int) ($data['id_tipo'] ?? 1);
                 $existing = Citizen::create([
-                    'nombres'   => strtoupper(trim($data['nombres'])),
-                    'apellidos' => strtoupper(trim($data['apellidos'] ?? '')),
-                    'documento' => $documento ?: null,
-                    'correo'    => $data['correo'] ?? null,
-                    'telefono'  => $data['telefono'] ?? null,
-                    'genero'    => $data['genero'] ?? null,
-                    'activo'    => true,
-                    'id_punto'  => $prestamo->id_punto ?? null,
-                    'id_gestor' => \Illuminate\Support\Facades\Auth::id(),
+                    'id_tipo'       => $tipoId,
+                    'tipo_id'       => $tipoId,
+                    'nombres'       => strtoupper(trim($data['nombres'])),
+                    'apellidos'     => strtoupper(trim($data['apellidos'] ?? '')),
+                    'documento'     => $documento ?: null,
+                    'correo'        => $data['correo'] ?? null,
+                    'telefono'      => $data['telefono'] ?? null,
+                    'genero'        => $data['genero'] ?? null,
+                    'g_poblacional' => $data['g_poblacional'] ?? 'Ninguno',
+                    'activo'        => true,
+                    'id_punto'      => $prestamo->id_punto ?? null,
+                    'id_gestor'     => \Illuminate\Support\Facades\Auth::id(),
                 ]);
             }
 

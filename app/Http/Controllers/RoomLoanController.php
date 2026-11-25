@@ -151,14 +151,20 @@ class RoomLoanController extends Controller
                     $documento = trim($part['documento'] ?? '');
                     $existing  = $documento ? \App\Models\Citizen::where('documento', $documento)->first() : null;
                     if (! $existing) {
+                        $tipoId = (int) ($part['id_tipo'] ?? 1);
                         $existing = \App\Models\Citizen::create([
-                            'nombres'   => strtoupper(trim($part['nombres'])),
-                            'apellidos' => strtoupper(trim($part['apellidos'] ?? '')),
-                            'documento' => $documento ?: null,
-                            'correo'    => $part['correo'] ?? null,
-                            'activo'    => true,
-                            'id_punto'  => $loan->id_punto ?? null,
-                            'id_gestor' => Auth::id(),
+                            'id_tipo'       => $tipoId,
+                            'tipo_id'       => $tipoId,
+                            'nombres'       => strtoupper(trim($part['nombres'])),
+                            'apellidos'     => strtoupper(trim($part['apellidos'] ?? '')),
+                            'documento'     => $documento ?: null,
+                            'correo'        => $part['correo'] ?? null,
+                            'telefono'      => $part['telefono'] ?? null,
+                            'genero'        => $part['genero'] ?? null,
+                            'g_poblacional' => $part['g_poblacional'] ?? 'Ninguno',
+                            'activo'        => true,
+                            'id_punto'      => $loan->id_punto ?? null,
+                            'id_gestor'     => Auth::id(),
                         ]);
                     }
                     $idFormPvd = $existing->id_form_pvd ?? $existing->getKey();
