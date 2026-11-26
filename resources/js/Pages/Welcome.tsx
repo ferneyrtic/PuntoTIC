@@ -264,131 +264,170 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
             </header>
 
             {/* =========================================================================
-                2. INICIO & PRÉSTAMO DE SALAS
+                2. INICIO, SLIDER DE SEDES & PRÉSTAMO DE SALAS
                ========================================================================= */}
-            <section id="inicio" className="bg-white border-b border-slate-200 py-12 sm:py-16">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-4">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                        Puntos Vive Digital Acacías
-                    </h1>
-                    <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                        Salas de cómputo, internet y capacitaciones gratuitas de la Alcaldía de Acacías para toda la comunidad.
-                    </p>
+            <section id="inicio" className="bg-gradient-to-b from-slate-50 via-white to-slate-50/70 border-b border-slate-200 py-8 sm:py-12">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    {/* Encabezado Hero Alineado */}
+                    <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-8">
+                        <div className="space-y-2.5 max-w-2xl">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#1B6B35] bg-emerald-50 border border-emerald-200/70 px-2.5 py-1 rounded-md">
+                                Alcaldía de Acacías · Red TIC Municipal
+                            </span>
+                            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                                Puntos Vive Digital Acacías
+                            </h1>
+                            <p className="text-base text-slate-600 leading-relaxed">
+                                Salas de cómputo, internet gratuito y capacitaciones certificadas para toda la comunidad urbana y rural.
+                            </p>
+                        </div>
 
-                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                        <a
-                            href="#capacitaciones"
-                            className="px-5 py-2.5 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-sm font-semibold transition-colors shadow-2xs"
-                        >
-                            Ver Capacitaciones
-                        </a>
-                        <Link
-                            href={auth?.user ? route('portal.index') : route('login')}
-                            className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold transition-colors"
-                        >
-                            Préstamo de Salas
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-3 shrink-0">
+                            <a
+                                href="#capacitaciones"
+                                className="px-5 py-2.5 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-sm font-semibold transition-all shadow-sm hover:shadow"
+                            >
+                                Ver Capacitaciones
+                            </a>
+                            <Link
+                                href={auth?.user ? route('portal.index') : route('login')}
+                                className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 text-sm font-semibold border border-slate-300 transition-all shadow-2xs"
+                            >
+                                Préstamo de Salas
+                            </Link>
+                        </div>
                     </div>
-                </div>
 
-                {/* SLIDER DE SEDES / BANNERS INSTITUCIONALES */}
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-8 sm:mt-10">
+                    {/* SLIDER DE SEDES CON SELECTOR INTERACTIVO */}
                     <div
-                        className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-sm bg-slate-950 group select-none"
+                        className="rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200/90 shadow-lg shadow-slate-900/5 bg-white select-none"
                         onMouseEnter={() => setIsPaused(true)}
                         onMouseLeave={() => setIsPaused(false)}
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
                     >
-                        {/* Pista de Diapositivas */}
-                        <div
-                            className="flex transition-transform duration-700 ease-out"
-                            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                        >
-                            {heroSlides.map((slide, idx) => (
-                                <div
-                                    key={slide.id}
-                                    className="w-full flex-shrink-0 relative aspect-[1024/384] bg-slate-900"
-                                >
-                                    <img
-                                        src={asset(slide.imagen)}
-                                        alt={slide.title}
-                                        className="w-full h-full object-cover select-none"
-                                        loading={idx === 0 ? 'eager' : 'lazy'}
-                                        draggable={false}
-                                    />
-                                </div>
-                            ))}
+                        <div className="relative overflow-hidden bg-slate-900 group">
+                            {/* Pista de Diapositivas */}
+                            <div
+                                className="flex transition-transform duration-700 ease-out"
+                                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                            >
+                                {heroSlides.map((slide, idx) => (
+                                    <div
+                                        key={slide.id}
+                                        className="w-full flex-shrink-0 relative aspect-[1024/384] bg-slate-900"
+                                    >
+                                        <img
+                                            src={asset(slide.imagen)}
+                                            alt={slide.title}
+                                            className="w-full h-full object-cover select-none"
+                                            loading={idx === 0 ? 'eager' : 'lazy'}
+                                            draggable={false}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Flechas Sutiles en los Bordes */}
+                            <button
+                                type="button"
+                                onClick={prevSlide}
+                                aria-label="Diapositiva anterior"
+                                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-900/45 hover:bg-slate-900/75 text-white backdrop-blur-xs flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 z-20 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={nextSlide}
+                                aria-label="Diapositiva siguiente"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-900/45 hover:bg-slate-900/75 text-white backdrop-blur-xs flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 z-20 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+
+                            {/* Contador Discreto */}
+                            <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-slate-900/50 backdrop-blur-xs text-[11px] font-semibold text-white tracking-wider z-20">
+                                {currentSlide + 1} / {heroSlides.length}
+                            </div>
                         </div>
 
-                        {/* Botón Anterior */}
-                        <button
-                            type="button"
-                            onClick={prevSlide}
-                            aria-label="Diapositiva anterior"
-                            className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/85 hover:bg-white text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 z-20 opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        >
-                            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-slate-700" />
-                        </button>
-
-                        {/* Botón Siguiente */}
-                        <button
-                            type="button"
-                            onClick={nextSlide}
-                            aria-label="Diapositiva siguiente"
-                            className="absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/85 hover:bg-white text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 z-20 opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        >
-                            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-slate-700" />
-                        </button>
-
-                        {/* Indicadores / Puntos de Navegación */}
-                        <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-xs z-20">
-                            {heroSlides.map((slide, idx) => (
-                                <button
-                                    key={slide.id}
-                                    type="button"
-                                    onClick={() => setCurrentSlide(idx)}
-                                    aria-label={`Ir a ${slide.title}`}
-                                    className={`transition-all duration-300 rounded-full ${
-                                        currentSlide === idx
-                                            ? 'w-6 sm:w-8 h-2 bg-white'
-                                            : 'w-2 h-2 bg-white/60 hover:bg-white/90'
-                                    }`}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Contador de Diapositivas */}
-                        <div className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-xs text-[11px] font-semibold text-white tracking-wider z-20 select-none">
-                            {currentSlide + 1} / {heroSlides.length}
+                        {/* Barra de Pestañas Interactivas de las 4 Sedes */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 border-t border-slate-200 bg-white">
+                            {heroSlides.map((slide, idx) => {
+                                const isActive = currentSlide === idx;
+                                return (
+                                    <button
+                                        key={slide.id}
+                                        type="button"
+                                        onClick={() => setCurrentSlide(idx)}
+                                        className={`relative text-left px-4 py-3 transition-colors duration-200 ${
+                                            isActive
+                                                ? 'bg-emerald-50/60'
+                                                : 'hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {/* Línea superior indicadora activa */}
+                                        <span
+                                            className={`absolute top-0 left-0 right-0 h-0.5 transition-all duration-300 ${
+                                                isActive ? 'bg-[#1B6B35]' : 'bg-transparent'
+                                            }`}
+                                        />
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${
+                                                    isActive
+                                                        ? 'bg-[#1B6B35] text-white'
+                                                        : 'bg-slate-100 text-slate-500'
+                                                }`}
+                                            >
+                                                0{idx + 1}
+                                            </span>
+                                            <span
+                                                className={`text-xs font-bold truncate ${
+                                                    isActive ? 'text-slate-900' : 'text-slate-600'
+                                                }`}
+                                            >
+                                                {slide.title}
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 truncate mt-0.5 pl-7">
+                                            {slide.sede}
+                                        </p>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
-                </div>
 
-                {/* BLOQUE PRÉSTAMO DE SALAS (DENTRO DE INICIO) */}
-                <div id="prestamo-salas" className="max-w-4xl mx-auto px-4 sm:px-6 mt-12">
-                    <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 sm:p-8">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-                            <div>
-                                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                                    <Building2 className="w-5 h-5 text-[#1B6B35]" />
-                                    <span>Préstamo de Salas</span>
-                                </h2>
-                                <p className="text-sm text-slate-600 mt-1">
-                                    Espacios con computadores y proyector para reuniones comunitarias, juntas de acción comunal o talleres.
-                                </p>
+                    {/* BLOQUE PRÉSTAMO DE SALAS (ALINEADO A LA MISMA RETÍCULA) */}
+                    <div id="prestamo-salas" className="mt-8 bg-white rounded-2xl border border-slate-200 shadow-xs p-6 sm:p-8">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+                            <div className="flex items-start gap-3.5">
+                                <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 text-[#1B6B35] flex items-center justify-center shrink-0">
+                                    <Building2 className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+                                        Préstamo de Salas
+                                    </h2>
+                                    <p className="text-sm text-slate-600 mt-0.5">
+                                        Espacios con computadores y proyector para reuniones comunitarias, juntas de acción comunal o talleres.
+                                    </p>
+                                </div>
                             </div>
                             <div className="flex flex-wrap items-center gap-2 shrink-0">
                                 <Link
                                     href={auth?.user ? route('portal.index') : `${route('login')}?mode=ciudadanos`}
-                                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-sm font-semibold transition-colors"
+                                    className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-sm font-semibold transition-all shadow-2xs"
                                 >
                                     Ingresar y Apartar
                                 </Link>
                                 {!auth?.user && (
                                     <Link
                                         href={route('register')}
-                                        className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 text-sm font-semibold transition-colors"
+                                        className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 text-sm font-semibold transition-colors"
                                     >
                                         Registrarme
                                     </Link>
@@ -396,35 +435,35 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                             </div>
                         </div>
 
-                        {/* 3 Pasos Simples */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 text-sm">
-                            <div className="flex items-start gap-3">
-                                <span className="w-7 h-7 rounded-full bg-[#1B6B35] text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                        {/* 3 Pasos en Tarjetas Estructuradas */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
+                            <div className="bg-slate-50/80 border border-slate-200/70 rounded-xl p-4 flex items-start gap-3">
+                                <span className="w-7 h-7 rounded-lg bg-[#1B6B35] text-white font-bold flex items-center justify-center shrink-0 text-xs">
                                     1
                                 </span>
                                 <div>
-                                    <strong className="block text-slate-900">Elige la sede</strong>
-                                    <span className="text-slate-600 text-xs">Juan Rozo, Las Colinas, Chichimene o Dinamarca.</span>
+                                    <strong className="block text-sm text-slate-900">Elige la sede</strong>
+                                    <span className="text-slate-600 text-xs leading-relaxed">Juan Rozo, Las Colinas, Chichimene o Dinamarca.</span>
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-3">
-                                <span className="w-7 h-7 rounded-full bg-[#1B6B35] text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                            <div className="bg-slate-50/80 border border-slate-200/70 rounded-xl p-4 flex items-start gap-3">
+                                <span className="w-7 h-7 rounded-lg bg-[#1B6B35] text-white font-bold flex items-center justify-center shrink-0 text-xs">
                                     2
                                 </span>
                                 <div>
-                                    <strong className="block text-slate-900">Fecha y horario</strong>
-                                    <span className="text-slate-600 text-xs">Indícanos el día y cuántas personas asistirán.</span>
+                                    <strong className="block text-sm text-slate-900">Fecha y horario</strong>
+                                    <span className="text-slate-600 text-xs leading-relaxed">Lun - Vie (8am-12m / 2pm-6pm) y Sáb (9am-12m).</span>
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-3">
-                                <span className="w-7 h-7 rounded-full bg-[#1B6B35] text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                            <div className="bg-slate-50/80 border border-slate-200/70 rounded-xl p-4 flex items-start gap-3">
+                                <span className="w-7 h-7 rounded-lg bg-[#1B6B35] text-white font-bold flex items-center justify-center shrink-0 text-xs">
                                     3
                                 </span>
                                 <div>
-                                    <strong className="block text-slate-900">Usa el espacio</strong>
-                                    <span className="text-slate-600 text-xs">El gestor te espera con los equipos listos.</span>
+                                    <strong className="block text-sm text-slate-900">Usa el espacio</strong>
+                                    <span className="text-slate-600 text-xs leading-relaxed">El gestor te espera con los equipos listos.</span>
                                 </div>
                             </div>
                         </div>
