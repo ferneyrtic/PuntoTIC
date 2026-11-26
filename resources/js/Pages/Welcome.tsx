@@ -25,6 +25,7 @@ interface Point {
     equipos?: string;
     horario?: string;
     map_query?: string;
+    map_url?: string;
     badge?: string;
     tipo_sede?: string;
     telefono?: string;
@@ -465,9 +466,12 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
 
                                 <div className="pt-2 border-t border-slate-200">
                                     <a
-                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                            p.map_query || `${p.nombre_punto}, Acacias, Meta`
-                                        )}`}
+                                        href={
+                                            p.map_url ||
+                                            `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                                p.map_query || `${p.nombre_punto}, Acacias, Meta`
+                                            )}`
+                                        }
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors"

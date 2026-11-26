@@ -115,7 +115,7 @@ class PortalController extends Controller
                 'telefono' => 'XXX-XXXX',
                 'whatsapp' => '+57 321 361 8632',
                 'correo' => 'xxx@acacias.gov.co',
-                'horario' => 'Lunes a Viernes: 8:00 AM - 12:00 M y 2:00 PM - 6:00 PM',
+                'horario' => 'Lunes a Viernes: 8:00 AM - 12:00 M y 2:00 PM - 6:00 PM · Sábados: 9:00 AM - 12:00 M',
                 'direccion' => 'Carrera 15 # 13-30, Alcaldía Municipal de Acacías, Meta',
             ],
         ]);
