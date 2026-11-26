@@ -70,7 +70,7 @@ interface Props {
 }
 
 export default function Welcome({ points = [], capacitaciones = [] }: Props) {
-    const { flash } = usePage<any>().props;
+    const { flash, auth } = usePage<any>().props;
 
     // Filtro de categorías simple
     const [categoriaFilter, setCategoriaFilter] = useState('todas');
@@ -173,15 +173,24 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                         </a>
                     </nav>
 
-                    {/* Botón Ingresar */}
+                    {/* Botón Ingresar / Mi Portal */}
                     <div>
-                        <Link
-                            href={route('login')}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-300 transition-colors"
-                        >
-                            <LogIn className="w-4 h-4 text-slate-500" />
-                            <span>Ingresar</span>
-                        </Link>
+                        {auth?.user ? (
+                            <Link
+                                href={route('portal.index')}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold text-[#1B6B35] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+                            >
+                                <span>Mi Portal</span>
+                            </Link>
+                        ) : (
+                            <Link
+                                href={route('login')}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-300 transition-colors"
+                            >
+                                <LogIn className="w-4 h-4 text-slate-500" />
+                                <span>Ingresar</span>
+                            </Link>
+                        )}
                     </div>
                 </div>
             </header>
@@ -205,12 +214,12 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                         >
                             Ver Capacitaciones
                         </a>
-                        <a
-                            href="#prestamo-salas"
+                        <Link
+                            href={auth?.user ? route('portal.index') : route('login')}
                             className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold transition-colors"
                         >
                             Préstamo de Salas
-                        </a>
+                        </Link>
                     </div>
                 </div>
 
@@ -229,17 +238,19 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                             </div>
                             <div className="flex flex-wrap items-center gap-2 shrink-0">
                                 <Link
-                                    href={`${route('login')}?mode=ciudadanos`}
+                                    href={auth?.user ? route('portal.index') : `${route('login')}?mode=ciudadanos`}
                                     className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-sm font-semibold transition-colors"
                                 >
                                     Ingresar y Apartar
                                 </Link>
-                                <Link
-                                    href={route('register')}
-                                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 text-sm font-semibold transition-colors"
-                                >
-                                    Registrarme
-                                </Link>
+                                {!auth?.user && (
+                                    <Link
+                                        href={route('register')}
+                                        className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 text-sm font-semibold transition-colors"
+                                    >
+                                        Registrarme
+                                    </Link>
+                                )}
                             </div>
                         </div>
 
