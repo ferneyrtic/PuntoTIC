@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     Calendar,
@@ -12,6 +12,8 @@ import {
     ExternalLink,
     X,
     Mail,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import { asset } from '@/utils/asset';
 
@@ -71,6 +73,72 @@ interface Props {
 
 export default function Welcome({ points = [], capacitaciones = [] }: Props) {
     const { flash, auth } = usePage<any>().props;
+
+    // Slider Hero Institucional con las 4 sedes de Acacías
+    const heroSlides = [
+        {
+            id: 1,
+            title: 'Punto Vive Digital Plus Acacías',
+            sede: 'Sede I.E. Juan Rozo · Centro',
+            imagen: 'images/slider/slide_juan_rozo.jpg',
+        },
+        {
+            id: 2,
+            title: 'Punto Vive Digital Tradicional',
+            sede: 'Sede Barrio Las Colinas',
+            imagen: 'images/slider/slide_las_colinas.jpg',
+        },
+        {
+            id: 3,
+            title: 'Aula Digital Dinamarca',
+            sede: 'Sede Corregimiento Dinamarca',
+            imagen: 'images/slider/slide_dinamarca.jpg',
+        },
+        {
+            id: 4,
+            title: 'Aula Digital Chichimene',
+            sede: 'Sede Vereda Chichimene',
+            imagen: 'images/slider/slide_chichimene.jpg',
+        },
+    ];
+
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
+    const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+    const nextSlide = useCallback(() => {
+        setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, [heroSlides.length]);
+
+    const prevSlide = useCallback(() => {
+        setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    }, [heroSlides.length]);
+
+    useEffect(() => {
+        if (isPaused) return;
+        const interval = setInterval(() => {
+            nextSlide();
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [isPaused, nextSlide]);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setTouchStartX(e.targetTouches[0].clientX);
+        setIsPaused(true);
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (touchStartX === null) return;
+        const touchEndX = e.changedTouches[0].clientX;
+        const diff = touchStartX - touchEndX;
+        if (diff > 45) {
+            nextSlide();
+        } else if (diff < -45) {
+            prevSlide();
+        }
+        setTouchStartX(null);
+        setIsPaused(false);
+    };
 
     // Filtro de categorías simple
     const [categoriaFilter, setCategoriaFilter] = useState('todas');
@@ -220,6 +288,80 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                         >
                             Préstamo de Salas
                         </Link>
+                    </div>
+                </div>
+
+                {/* SLIDER DE SEDES / BANNERS INSTITUCIONALES */}
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-8 sm:mt-10">
+                    <div
+                        className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-sm bg-slate-950 group select-none"
+                        onMouseEnter={() => setIsPaused(true)}
+                        onMouseLeave={() => setIsPaused(false)}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                    >
+                        {/* Pista de Diapositivas */}
+                        <div
+                            className="flex transition-transform duration-700 ease-out"
+                            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                        >
+                            {heroSlides.map((slide, idx) => (
+                                <div
+                                    key={slide.id}
+                                    className="w-full flex-shrink-0 relative aspect-[1024/384] bg-slate-900"
+                                >
+                                    <img
+                                        src={asset(slide.imagen)}
+                                        alt={slide.title}
+                                        className="w-full h-full object-cover select-none"
+                                        loading={idx === 0 ? 'eager' : 'lazy'}
+                                        draggable={false}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Botón Anterior */}
+                        <button
+                            type="button"
+                            onClick={prevSlide}
+                            aria-label="Diapositiva anterior"
+                            className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/85 hover:bg-white text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 z-20 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        >
+                            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-slate-700" />
+                        </button>
+
+                        {/* Botón Siguiente */}
+                        <button
+                            type="button"
+                            onClick={nextSlide}
+                            aria-label="Diapositiva siguiente"
+                            className="absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/85 hover:bg-white text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 z-20 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        >
+                            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-slate-700" />
+                        </button>
+
+                        {/* Indicadores / Puntos de Navegación */}
+                        <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-xs z-20">
+                            {heroSlides.map((slide, idx) => (
+                                <button
+                                    key={slide.id}
+                                    type="button"
+                                    onClick={() => setCurrentSlide(idx)}
+                                    aria-label={`Ir a ${slide.title}`}
+                                    className={`transition-all duration-300 rounded-full ${
+                                        currentSlide === idx
+                                            ? 'w-6 sm:w-8 h-2 bg-white'
+                                            : 'w-2 h-2 bg-white/60 hover:bg-white/90'
+                                    }`}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Contador de Diapositivas */}
+                        <div className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-xs text-[11px] font-semibold text-white tracking-wider z-20 select-none">
+                            {currentSlide + 1} / {heroSlides.length}
+                        </div>
                     </div>
                 </div>
 
