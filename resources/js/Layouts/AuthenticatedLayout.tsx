@@ -668,8 +668,8 @@ export default function AuthenticatedLayout({ header, children }: PropsWithChild
                     </div>
                 )}
 
-                {/* Page Content Container with Smooth Fade & Scale Transition */}
-                <main className={`flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6 transition-all duration-300 ease-out ${pageLoading ? 'opacity-40 scale-[0.997]' : 'opacity-100 scale-100'}`}>
+                {/* Page Content Container with Smooth Fade Transition (never use scale/transform here so fixed modals stay viewport-centered) */}
+                <main className={`flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6 transition-opacity duration-300 ease-out ${pageLoading ? 'opacity-40' : 'opacity-100'}`}>
                     {header && (
                         <div className="animate-fade-in">
                             {header}
