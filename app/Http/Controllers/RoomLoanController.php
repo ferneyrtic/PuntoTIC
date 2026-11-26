@@ -152,21 +152,40 @@ class RoomLoanController extends Controller
                     $existing  = $documento ? \App\Models\Citizen::where('documento', $documento)->first() : null;
                     if (! $existing) {
                         $tipoId = (int) ($part['id_tipo'] ?? 1);
-                        $existing = \App\Models\Citizen::create([
-                            'id_tipo'       => $tipoId,
-                            'tipo_id'       => $tipoId,
-                            'nombres'       => strtoupper(trim($part['nombres'])),
-                            'apellidos'     => strtoupper(trim($part['apellidos'] ?? '')),
-                            'documento'     => $documento ?: null,
-                            'correo'        => $part['correo'] ?? null,
-                            'telefono'      => $part['telefono'] ?? null,
-                            'genero'        => $part['genero'] ?? null,
-                            'barrio'        => $part['barrio'] ?? null,
-                            'g_poblacional' => $part['g_poblacional'] ?? 'Ninguno',
-                            'activo'        => true,
-                            'id_punto'      => $loan->id_punto ?? null,
-                            'id_gestor'     => Auth::id(),
-                        ]);
+                        // tipo_id en BD es NOT NULL sin default → siempre incluirlo
+                        // genero puede ser cadena vacía desde multipart; normalizar a valor válido
+                        $genero = trim($part['genero'] ?? '');
+                        $genero = in_array($genero, ['Masculino', 'Femenino', 'Otro', 'No binario', 'Prefiero no decir'], true)
+                            ? $genero : 'Otro';
+                        try {
+                            $existing = \App\Models\Citizen::create([
+                                'id_tipo'       => $tipoId,
+                                'tipo_id'       => $tipoId,
+                                'nombres'       => strtoupper(trim($part['nombres'])),
+                                'apellidos'     => strtoupper(trim($part['apellidos'] ?? '')),
+                                'documento'     => $documento ?: null,
+                                'correo'        => $part['correo'] ? trim($part['correo']) : null,
+                                'telefono'      => $part['telefono'] ? trim($part['telefono']) : null,
+                                'genero'        => $genero,
+                                'barrio'        => $part['barrio'] ? trim($part['barrio']) : null,
+                                'g_poblacional' => trim($part['g_poblacional'] ?? '') ?: 'Ninguno',
+                                'activo'        => true,
+                                'id_punto'      => $loan->id_punto ?? null,
+                                'id_gestor'     => Auth::id(),
+                            ]);
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning('AutoRegistro participante fallo: ' . $e->getMessage(), [
+                                'documento' => $documento, 'nombres' => $part['nombres'] ?? '',
+                            ]);
+                            // Si falla la creación del ciudadano, guardar como libre para no perder el registro
+                            $loan->participantes()->create([
+                                'id_prestamo'     => $prestamoId,
+                                'id_form_pvd'     => null,
+                                'nombre_libre'    => strtoupper(trim(($part['nombres'] ?? '') . ' ' . ($part['apellidos'] ?? ''))),
+                                'documento_libre' => $documento ?: null,
+                            ]);
+                            continue;
+                        }
                     }
                     $idFormPvd = $existing->id_form_pvd ?? $existing->getKey();
                 }

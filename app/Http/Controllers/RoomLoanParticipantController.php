@@ -64,17 +64,22 @@ class RoomLoanParticipantController extends Controller
 
             if (! $existing) {
                 $tipoId = (int) ($data['id_tipo'] ?? 1);
+                // tipo_id en BD es NOT NULL sin default → siempre incluirlo
+                // genero puede llegar como vacío desde multipart → normalizar
+                $genero = trim($data['genero'] ?? '');
+                $genero = in_array($genero, ['Masculino', 'Femenino', 'Otro', 'No binario', 'Prefiero no decir'], true)
+                    ? $genero : 'Otro';
                 $existing = Citizen::create([
                     'id_tipo'       => $tipoId,
                     'tipo_id'       => $tipoId,
                     'nombres'       => strtoupper(trim($data['nombres'])),
                     'apellidos'     => strtoupper(trim($data['apellidos'] ?? '')),
                     'documento'     => $documento ?: null,
-                    'correo'        => $data['correo'] ?? null,
-                    'telefono'      => $data['telefono'] ?? null,
-                    'genero'        => $data['genero'] ?? null,
-                    'barrio'        => $data['barrio'] ?? null,
-                    'g_poblacional' => $data['g_poblacional'] ?? 'Ninguno',
+                    'correo'        => $data['correo'] ? trim($data['correo']) : null,
+                    'telefono'      => $data['telefono'] ? trim($data['telefono']) : null,
+                    'genero'        => $genero,
+                    'barrio'        => $data['barrio'] ? trim($data['barrio']) : null,
+                    'g_poblacional' => trim($data['g_poblacional'] ?? '') ?: 'Ninguno',
                     'activo'        => true,
                     'id_punto'      => $prestamo->id_punto ?? null,
                     'id_gestor'     => \Illuminate\Support\Facades\Auth::id(),
