@@ -449,8 +449,8 @@ export default function Dashboard({
                                         </button>
                                         <div className="absolute right-0 top-6 w-64 bg-slate-900 text-white text-[11px] rounded-xl p-3 shadow-xl z-50 hidden group-hover:block leading-relaxed">
                                             <p className="font-bold mb-1 text-emerald-300">¿Qué cuenta este número?</p>
-                                            <p>Suma total de <strong>visitas registradas</strong> en la plataforma + <strong>asistentes a préstamos de sala</strong> (cursos SENA, talleres, eventos) en el período seleccionado.</p>
-                                            <p className="mt-1 text-slate-400">Cada fila en el módulo de Visitas o cada persona en un préstamo de sala suma 1 atención.</p>
+                                            <p>Suma total de <strong>visitas registradas</strong> + <strong>asistentes reales a préstamos de sala</strong> (si hay lista de participantes, cuenta esa cantidad real; si no, cuenta el aforo solo cuando el préstamo ya está <em>Completado</em> o <em>En curso</em>).</p>
+                                            <p className="mt-1 text-slate-400">Las reservas en estado Pendiente o Reservado sin lista de asistencia no se suman aún.</p>
                                         </div>
                                     </div>
                                     <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
@@ -594,8 +594,8 @@ export default function Dashboard({
                                         <div className="absolute right-0 top-6 w-64 bg-slate-900 text-white text-[11px] rounded-xl p-3 shadow-xl z-50 hidden group-hover:block leading-relaxed">
                                             <p className="font-bold mb-1 text-emerald-300">¿Qué cuenta este número?</p>
                                             <p>Número grande = <strong>eventos o préstamos de sala</strong> registrados (cursos SENA, talleres, reuniones JAC, cine comunitario, etc.).</p>
-                                            <p className="mt-1">Número verde = <strong>asistentes totales</strong> que participaron en esos eventos (suma del campo "N° Asistentes" de cada préstamo).</p>
-                                            <p className="mt-1 text-slate-400">"Hoy en curso" muestra cuántos préstamos tienen fecha de hoy.</p>
+                                            <p className="mt-1">Número verde = <strong>asistentes reales</strong> (prioriza los participantes registrados en la lista; si no hay lista, usa "N° Asistentes" solo en eventos <em>Completados</em> o <em>En curso</em>).</p>
+                                            <p className="mt-1 text-slate-400">"Hoy en curso" muestra los préstamos activos o completados de hoy (sin contar reservas pendientes).</p>
                                         </div>
                                     </div>
                                     <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">

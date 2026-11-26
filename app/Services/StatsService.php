@@ -25,6 +25,37 @@ class StatsService
     }
 
     /**
+     * Une el conteo real de participantes registrados por préstamo y excluye cancelados/rechazados.
+     */
+    protected function withEffectiveRoomLoanAttendees($query)
+    {
+        $participantsSub = DB::table('prestamo_sala_participantes')
+            ->select('id_prestamo', DB::raw('COUNT(*) as real_count'))
+            ->groupBy('id_prestamo');
+
+        return $query
+            ->leftJoinSub($participantsSub, 'psp_counts', function ($join) {
+                $join->on(DB::raw('COALESCE(prestamo_sala.id_prestamo, prestamo_sala.id)'), '=', 'psp_counts.id_prestamo');
+            })
+            ->whereNotIn('prestamo_sala.estado', ['Cancelado', 'Rechazado']);
+    }
+
+    /**
+     * Expresión SQL de asistentes efectivos por préstamo:
+     * 1) Si tiene participantes registrados en lista, usa el conteo real (ej. 30 aunque el estimado fuera 25).
+     * 2) Si no tiene lista individual, solo suma `num_asistentes` cuando el préstamo está 'Completado' o 'En curso'
+     *    (nunca suma reservas 'Pendiente' o 'Reservado' que aún no tienen asistencia).
+     */
+    protected function effectiveAttendeesSql(): string
+    {
+        return "CASE
+            WHEN COALESCE(psp_counts.real_count, 0) > 0 THEN psp_counts.real_count
+            WHEN prestamo_sala.estado IN ('Completado', 'En curso') THEN COALESCE(prestamo_sala.num_asistentes, 0)
+            ELSE 0
+        END";
+    }
+
+    /**
      * Resumen completo de métricas del Dashboard con soporte de ámbitos y períodos.
      *
      * @param  array|int|null  $params  Filtros del dashboard (point_id, zona, periodo, fecha_desde, fecha_hasta)
@@ -244,28 +275,35 @@ class StatsService
         $visitasHoy = (clone $visitasQuery)->whereBetween('created_at', [$todayStart, $todayEnd])->count();
         $visitasAyer = (clone $visitasQuery)->whereBetween('created_at', [$yesterdayStart, $yesterdayEnd])->count();
 
-        // Préstamos de salas en el período
-        $prestamosQuery = RoomLoan::query();
+        // Préstamos de salas en el período (excluye Cancelados/Rechazados; suma participantes reales o aforo si ya está Completado/En curso)
+        $prestamosQuery = $this->withEffectiveRoomLoanAttendees(RoomLoan::query());
         if ($targetPointIds) {
             $prestamosQuery->where(function ($sub) use ($targetPointIds) {
-                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+                $sub->whereIn('prestamo_sala.id_punto', $targetPointIds)->orWhereIn('prestamo_sala.id_puntos', $targetPointIds);
             });
         }
-        $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
+        $dateLoanCol = DB::raw('COALESCE(NULLIF(prestamo_sala.fecha_prestamo, "0000-00-00"), DATE(prestamo_sala.created_at))');
+        $effectiveSumExpr = "COALESCE(SUM({$this->effectiveAttendeesSql()}), 0) as total_eff";
+
         $prestamosPeriodo = (clone $prestamosQuery)
             ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereIn('prestamo_sala.estado', ['Completado', 'En curso', 'Reservado'])
             ->count();
-        $asistentesPeriodo = (int) (clone $prestamosQuery)
+        $asistentesPeriodo = (int) ((clone $prestamosQuery)
             ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
-            ->sum('num_asistentes');
-        $asistentesHoy = (int) (clone $prestamosQuery)
+            ->selectRaw($effectiveSumExpr)
+            ->value('total_eff') ?? 0);
+        $asistentesHoy = (int) ((clone $prestamosQuery)
             ->whereDate($dateLoanCol, Carbon::today())
-            ->sum('num_asistentes');
-        $asistentesAyer = (int) (clone $prestamosQuery)
+            ->selectRaw($effectiveSumExpr)
+            ->value('total_eff') ?? 0);
+        $asistentesAyer = (int) ((clone $prestamosQuery)
             ->whereDate($dateLoanCol, Carbon::yesterday())
-            ->sum('num_asistentes');
+            ->selectRaw($effectiveSumExpr)
+            ->value('total_eff') ?? 0);
         $prestamosHoy = (clone $prestamosQuery)
             ->whereDate($dateLoanCol, Carbon::today())
+            ->whereIn('prestamo_sala.estado', ['Completado', 'En curso'])
             ->count();
 
         // Total consolidado de atenciones (visitas individuales + asistentes a capacitaciones/cursos)
@@ -452,16 +490,18 @@ class StatsService
             ->toArray();
 
         // Préstamos por punto en el período
-        $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
-        $loansQuery = RoomLoan::whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()]);
+        $dateLoanCol = DB::raw('COALESCE(NULLIF(prestamo_sala.fecha_prestamo, "0000-00-00"), DATE(prestamo_sala.created_at))');
+        $loansQuery = $this->withEffectiveRoomLoanAttendees(
+            RoomLoan::whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
+        );
         if ($targetPointIds && count($targetPointIds) > 0) {
             $loansQuery->where(function ($sub) use ($targetPointIds) {
-                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+                $sub->whereIn('prestamo_sala.id_punto', $targetPointIds)->orWhereIn('prestamo_sala.id_puntos', $targetPointIds);
             });
         }
         $loansByPoint = $loansQuery
-            ->select(DB::raw('COALESCE(id_punto, id_puntos) as id_punto, count(*) as total_prestamos, sum(num_asistentes) as total_asistentes'))
-            ->groupBy(DB::raw('COALESCE(id_punto, id_puntos)'))
+            ->select(DB::raw("COALESCE(prestamo_sala.id_punto, prestamo_sala.id_puntos) as id_punto, count(*) as total_prestamos, COALESCE(SUM({$this->effectiveAttendeesSql()}), 0) as total_asistentes"))
+            ->groupBy(DB::raw('COALESCE(prestamo_sala.id_punto, prestamo_sala.id_puntos)'))
             ->get()
             ->keyBy('id_punto');
 
@@ -560,18 +600,18 @@ class StatsService
             $totalAtenciones += $count;
         }
 
-        // Incluir asistentes de Préstamos de Salas / Capacitaciones en el ranking
-        $loansQuery = RoomLoan::query();
+        // Incluir asistentes efectivos de Préstamos de Salas / Capacitaciones en el ranking
+        $loansQuery = $this->withEffectiveRoomLoanAttendees(RoomLoan::query());
         if ($targetPointIds) {
             $loansQuery->where(function ($sub) use ($targetPointIds) {
-                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+                $sub->whereIn('prestamo_sala.id_punto', $targetPointIds)->orWhereIn('prestamo_sala.id_puntos', $targetPointIds);
             });
         }
-        $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
+        $dateLoanCol = DB::raw('COALESCE(NULLIF(prestamo_sala.fecha_prestamo, "0000-00-00"), DATE(prestamo_sala.created_at))');
         $loanRows = $loansQuery
             ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
-            ->select('tipo_actividad', DB::raw('SUM(num_asistentes) as total_asistentes'))
-            ->groupBy('tipo_actividad')
+            ->select('prestamo_sala.tipo_actividad', DB::raw("COALESCE(SUM({$this->effectiveAttendeesSql()}), 0) as total_asistentes"))
+            ->groupBy('prestamo_sala.tipo_actividad')
             ->get();
 
         foreach ($loanRows as $lr) {
@@ -636,24 +676,25 @@ class StatsService
             ->count();
 
         // Sumar asistentes de préstamos de sala de tipo formativo (SENA, cursos, talleres, instituciones educativas)
-        $loansFormacionQuery = RoomLoan::query();
+        $loansFormacionQuery = $this->withEffectiveRoomLoanAttendees(RoomLoan::query());
         if ($targetPointIds) {
             $loansFormacionQuery->where(function ($sub) use ($targetPointIds) {
-                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+                $sub->whereIn('prestamo_sala.id_punto', $targetPointIds)->orWhereIn('prestamo_sala.id_puntos', $targetPointIds);
             });
         }
-        $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
-        $asistentesFormacionSalas = (int) $loansFormacionQuery
+        $dateLoanCol = DB::raw('COALESCE(NULLIF(prestamo_sala.fecha_prestamo, "0000-00-00"), DATE(prestamo_sala.created_at))');
+        $asistentesFormacionSalas = (int) ($loansFormacionQuery
             ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
             ->where(function ($q) {
-                $q->where('tipo_actividad', 'like', '%curso%')
-                    ->orWhere('tipo_actividad', 'like', '%formativ%')
-                    ->orWhere('tipo_actividad', 'like', '%capacita%')
-                    ->orWhere('tipo_actividad', 'like', '%taller%')
-                    ->orWhere('tipo_actividad', 'like', '%sena%')
-                    ->orWhere('tipo_actividad', 'like', '%educativ%');
+                $q->where('prestamo_sala.tipo_actividad', 'like', '%curso%')
+                    ->orWhere('prestamo_sala.tipo_actividad', 'like', '%formativ%')
+                    ->orWhere('prestamo_sala.tipo_actividad', 'like', '%capacita%')
+                    ->orWhere('prestamo_sala.tipo_actividad', 'like', '%taller%')
+                    ->orWhere('prestamo_sala.tipo_actividad', 'like', '%sena%')
+                    ->orWhere('prestamo_sala.tipo_actividad', 'like', '%educativ%');
             })
-            ->sum('num_asistentes');
+            ->selectRaw("COALESCE(SUM({$this->effectiveAttendeesSql()}), 0) as total_eff")
+            ->value('total_eff') ?? 0);
 
         $formacionVisitas += $asistentesFormacionSalas;
 
@@ -763,23 +804,27 @@ class StatsService
      */
     protected function calculateSalasStats(?array $targetPointIds, Carbon $startDate, Carbon $endDate): array
     {
-        $query = RoomLoan::query()
-            ->whereBetween('fecha_prestamo', [$startDate->toDateString(), $endDate->toDateString()]);
+        $dateLoanCol = DB::raw('COALESCE(NULLIF(prestamo_sala.fecha_prestamo, "0000-00-00"), DATE(prestamo_sala.created_at))');
+        $query = $this->withEffectiveRoomLoanAttendees(
+            RoomLoan::query()->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
+        );
 
         if ($targetPointIds) {
             $query->where(function ($sub) use ($targetPointIds) {
-                $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+                $sub->whereIn('prestamo_sala.id_punto', $targetPointIds)->orWhereIn('prestamo_sala.id_puntos', $targetPointIds);
             });
         }
 
         $totalEventos = (clone $query)->count();
-        $totalAsistentes = (int) (clone $query)->sum('num_asistentes');
+        $totalAsistentes = (int) ((clone $query)
+            ->selectRaw("COALESCE(SUM({$this->effectiveAttendeesSql()}), 0) as total_eff")
+            ->value('total_eff') ?? 0);
         $promedioAsistentes = $totalEventos > 0 ? round($totalAsistentes / $totalEventos) : 0;
 
         // Desglose por tipo de actividad
         $porTipo = (clone $query)
-            ->select('tipo_actividad', DB::raw('count(*) as eventos, sum(num_asistentes) as asistentes'))
-            ->groupBy('tipo_actividad')
+            ->select('prestamo_sala.tipo_actividad', DB::raw("count(*) as eventos, COALESCE(SUM({$this->effectiveAttendeesSql()}), 0) as asistentes"))
+            ->groupBy('prestamo_sala.tipo_actividad')
             ->get()
             ->map(function ($row) use ($totalEventos) {
                 return [
@@ -907,16 +952,17 @@ class StatsService
 
         // Sumar los asistentes a cursos y préstamos de sala a la categoría de Salas
         if (isset($catByKey['salas']) && isset($catCounts[$catByKey['salas']->id_categoria])) {
-            $loansQuery = RoomLoan::query();
+            $loansQuery = $this->withEffectiveRoomLoanAttendees(RoomLoan::query());
             if ($targetPointIds) {
                 $loansQuery->where(function ($sub) use ($targetPointIds) {
-                    $sub->whereIn('id_punto', $targetPointIds)->orWhereIn('id_puntos', $targetPointIds);
+                    $sub->whereIn('prestamo_sala.id_punto', $targetPointIds)->orWhereIn('prestamo_sala.id_puntos', $targetPointIds);
                 });
             }
-            $dateLoanCol = DB::raw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at))');
-            $asistentesSalas = (int) $loansQuery
+            $dateLoanCol = DB::raw('COALESCE(NULLIF(prestamo_sala.fecha_prestamo, "0000-00-00"), DATE(prestamo_sala.created_at))');
+            $asistentesSalas = (int) ($loansQuery
                 ->whereBetween($dateLoanCol, [$startDate->toDateString(), $endDate->toDateString()])
-                ->sum('num_asistentes');
+                ->selectRaw("COALESCE(SUM({$this->effectiveAttendeesSql()}), 0) as total_eff")
+                ->value('total_eff') ?? 0);
             $catCounts[$catByKey['salas']->id_categoria] += $asistentesSalas;
         }
 

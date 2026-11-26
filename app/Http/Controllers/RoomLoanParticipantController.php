@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Citizen;
 use App\Models\RoomLoan;
 use App\Models\RoomLoanParticipant;
+use App\Services\StatsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -106,6 +107,8 @@ class RoomLoanParticipantController extends Controller
 
         $participante->load('ciudadano:id_form_pvd,nombres,apellidos,documento');
 
+        StatsService::invalidateCache();
+
         return response()->json([
             'participante' => [
                 'id'                => $participante->id,
@@ -133,6 +136,8 @@ class RoomLoanParticipantController extends Controller
         }
 
         $participante->delete();
+
+        StatsService::invalidateCache();
 
         return response()->json(['ok' => true]);
     }
