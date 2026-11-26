@@ -86,10 +86,19 @@ class TrainingController extends Controller
             'requisitos' => 'nullable|string',
             'dirigido_a' => 'nullable|string|max:150',
             'imagen_url' => 'nullable|string|max:500',
+            'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
             'color_tema' => 'nullable|string|max:50',
             'activo' => 'boolean',
             'destacado' => 'boolean',
         ]);
+
+        if ($request->hasFile('imagen')) {
+            $file = $request->file('imagen');
+            $filename = 'curso_'.time().'_'.Str::lower(Str::random(6)).'.'.$file->getClientOriginalExtension();
+            $file->move(public_path('images/cursos'), $filename);
+            $validated['imagen_url'] = 'images/cursos/'.$filename;
+        }
+        unset($validated['imagen']);
 
         $validated['cupos_disponibles'] = $validated['cupos_totales'];
         $validated['slug'] = Str::slug($validated['titulo']).'-'.Str::lower(Str::random(5));
@@ -129,10 +138,19 @@ class TrainingController extends Controller
             'requisitos' => 'nullable|string',
             'dirigido_a' => 'nullable|string|max:150',
             'imagen_url' => 'nullable|string|max:500',
+            'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
             'color_tema' => 'nullable|string|max:50',
             'activo' => 'boolean',
             'destacado' => 'boolean',
         ]);
+
+        if ($request->hasFile('imagen')) {
+            $file = $request->file('imagen');
+            $filename = 'curso_'.time().'_'.Str::lower(Str::random(6)).'.'.$file->getClientOriginalExtension();
+            $file->move(public_path('images/cursos'), $filename);
+            $validated['imagen_url'] = 'images/cursos/'.$filename;
+        }
+        unset($validated['imagen']);
 
         // Ajustar cupos disponibles si cambiaron los totales
         if ($training->cupos_totales !== (int) $validated['cupos_totales']) {

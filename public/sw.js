@@ -1,6 +1,6 @@
 /* PuntoTIC Acacías - Service Worker PWA */
 const BASE_PATH = self.location.pathname.replace(/\/sw\.js$/, '');
-const CACHE_NAME = 'puntotic-pwa-v2.0.0';
+const CACHE_NAME = 'puntotic-pwa-v2.2.0';
 const OFFLINE_URL = `${BASE_PATH}/offline.html`;
 
 const PRECACHE_ASSETS = [
