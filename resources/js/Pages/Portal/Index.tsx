@@ -70,7 +70,8 @@ interface RoomLoanItem {
 }
 
 interface CalendarLoanItem {
-    id_prestamo: number;
+    id?: number;
+    id_prestamo: number | null;
     id_punto: number;
     id_form_pvd: number | null;
     tipo_actividad: string;
@@ -94,7 +95,8 @@ interface VisitItem {
         nombre_punto: string;
     };
     categoria?: {
-        nombre_categoria: string;
+        nombre?: string;
+        nombre_categoria?: string;
     };
 }
 
@@ -146,6 +148,9 @@ const HORAS_PREDEFINIDAS = [
     { inicio: '16:00', fin: '18:00', label: '04:00 - 06:00 PM (2h)', turno: 'Tarde' },
 ];
 
+const formatLocalDate = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 export default function PortalIndex({
     ciudadano,
     stats,
@@ -164,9 +169,12 @@ export default function PortalIndex({
     const [selectedOccupiedDetail, setSelectedOccupiedDetail] = useState<CalendarLoanItem | null>(null);
     const [activeTab, setActiveTab] = useState<'calendario' | 'solicitudes' | 'visitas'>('calendario');
 
+    const nowLocal = new Date();
+    const localMonthStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}`;
+
     // Estado del mes y filtro de sede para el calendario
     const [currentMonthStr, setCurrentMonthStr] = useState<string>(
-        selectedMonth || new Date().toISOString().substring(0, 7)
+        selectedMonth || localMonthStr
     );
     const [pointFilter, setPointFilter] = useState<number | null>(selectedPunto || null);
 
@@ -174,10 +182,9 @@ export default function PortalIndex({
     const [consultandoDisponibilidad, setConsultandoDisponibilidad] = useState(false);
     const [prestamosOcupados, setPrestamosOcupados] = useState<Array<any>>([]);
 
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const defaultDate = tomorrow.toISOString().split('T')[0];
-    const todayDateStr = new Date().toISOString().substring(0, 10);
+    const tomorrow = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), nowLocal.getDate() + 1);
+    const defaultDate = formatLocalDate(tomorrow);
+    const todayDateStr = formatLocalDate(nowLocal);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         id_punto: puntos[0]?.id_punto || 1,
@@ -759,7 +766,7 @@ export default function PortalIndex({
 
                                                         return (
                                                             <button
-                                                                key={loan.id_prestamo}
+                                                                key={loan.id_prestamo ?? loan.id ?? `${item.dateStr}-${loan.hora_inicio}`}
                                                                 type="button"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -935,7 +942,7 @@ export default function PortalIndex({
                                                 </td>
                                                 <td className="py-3.5 px-4 whitespace-nowrap">
                                                     <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700">
-                                                        {v.categoria?.nombre_categoria || 'Servicios TIC'}
+                                                        {v.categoria?.nombre || v.categoria?.nombre_categoria || 'Servicios TIC'}
                                                     </span>
                                                 </td>
                                                 <td className="py-3.5 px-5 text-right font-mono text-slate-600 whitespace-nowrap">
@@ -1117,6 +1124,17 @@ export default function PortalIndex({
 
                         {/* Modal Form */}
                         <form onSubmit={handleSubmit} className="overflow-y-auto p-1 space-y-4 my-2 text-xs">
+                            {Object.keys(errors).length > 0 && (
+                                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] space-y-1">
+                                    <p className="font-bold">Por favor corrige lo siguiente:</p>
+                                    <ul className="list-disc pl-4 space-y-0.5">
+                                        {Object.entries(errors).map(([field, msg]) => (
+                                            <li key={field}>{msg}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
                             {/* Selector de Sede */}
                             <div>
                                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
@@ -1133,6 +1151,11 @@ export default function PortalIndex({
                                         </option>
                                     ))}
                                 </select>
+                                {errors.id_punto && (
+                                    <span className="text-[10px] text-rose-600 font-bold block mt-1">
+                                        {errors.id_punto}
+                                    </span>
+                                )}
                                 {selectedPointInfo && (
                                     <div className="mt-1 text-[11px] text-slate-500 flex items-center gap-1">
                                         <MapPin className="w-3 h-3 text-slate-400" />
@@ -1153,6 +1176,11 @@ export default function PortalIndex({
                                     onChange={(e) => setData('fecha_prestamo', e.target.value)}
                                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 />
+                                {errors.fecha_prestamo && (
+                                    <span className="text-[10px] text-rose-600 font-bold block mt-1">
+                                        {errors.fecha_prestamo}
+                                    </span>
+                                )}
                             </div>
 
                             {/* Selector Visual de Franjas Horarias del Día */}
@@ -1269,6 +1297,11 @@ export default function PortalIndex({
                                             </option>
                                         ))}
                                     </select>
+                                    {errors.tipo_actividad && (
+                                        <span className="text-[10px] text-rose-600 font-bold block mt-1">
+                                            {errors.tipo_actividad}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div>
@@ -1283,6 +1316,11 @@ export default function PortalIndex({
                                         onChange={(e) => setData('num_asistentes', Number(e.target.value))}
                                         className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                     />
+                                    {errors.num_asistentes && (
+                                        <span className="text-[10px] text-rose-600 font-bold block mt-1">
+                                            {errors.num_asistentes}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 

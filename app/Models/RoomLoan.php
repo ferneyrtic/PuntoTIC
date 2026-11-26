@@ -84,11 +84,22 @@ class RoomLoan extends Model
                 }
             }
         });
+
+        static::created(function ($loan) {
+            $cols = static::getTableColumns();
+            if (in_array('id_prestamo', $cols, true) && empty($loan->attributes['id_prestamo']) && ! empty($loan->id)) {
+                \Illuminate\Support\Facades\DB::table('prestamo_sala')
+                    ->where('id', $loan->id)
+                    ->update(['id_prestamo' => $loan->id]);
+                $loan->attributes['id_prestamo'] = $loan->id;
+            }
+        });
     }
 
     protected $fillable = [
         'id_form_pvd',
         'nombre_responsable_texto',
+        'telefono',
         'id_punto',
         'id_gestor',
         'tipo_actividad',

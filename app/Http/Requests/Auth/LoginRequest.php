@@ -66,23 +66,48 @@ class LoginRequest extends FormRequest
                 }
             }
         } else {
+            // Normalizar posibles puntos o espacios en el documento (ej. 1.121.000.999)
+            $digitsOnly = preg_replace('/\D/', '', $login);
+
             // 1. Intentar autenticación por documento directo en users
             $authenticated = Auth::attempt(['documento' => $login, 'password' => $password], $remember);
 
-            // 2. Si no autenticó, buscar si el documento está en form_pvd y encontrar el usuario
-            if (! $authenticated) {
-                $citizen = Citizen::where('documento', $login)->first();
-                if ($citizen) {
-                    $user = User::where('id_form_pvd', $citizen->id)
-                        ->orWhere('documento', $login)
-                        ->first();
+            if (! $authenticated && $digitsOnly !== '' && $digitsOnly !== $login) {
+                $authenticated = Auth::attempt(['documento' => $digitsOnly, 'password' => $password], $remember);
+            }
 
-                    if ($user && Hash::check($password, $user->password)) {
-                        Auth::login($user, $remember);
-                        $authenticated = true;
-                    }
+            // 2. Si no autenticó, buscar en form_pvd (incluyendo registros históricos) o en users por id_form_pvd
+            if (! $authenticated) {
+                $docLookup = $digitsOnly !== '' ? $digitsOnly : $login;
+                $citizen = Citizen::where('documento', $login)
+                    ->when($docLookup !== $login, fn ($q) => $q->orWhere('documento', $docLookup))
+                    ->orWhere('id_form_pvd', $docLookup)
+                    ->when(ctype_digit((string) $docLookup), fn ($q) => $q->orWhere('id', (int) $docLookup))
+                    ->first();
+
+                $user = User::query()
+                    ->where('documento', $login)
+                    ->when($docLookup !== $login, fn ($q) => $q->orWhere('documento', $docLookup))
+                    ->when($citizen, function ($q) use ($citizen) {
+                        $q->orWhere('id_form_pvd', $citizen->id)
+                            ->when($citizen->id_form_pvd, fn ($sub) => $sub->orWhere('id_form_pvd', $citizen->id_form_pvd));
+                    })
+                    ->first();
+
+                if ($user && Hash::check($password, $user->password)) {
+                    Auth::login($user, $remember);
+                    $authenticated = true;
                 }
             }
+        }
+
+        if ($authenticated && Auth::user()?->activo === false) {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Esta cuenta se encuentra desactivada. Comunícate con la coordinación TIC.',
+            ]);
         }
 
         if (! $authenticated) {
@@ -112,10 +137,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'email' => "Demasiados intentos de inicio de sesión. Por favor intenta nuevamente en {$seconds} segundos.",
         ]);
     }
 

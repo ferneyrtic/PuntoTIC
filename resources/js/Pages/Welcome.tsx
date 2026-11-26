@@ -226,12 +226,20 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                                     Espacios con computadores y proyector para reuniones comunitarias, juntas de acción comunal o talleres.
                                 </p>
                             </div>
-                            <Link
-                                href={route('register')}
-                                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-sm font-semibold transition-colors shrink-0"
-                            >
-                                Apartar Sala
-                            </Link>
+                            <div className="flex flex-wrap items-center gap-2 shrink-0">
+                                <Link
+                                    href={`${route('login')}?mode=ciudadanos`}
+                                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#1B6B35] hover:bg-[#145328] text-white text-sm font-semibold transition-colors"
+                                >
+                                    Ingresar y Apartar
+                                </Link>
+                                <Link
+                                    href={route('register')}
+                                    className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 text-sm font-semibold transition-colors"
+                                >
+                                    Registrarme
+                                </Link>
+                            </div>
                         </div>
 
                         {/* 3 Pasos Simples */}

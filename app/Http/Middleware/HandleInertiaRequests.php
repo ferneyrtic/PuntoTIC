@@ -49,7 +49,7 @@ class HandleInertiaRequests extends Middleware
                 600,
                 fn () => Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona'])->toArray()
             ),
-            'catalogs' => fn () => $user ? Cache::remember(
+            'catalogs' => fn () => Cache::remember(
                 'shared_demographics_catalogs_v1',
                 600,
                 function () {
@@ -76,7 +76,7 @@ class HandleInertiaRequests extends Middleware
                         'grupos_poblacionales' => $grupos,
                     ];
                 }
-            ) : ['barrios' => [], 'grupos_poblacionales' => []],
+            ),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

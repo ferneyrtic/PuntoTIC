@@ -165,7 +165,8 @@ class User extends Authenticatable
 
     public function getEsUsuarioCiudadanoAttribute(): bool
     {
-        return $this->hasRole(['Usuario', 'Ciudadano']);
+        return $this->hasRole(['Usuario', 'Ciudadano'])
+            || in_array(mb_strtolower(trim((string) $this->cargo)), ['ciudadano', 'ciudadano registrado'], true);
     }
 
     public function isAdmin(): bool
@@ -275,7 +276,11 @@ class User extends Authenticatable
             return null;
         }
 
-        $citizen = Citizen::where('documento', $doc)->first();
+        $numericDoc = preg_replace('/\D/', '', (string) $doc);
+        $citizen = Citizen::where('documento', $doc)
+            ->orWhere('id_form_pvd', $doc)
+            ->when(! empty($numericDoc), fn ($q) => $q->orWhere('id', (int) $numericDoc))
+            ->first();
 
         if (! $citizen) {
             $parts = explode(' ', trim($this->name));

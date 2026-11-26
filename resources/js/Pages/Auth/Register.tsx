@@ -21,6 +21,8 @@ import {
     Users,
 } from 'lucide-react';
 import { asset } from '@/utils/asset';
+import BarrioInput from '@/Components/BarrioInput';
+import GrupoPoblacionalSelect from '@/Components/GrupoPoblacionalSelect';
 
 interface Props {
     documentTypes: Array<{ id_tipo: number; nombre_tipo: string; sigla: string }>;
@@ -115,8 +117,8 @@ export default function Register({ documentTypes = [], points = [] }: Props) {
                             <p className="text-xs text-emerald-100 font-medium">Todos los campos con (*) son obligatorios</p>
                         </div>
                         <Link
-                            href={route('login')}
-                            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all border border-white/20"
+                            href={`${route('login')}?mode=ciudadanos`}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all border border-white/20 shrink-0"
                         >
                             <ArrowLeft className="w-3.5 h-3.5" />
                             <span>Ya tengo cuenta</span>
@@ -124,6 +126,16 @@ export default function Register({ documentTypes = [], points = [] }: Props) {
                     </div>
 
                     <form onSubmit={submit} className="p-6 sm:p-8 space-y-8">
+                        {Object.keys(errors).length > 0 && (
+                            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs space-y-1">
+                                <p className="font-bold">Revisa los siguientes datos antes de continuar:</p>
+                                <ul className="list-disc pl-4 space-y-0.5">
+                                    {Object.entries(errors).map(([field, msg]) => (
+                                        <li key={field}>{msg}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                         {/* SECCIÓN 1: IDENTIFICACIÓN PERSONAL */}
                         <div>
                             <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 mb-4">
@@ -320,7 +332,10 @@ export default function Register({ documentTypes = [], points = [] }: Props) {
                                             {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                         </button>
                                     </div>
-                                    {errors.password && <p className="text-[11px] text-rose-500 mt-1">{errors.password}</p>}
+                                    <p className="text-[10px] text-slate-400 mt-1">
+                                        Debe tener mínimo 8 caracteres, incluyendo mayúscula, minúscula, número y un símbolo (ej. @ # ! *).
+                                    </p>
+                                    {errors.password && <p className="text-[11px] text-rose-500 mt-1 font-semibold">{errors.password}</p>}
                                 </div>
 
                                 <div className="md:col-span-2">
@@ -345,6 +360,9 @@ export default function Register({ documentTypes = [], points = [] }: Props) {
                                             {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                         </button>
                                     </div>
+                                    {errors.password_confirmation && (
+                                        <p className="text-[11px] text-rose-500 mt-1 font-semibold">{errors.password_confirmation}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -380,13 +398,11 @@ export default function Register({ documentTypes = [], points = [] }: Props) {
                                     <label className="block text-xs font-bold text-slate-700 mb-1">
                                         Barrio o Vereda *
                                     </label>
-                                    <input
-                                        type="text"
+                                    <BarrioInput
                                         value={data.barrio}
-                                        onChange={(e) => setData('barrio', e.target.value)}
-                                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
-                                        placeholder="Ej. Centro, Dinamarca"
-                                        required
+                                        onChange={(val) => setData('barrio', val)}
+                                        placeholder="Buscar o escribir barrio / vereda..."
+                                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none bg-white"
                                     />
                                     {errors.barrio && <p className="text-[11px] text-rose-500 mt-1">{errors.barrio}</p>}
                                 </div>
@@ -502,20 +518,11 @@ export default function Register({ documentTypes = [], points = [] }: Props) {
                                     <label className="block text-xs font-bold text-slate-700 mb-1">
                                         Grupo Poblacional (Enfoque Diferencial)
                                     </label>
-                                    <select
+                                    <GrupoPoblacionalSelect
                                         value={data.g_poblacional}
-                                        onChange={(e) => setData('g_poblacional', e.target.value)}
-                                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
-                                    >
-                                        <option value="Ninguno">Ninguno</option>
-                                        <option value="Víctima del conflicto armado">Víctima del conflicto armado</option>
-                                        <option value="Discapacidad">Persona con Discapacidad</option>
-                                        <option value="Adulto mayor">Adulto mayor</option>
-                                        <option value="Joven / Juventud">Jóvenes (14-28 años)</option>
-                                        <option value="Madre cabeza de familia">Madre cabeza de familia</option>
-                                        <option value="Comunidad LGBTIQ+">Comunidad LGBTIQ+</option>
-                                        <option value="Migrante">Población Migrante</option>
-                                    </select>
+                                        onChange={(val) => setData('g_poblacional', val)}
+                                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none bg-white"
+                                    />
                                 </div>
 
                                 <div>

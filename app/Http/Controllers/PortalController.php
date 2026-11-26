@@ -84,10 +84,14 @@ class PortalController extends Controller
         $calendarLoans = RoomLoan::with('punto:id_punto,nombre_punto')
             ->whereBetween('fecha_prestamo', [$monthStart, $monthEnd])
             ->whereIn('estado', ['Pendiente', 'Reservado', 'En curso'])
-            ->when($selectedPunto, fn ($q, $p) => $q->where('id_punto', $p))
+            ->when($selectedPunto, fn ($q, $p) => $q->where(function ($sub) use ($p) {
+                $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
+            }))
             ->get([
+                'id',
                 'id_prestamo',
                 'id_punto',
+                'id_puntos',
                 'id_form_pvd',
                 'tipo_actividad',
                 'fecha_prestamo',
@@ -130,15 +134,19 @@ class PortalController extends Controller
             'fecha' => ['required', 'date'],
         ]);
 
-        $prestamos = RoomLoan::where('id_punto', $request->id_punto)
+        $puntoId = (int) $request->id_punto;
+
+        $prestamos = RoomLoan::where(function ($q) use ($puntoId) {
+            $q->where('id_punto', $puntoId)->orWhere('id_puntos', $puntoId);
+        })
             ->whereDate('fecha_prestamo', $request->fecha)
             ->whereIn('estado', ['Pendiente', 'Reservado', 'En curso'])
             ->orderBy('hora_inicio')
-            ->get(['id_prestamo', 'hora_inicio', 'hora_fin', 'tipo_actividad', 'estado']);
+            ->get(['id', 'id_prestamo', 'hora_inicio', 'hora_fin', 'tipo_actividad', 'estado']);
 
         return response()->json([
             'fecha' => $request->fecha,
-            'id_punto' => (int) $request->id_punto,
+            'id_punto' => $puntoId,
             'ocupados' => $prestamos,
         ]);
     }
@@ -156,6 +164,12 @@ class PortalController extends Controller
             $user->refresh();
         }
 
+        // Normalizar horas en caso de recibir formato HH:MM:SS desde el navegador
+        $request->merge([
+            'hora_inicio' => substr((string) $request->input('hora_inicio'), 0, 5),
+            'hora_fin' => substr((string) $request->input('hora_fin'), 0, 5),
+        ]);
+
         $validated = $request->validate([
             'id_punto' => ['required', 'exists:puntos_vd,id_punto'],
             'tipo_actividad' => ['required', 'string', 'max:150'],
@@ -165,15 +179,33 @@ class PortalController extends Controller
             'hora_fin' => ['required', 'date_format:H:i', 'after:hora_inicio'],
             'motivo' => ['required', 'string', 'min:5', 'max:1000'],
         ], [
+            'id_punto.required' => 'Debes seleccionar una sede o Punto Vive Digital.',
+            'id_punto.exists' => 'La sede seleccionada no es válida.',
+            'tipo_actividad.required' => 'Debes seleccionar la categoría de actividad.',
+            'num_asistentes.required' => 'Indica la cantidad estimada de asistentes.',
+            'num_asistentes.min' => 'Debe asistir al menos 1 persona.',
+            'num_asistentes.max' => 'El aforo máximo permitido es de 300 personas.',
+            'fecha_prestamo.required' => 'Selecciona la fecha en la que necesitas la sala.',
             'fecha_prestamo.after_or_equal' => 'La fecha de la solicitud no puede ser anterior al día de hoy.',
+            'hora_inicio.required' => 'Indica la hora de inicio.',
+            'hora_inicio.date_format' => 'El formato de la hora de inicio no es válido.',
+            'hora_fin.required' => 'Indica la hora de finalización.',
+            'hora_fin.date_format' => 'El formato de la hora final no es válido.',
             'hora_fin.after' => 'La hora final debe ser posterior a la hora de inicio.',
-            'motivo.min' => 'Por favor describe con más detalle para qué requieres el espacio.',
+            'motivo.required' => 'Describe el motivo para el cual solicitas la sala.',
+            'motivo.min' => 'Por favor describe con más detalle para qué requieres el espacio (mínimo 5 caracteres).',
         ]);
 
+        $puntoId = (int) $validated['id_punto'];
+
         // Verificar disponibilidad (Overlap check)
-        $solape = RoomLoan::where('id_punto', $validated['id_punto'])
+        $solape = RoomLoan::where(function ($q) use ($puntoId) {
+            $q->where('id_punto', $puntoId)->orWhere('id_puntos', $puntoId);
+        })
             ->whereDate('fecha_prestamo', $validated['fecha_prestamo'])
             ->whereIn('estado', ['Pendiente', 'Reservado', 'En curso'])
+            ->whereNotNull('hora_inicio')
+            ->whereNotNull('hora_fin')
             ->where(function ($q) use ($validated) {
                 $inicio = $validated['hora_inicio'];
                 $fin = $validated['hora_fin'];
@@ -193,7 +225,8 @@ class PortalController extends Controller
         $loan = RoomLoan::create([
             'id_form_pvd' => $user->id_form_pvd,
             'nombre_responsable_texto' => $user->name,
-            'id_punto' => $validated['id_punto'],
+            'telefono' => $user->telefono ?? $user->ciudadano?->telefono ?? '3000000000',
+            'id_punto' => $puntoId,
             'id_gestor' => null, // Pendiente de confirmación del gestor
             'tipo_actividad' => $validated['tipo_actividad'],
             'num_asistentes' => $validated['num_asistentes'],
@@ -204,20 +237,24 @@ class PortalController extends Controller
             'estado' => 'Pendiente',
         ]);
 
-        AuditLog::registrar(
-            accion: 'SOLICITUD_SALA_CIUDADANO',
-            modulo: 'prestamos',
-            registroId: (string) $loan->id_prestamo,
-            antiguos: null,
-            nuevos: [
-                'usuario' => $user->name,
-                'cedula' => $user->documento,
-                'punto' => $validated['id_punto'],
-                'fecha' => $validated['fecha_prestamo'],
-                'horario' => "{$validated['hora_inicio']} - {$validated['hora_fin']}",
-                'motivo' => $validated['motivo'],
-            ]
-        );
+        try {
+            AuditLog::registrar(
+                accion: 'SOLICITUD_SALA_CIUDADANO',
+                modulo: 'prestamos',
+                registroId: (string) ($loan->id_prestamo ?? $loan->id),
+                antiguos: null,
+                nuevos: [
+                    'usuario' => $user->name,
+                    'cedula' => $user->documento,
+                    'punto' => $puntoId,
+                    'fecha' => $validated['fecha_prestamo'],
+                    'horario' => "{$validated['hora_inicio']} - {$validated['hora_fin']}",
+                    'motivo' => $validated['motivo'],
+                ]
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('AuditLog SOLICITUD_SALA_CIUDADANO failed: '.$e->getMessage());
+        }
 
         return redirect()->route('portal.index')
             ->with('success', '¡Tu solicitud de sala fue enviada con éxito! El administrador del punto la revisará para su confirmación.');

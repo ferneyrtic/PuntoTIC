@@ -112,7 +112,7 @@ class DashboardController extends Controller
 
     public function index(Request $request): Response|RedirectResponse
     {
-        if ($request->user()?->hasRole(['Usuario', 'Ciudadano'])) {
+        if ($request->user()?->hasRole(['Usuario', 'Ciudadano']) || $request->user()?->es_usuario_ciudadano) {
             return redirect()->route('portal.index');
         }
 

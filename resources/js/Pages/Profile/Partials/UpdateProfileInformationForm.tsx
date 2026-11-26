@@ -5,6 +5,8 @@ import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import BarrioInput from '@/Components/BarrioInput';
+import GrupoPoblacionalSelect from '@/Components/GrupoPoblacionalSelect';
 import {
     User,
     Mail,
@@ -176,14 +178,14 @@ export default function UpdateProfileInformation({
 
                         <div>
                             <InputLabel htmlFor="barrio" value="Barrio o Vereda" className="text-xs font-bold text-slate-700" />
-                            <TextInput
-                                id="barrio"
-                                type="text"
-                                placeholder="Ej: Centro, Dinamarca, Chichimene..."
-                                className="mt-1 block w-full text-xs rounded-xl"
-                                value={data.barrio}
-                                onChange={(e) => setData('barrio', e.target.value)}
-                            />
+                            <div className="mt-1">
+                                <BarrioInput
+                                    value={data.barrio}
+                                    onChange={(val) => setData('barrio', val)}
+                                    placeholder="Ej: Centro, Dinamarca, Chichimene..."
+                                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none bg-white"
+                                />
+                            </div>
                             <InputError className="mt-1 text-xs" message={errors.barrio} />
                         </div>
 
@@ -221,18 +223,11 @@ export default function UpdateProfileInformation({
                             <label className="block text-xs font-bold text-slate-700 mb-1">
                                 Grupo Poblacional / Enfoque
                             </label>
-                            <select
+                            <GrupoPoblacionalSelect
                                 value={data.g_poblacional}
-                                onChange={(e) => setData('g_poblacional', e.target.value)}
-                                className="w-full text-xs rounded-xl border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none p-2.5 font-medium"
-                            >
-                                <option value="Ninguno">Ninguno</option>
-                                <option value="Víctima del Conflicto">Víctima del Conflicto</option>
-                                <option value="Persona con Discapacidad">Persona con Discapacidad</option>
-                                <option value="Madre Cabeza de Hogar">Madre Cabeza de Hogar</option>
-                                <option value="Adulto Mayor">Adulto Mayor</option>
-                                <option value="Jóvenes">Jóvenes</option>
-                            </select>
+                                onChange={(val) => setData('g_poblacional', val)}
+                                className="w-full text-xs rounded-xl border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none p-2.5 font-medium bg-white"
+                            />
                             <InputError className="mt-1 text-xs" message={errors.g_poblacional} />
                         </div>
 

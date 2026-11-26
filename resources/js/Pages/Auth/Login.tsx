@@ -15,7 +15,11 @@ import {
 import { asset } from '@/utils/asset';
 
 export default function Login({ status }: { status?: string }) {
-    const [mode, setMode] = useState<'gestores' | 'ciudadanos'>('gestores');
+    const initialMode: 'gestores' | 'ciudadanos' =
+        typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'ciudadanos'
+            ? 'ciudadanos'
+            : 'gestores';
+    const [mode, setMode] = useState<'gestores' | 'ciudadanos'>(initialMode);
     const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -140,14 +144,14 @@ export default function Login({ status }: { status?: string }) {
                                 {errors.email && <p className="text-[11px] text-rose-500 font-medium mt-1.5">{errors.email}</p>}
                             </div>
                         ) : (
-                            /* MODO CIUDADANOS: CÉDULA / DOCUMENTO */
+                            /* MODO CIUDADANOS: CÉDULA / DOCUMENTO O CORREO */
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
                                     <label className="block text-xs font-bold text-slate-700">
-                                        Número de Cédula o Documento
+                                        Número de Cédula o Correo Electrónico
                                     </label>
                                     <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold border border-emerald-200/60">
-                                        Cédula o TI
+                                        Cédula, TI o Correo
                                     </span>
                                 </div>
                                 <div className="relative">
@@ -157,7 +161,7 @@ export default function Login({ status }: { status?: string }) {
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
                                         className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
-                                        placeholder="Ej. 1121000999"
+                                        placeholder="Ej. 1121000999 o tucorreo@ejemplo.com"
                                         required
                                         autoComplete="username"
                                     />
@@ -221,15 +225,29 @@ export default function Login({ status }: { status?: string }) {
 
                         {/* LLAMADO A REGISTRO PARA CIUDADANOS */}
                         {mode === 'ciudadanos' && (
-                            <div className="mt-4 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center text-xs">
-                                <span className="text-slate-500 block mb-1.5">¿Primera vez solicitando una sala?</span>
-                                <Link
-                                    href={route('register')}
-                                    className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-700 hover:text-emerald-800 hover:underline"
-                                >
-                                    <UserPlus className="w-3.5 h-3.5" />
-                                    <span>Realiza tu registro ciudadano aquí →</span>
-                                </Link>
+                            <div className="mt-4 space-y-2">
+                                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center text-xs">
+                                    <span className="text-slate-500 block mb-1.5">¿Primera vez solicitando una sala?</span>
+                                    <Link
+                                        href={route('register')}
+                                        className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-700 hover:text-emerald-800 hover:underline"
+                                    >
+                                        <UserPlus className="w-3.5 h-3.5" />
+                                        <span>Realiza tu registro ciudadano aquí →</span>
+                                    </Link>
+                                </div>
+                                <p className="text-[11px] text-center text-slate-400">
+                                    ¿Olvidaste tu contraseña? Solicita apoyo por WhatsApp TIC al{' '}
+                                    <a
+                                        href="https://wa.me/573213618632"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-emerald-700 font-semibold hover:underline"
+                                    >
+                                        +57 321 361 8632
+                                    </a>
+                                    .
+                                </p>
                             </div>
                         )}
                     </form>
