@@ -226,7 +226,19 @@ class Citizen extends Model
 
     public function scopeFilterByZone(Builder $query, ?string $zone): Builder
     {
-        return $zone ? $query->where('zona', $zone) : $query;
+        if (! $zone) {
+            return $query;
+        }
+
+        if (strcasecmp(trim($zone), 'Urbana') === 0 || strcasecmp(trim($zone), 'Urbano') === 0) {
+            return $query->whereIn('zona', ['Urbana', 'URBANA', 'Urbano', 'URBANO', 'urbana', 'urbano']);
+        }
+
+        if (strcasecmp(trim($zone), 'Rural') === 0) {
+            return $query->whereIn('zona', ['Rural', 'RURAL', 'rural']);
+        }
+
+        return $query->where('zona', $zone);
     }
 
     public function scopeInactiveLongerThan(Builder $query, int $days = 60): Builder

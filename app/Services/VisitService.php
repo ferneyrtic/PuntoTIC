@@ -40,11 +40,16 @@ class VisitService
 
         if (! empty($filters['search'])) {
             $term = trim($filters['search']);
-            $query->whereHas('ciudadano', function ($q) use ($term) {
-                $q->where('documento', 'like', "%{$term}%")
-                  ->orWhere('id', 'like', "%{$term}%")
-                  ->orWhere('nombres', 'like', "%{$term}%")
-                  ->orWhere('apellidos', 'like', "%{$term}%");
+            $query->where(function ($outer) use ($term) {
+                $outer->whereHas('ciudadano', function ($q) use ($term) {
+                    $q->where('documento', 'like', "%{$term}%")
+                        ->orWhere('id', 'like', "%{$term}%")
+                        ->orWhere('nombres', 'like', "%{$term}%")
+                        ->orWhere('apellidos', 'like', "%{$term}%");
+                })
+                ->orWhere('servicio', 'like', "%{$term}%")
+                ->orWhere('servicio_texto', 'like', "%{$term}%")
+                ->orWhere('descripcion', 'like', "%{$term}%");
             });
         }
 

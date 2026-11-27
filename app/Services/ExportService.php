@@ -281,7 +281,29 @@ class ExportService
             $query->where('v.id_punto', $filters['id_punto']);
         }
         if (! empty($filters['id_categoria'])) {
-            $query->where('v.id_categoria', $filters['id_categoria']);
+            $catInt = (int) $filters['id_categoria'];
+            $legacyPatterns = match ($catInt) {
+                63 => ['%tramite%', '%trámite%', '%certificado%', '%sisben%', '%sisbén%', '%gobierno digital%'],
+                64 => ['%sala de inform%', '%conectividad%', '%internet%', '%refuerzo%', '%navega%'],
+                65 => ['%impresi%', '%fotocopi%', '%escan%', '%digitaliz%'],
+                66 => ['%capacita%', '%taller%', '%curso%', '%formaci%', '%alfabetiz%'],
+                67 => ['%salón%', '%salon%', '%prestamo%', '%préstamo%', '%entretenimiento%', '%reuni%'],
+                default => [],
+            };
+            $query->where(function ($q) use ($catInt, $legacyPatterns) {
+                $q->where('v.id_categoria', $catInt);
+                if (! empty($legacyPatterns)) {
+                    $q->orWhere(function ($sub) use ($legacyPatterns) {
+                        $sub->whereNull('v.id_categoria')
+                            ->where(function ($textQ) use ($legacyPatterns) {
+                                foreach ($legacyPatterns as $pat) {
+                                    $textQ->orWhere('v.servicio', 'like', $pat)
+                                        ->orWhere('v.servicio_texto', 'like', $pat);
+                                }
+                            });
+                    });
+                }
+            });
         }
 
         $query->orderByDesc('v.created_at');

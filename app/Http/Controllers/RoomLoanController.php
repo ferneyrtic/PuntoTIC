@@ -26,21 +26,26 @@ class RoomLoanController extends Controller
             $filters['id_punto'] = (int) $user->id_punto;
         }
 
-        $loans = RoomLoan::with(['ciudadano', 'punto', 'gestor', 'participantes.ciudadano'])
-            ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
-            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
-                $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
+        $applyFilters = function ($q) use ($filters) {
+            $q->when($filters['id_punto'] ?? null, fn ($sub, $p) => $sub->where(function ($pSub) use ($p) {
+                $pSub->where('id_punto', $p)->orWhere('id_puntos', $p);
             }))
-            ->when($filters['id_gestor'] ?? null, fn ($q, $g) => $q->where(function($sub) use ($g) {
-                $sub->where('id_gestor', $g)->orWhere('id_gestores', $g);
+            ->when($filters['id_gestor'] ?? null, fn ($sub, $g) => $sub->where(function ($gSub) use ($g) {
+                $gSub->where('id_gestor', $g)->orWhere('id_gestores', $g);
             }))
-            ->when($filters['estado'] ?? null, fn ($q, $e) => $q->where('estado', $e))
-            ->when($filters['tipo_actividad'] ?? null, fn ($q, $t) => $q->where('tipo_actividad', $t))
-            ->when($filters['search'] ?? null, function ($q, $search) {
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('nombre_responsable_texto', 'like', "%{$search}%")
+            ->when($filters['estado'] ?? null, fn ($sub, $e) => $sub->where('estado', $e))
+            ->when($filters['tipo_actividad'] ?? null, fn ($sub, $t) => $sub->where('tipo_actividad', $t))
+            ->when($filters['search'] ?? null, function ($sub, $search) {
+                $sub->where(function ($sSub) use ($search) {
+                    $sSub->where('nombre_responsable_texto', 'like', "%{$search}%")
                         ->orWhere('observaciones', 'like', "%{$search}%")
+                        ->orWhere('sala_espacio', 'like', "%{$search}%")
                         ->orWhereHas('ciudadano', function ($c) use ($search) {
+                            $c->where('nombres', 'like', "%{$search}%")
+                                ->orWhere('apellidos', 'like', "%{$search}%")
+                                ->orWhere('documento', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('participantes.ciudadano', function ($c) use ($search) {
                             $c->where('nombres', 'like', "%{$search}%")
                                 ->orWhere('apellidos', 'like', "%{$search}%")
                                 ->orWhere('documento', 'like', "%{$search}%");
@@ -51,7 +56,12 @@ class RoomLoanController extends Controller
                                 ->orWhere('email', 'like', "%{$search}%");
                         });
                 });
-            })
+            });
+        };
+
+        $loans = RoomLoan::with(['ciudadano', 'punto', 'gestor', 'participantes.ciudadano'])
+            ->dateBetween($filters['fecha_desde'] ?? null, $filters['fecha_hasta'] ?? null)
+            ->tap($applyFilters)
             ->orderByRaw('COALESCE(fecha_prestamo, DATE(created_at)) DESC')
             ->orderByDesc(in_array('id', RoomLoan::getTableColumns(), true) ? 'id' : 'id_prestamo')
             ->paginate(15)
@@ -89,13 +99,7 @@ class RoomLoanController extends Controller
 
         $calendarLoans = RoomLoan::with(['ciudadano', 'punto', 'gestor', 'participantes.ciudadano'])
             ->dateBetween($monthStart, $monthEnd)
-            ->when($filters['id_punto'] ?? null, fn ($q, $p) => $q->where(function($sub) use ($p) {
-                $sub->where('id_punto', $p)->orWhere('id_puntos', $p);
-            }))
-            ->when($filters['id_gestor'] ?? null, fn ($q, $g) => $q->where(function($sub) use ($g) {
-                $sub->where('id_gestor', $g)->orWhere('id_gestores', $g);
-            }))
-            ->when($filters['tipo_actividad'] ?? null, fn ($q, $t) => $q->where('tipo_actividad', $t))
+            ->tap($applyFilters)
             ->orderByRaw('COALESCE(NULLIF(fecha_prestamo, "0000-00-00"), DATE(created_at)) ASC')
             ->get();
 

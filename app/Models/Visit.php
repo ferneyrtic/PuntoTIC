@@ -162,6 +162,33 @@ class Visit extends Model
 
     public function scopeFilterByCategory(Builder $query, $catId): Builder
     {
-        return $catId ? $query->where('id_categoria', $catId) : $query;
+        if (! $catId) {
+            return $query;
+        }
+
+        $catInt = (int) $catId;
+        $legacyPatterns = match ($catInt) {
+            63 => ['%tramite%', '%trámite%', '%certificado%', '%sisben%', '%sisbén%', '%gobierno digital%'],
+            64 => ['%sala de inform%', '%conectividad%', '%internet%', '%refuerzo%', '%navega%'],
+            65 => ['%impresi%', '%fotocopi%', '%escan%', '%digitaliz%'],
+            66 => ['%capacita%', '%taller%', '%curso%', '%formaci%', '%alfabetiz%'],
+            67 => ['%salón%', '%salon%', '%prestamo%', '%préstamo%', '%entretenimiento%', '%reuni%'],
+            default => [],
+        };
+
+        return $query->where(function (Builder $q) use ($catInt, $legacyPatterns) {
+            $q->where('id_categoria', $catInt);
+            if (! empty($legacyPatterns)) {
+                $q->orWhere(function (Builder $sub) use ($legacyPatterns) {
+                    $sub->whereNull('id_categoria')
+                        ->where(function (Builder $textQ) use ($legacyPatterns) {
+                            foreach ($legacyPatterns as $pat) {
+                                $textQ->orWhere('servicio', 'like', $pat)
+                                    ->orWhere('servicio_texto', 'like', $pat);
+                            }
+                        });
+                });
+            }
+        });
     }
 }

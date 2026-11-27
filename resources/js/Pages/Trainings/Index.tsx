@@ -171,16 +171,26 @@ export default function TrainingsIndex({ trainings, points, categorias, filters 
         }
     };
 
-    const handleFilter = () => {
+    const handleFilter = (overrides?: { search?: string; categoria?: string; id_punto?: string | number }) => {
+        const nextSearch = overrides?.search !== undefined ? overrides.search : searchTerm;
+        const nextCat = overrides?.categoria !== undefined ? overrides.categoria : selectedCategory;
+        const nextPoint = overrides?.id_punto !== undefined ? overrides.id_punto : selectedPoint;
         router.get(
             route('capacitaciones.index'),
             {
-                search: searchTerm || undefined,
-                categoria: selectedCategory || undefined,
-                id_punto: selectedPoint || undefined,
+                search: nextSearch || undefined,
+                categoria: nextCat || undefined,
+                id_punto: nextPoint || undefined,
             },
             { preserveState: true, preserveScroll: true }
         );
+    };
+
+    const handleClearFilters = () => {
+        setSearchTerm('');
+        setSelectedCategory('');
+        setSelectedPoint('');
+        router.get(route('capacitaciones.index'), {}, { preserveState: true, preserveScroll: true });
     };
 
     const handleToggle = (t: Training) => {
@@ -279,6 +289,7 @@ export default function TrainingsIndex({ trainings, points, categorias, filters 
                             value={selectedCategory}
                             onChange={(e) => {
                                 setSelectedCategory(e.target.value);
+                                handleFilter({ categoria: e.target.value });
                             }}
                             className="py-2 pl-3 pr-8 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200"
                         >
@@ -292,6 +303,7 @@ export default function TrainingsIndex({ trainings, points, categorias, filters 
                             value={selectedPoint}
                             onChange={(e) => {
                                 setSelectedPoint(e.target.value);
+                                handleFilter({ id_punto: e.target.value });
                             }}
                             className="py-2 pl-3 pr-8 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200"
                         >
@@ -305,11 +317,21 @@ export default function TrainingsIndex({ trainings, points, categorias, filters 
 
                         <button
                             type="button"
-                            onClick={handleFilter}
+                            onClick={() => handleFilter()}
                             className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold transition-colors"
                         >
                             Filtrar
                         </button>
+
+                        {(searchTerm || selectedCategory || selectedPoint) && (
+                            <button
+                                type="button"
+                                onClick={handleClearFilters}
+                                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                Limpiar
+                            </button>
+                        )}
                     </div>
                 </div>
 
