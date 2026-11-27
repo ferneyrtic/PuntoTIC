@@ -32,7 +32,7 @@ class DashboardController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $points = Cache::remember('welcome_points_list_v5', 600, function () {
+        $points = Cache::remember('welcome_points_list_v6', 600, function () {
             $rawPoints = Point::where('activo', true)
                 ->whereNotIn('id_punto', [5, 6])
                 ->get(['id_punto', 'nombre_punto', 'zona', 'direccion', 'barrio_vereda', 'telefono'])
@@ -40,7 +40,8 @@ class DashboardController extends Controller
 
             $sedesMeta = [
                 1 => [
-                    'alias' => 'Sede Juan Rozo (PVD PLUS)',
+                    'alias' => 'PVD PLUS',
+                    'subtitulo' => 'Sede Juan Rozo',
                     'barrio' => 'Centro / I.E. Juan Rozo',
                     'direccion' => 'Calle 13 # 18-45',
                     'equipos' => '28 Computadores Portátiles · Proyector Interactivo · Fibra Óptica 300 Mbps',
@@ -52,7 +53,8 @@ class DashboardController extends Controller
                     'imagen' => 'images/sedes/sede_juan_rozo.jpg?v=2',
                 ],
                 2 => [
-                    'alias' => 'Sede Las Colinas (PVD Tradicional)',
+                    'alias' => 'PVD Tradicional',
+                    'subtitulo' => 'Sede Las Colinas',
                     'barrio' => 'Barrio Las Colinas',
                     'direccion' => 'Carrera 20 # 14-30',
                     'equipos' => '24 Equipos de Cómputo · Sala de Capacitación · Conectividad Dedicada',
@@ -64,7 +66,8 @@ class DashboardController extends Controller
                     'imagen' => 'images/sedes/sede_las_colinas.jpg?v=2',
                 ],
                 3 => [
-                    'alias' => 'Aula Digital Vereda Dinamarca',
+                    'alias' => 'Aula Digital',
+                    'subtitulo' => 'Vereda Dinamarca',
                     'barrio' => 'Vereda Dinamarca',
                     'direccion' => 'Corregimiento Dinamarca · I.E. Dinamarca',
                     'equipos' => '16 Equipos Portátiles · Conectividad Satelital / Fibra Rural · Espacio Comunal',
@@ -76,7 +79,8 @@ class DashboardController extends Controller
                     'imagen' => 'images/sedes/sede_dinamarca.jpg?v=2',
                 ],
                 4 => [
-                    'alias' => 'Aula Digital Vereda Chichimene',
+                    'alias' => 'Aula Digital',
+                    'subtitulo' => 'Vereda Chichimene',
                     'barrio' => 'Vereda Chichimene',
                     'direccion' => 'Vereda Chichimene · Caserío Principal',
                     'equipos' => '18 Equipos de Cómputo · Internet de Alta Velocidad · Sala de Reuniones JAC',
