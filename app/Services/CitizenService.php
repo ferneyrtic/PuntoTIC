@@ -6,11 +6,62 @@ use App\Models\AuditLog;
 use App\Models\Citizen;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CitizenService
 {
+    /**
+     * Mapa cacheado de Barrio/Vereda -> ['up' => ..., 'zona' => 'Urbana'|'Rural']
+     * construido a partir de los registros históricos validados en form_pvd.
+     */
+    public static function getBarriosMetaMap(): array
+    {
+        return Cache::remember('barrios_up_zona_meta_v1', 1800, function () {
+            $rows = DB::table('form_pvd')
+                ->selectRaw('UPPER(TRIM(barrio)) as b_key, TRIM(up) as up_val, UPPER(TRIM(zona)) as zona_val, COUNT(*) as c')
+                ->whereNotNull('barrio')
+                ->whereRaw("TRIM(barrio) != ''")
+                ->whereNotNull('up')
+                ->whereRaw("LOWER(TRIM(up)) NOT IN ('', 'null', 'otro', 'ninguna')")
+                ->groupBy(DB::raw('UPPER(TRIM(barrio))'), DB::raw('TRIM(up)'), DB::raw('UPPER(TRIM(zona))'))
+                ->orderByDesc('c')
+                ->get();
+
+            $meta = [];
+            foreach ($rows as $row) {
+                $key = (string) $row->b_key;
+                if (isset($meta[$key])) {
+                    continue;
+                }
+                $up = strtoupper((string) $row->up_val);
+                $zonaRaw = (string) $row->zona_val;
+                $zona = (str_contains($zonaRaw, 'RURAL') || str_starts_with($up, 'UPR')) ? 'Rural' : 'Urbana';
+                $meta[$key] = [
+                    'up' => $up,
+                    'zona' => $zona,
+                ];
+            }
+
+            return $meta;
+        });
+    }
+
+    /**
+     * Resuelve UP y Zona para un barrio/vereda dado.
+     */
+    public static function resolveBarrioMeta(?string $barrio): ?array
+    {
+        $key = mb_strtoupper(trim((string) $barrio));
+        if ($key === '') {
+            return null;
+        }
+
+        $map = self::getBarriosMetaMap();
+        return $map[$key] ?? null;
+    }
+
     /**
      * Calcula la edad a partir de la fecha de nacimiento.
      */
@@ -83,6 +134,17 @@ class CitizenService
                 $data['edad'] = $this->calculateAge($data['fecha_nac']);
             }
 
+            // Resolver UP / Zona automáticamente si no se especificó UP
+            if (! empty($data['barrio']) && (empty($data['up']) || strcasecmp((string) $data['up'], 'null') === 0)) {
+                $meta = self::resolveBarrioMeta($data['barrio']);
+                if ($meta) {
+                    $data['up'] = $meta['up'];
+                    if (empty($data['zona'])) {
+                        $data['zona'] = $meta['zona'];
+                    }
+                }
+            }
+
             $citizen = Citizen::create($data);
 
             AuditLog::registrar(
@@ -108,6 +170,21 @@ class CitizenService
 
             if (! empty($data['fecha_nac'])) {
                 $data['edad'] = $this->calculateAge($data['fecha_nac']);
+            }
+
+            // Si cambió el barrio o la UP venía vacía/'null', resolver UPZ/UPR automáticamente
+            $oldBarrio = mb_strtoupper(trim((string) ($citizen->barrio ?? '')));
+            $newBarrio = mb_strtoupper(trim((string) ($data['barrio'] ?? '')));
+            $incomingUp = trim((string) ($data['up'] ?? ''));
+            $oldUp = trim((string) ($citizen->up ?? ''));
+            $upWasUnchanged = ($incomingUp === '' || strcasecmp($incomingUp, 'null') === 0 || $incomingUp === $oldUp);
+
+            if ($newBarrio !== '' && ($newBarrio !== $oldBarrio || $incomingUp === '' || strcasecmp($incomingUp, 'null') === 0)) {
+                $meta = self::resolveBarrioMeta($newBarrio);
+                if ($meta && $upWasUnchanged) {
+                    $data['up'] = $meta['up'];
+                    $data['zona'] = $meta['zona'];
+                }
             }
 
             $citizen->update($data);

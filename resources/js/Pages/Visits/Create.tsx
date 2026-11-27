@@ -130,6 +130,7 @@ export default function VisitCreate({
         genero: 'Femenino',
         barrio: '',
         zona: 'Urbana',
+        up: '',
         estrato: 1,
         nivel_educativo: 'Bachillerato completo',
         ocupacion: 'Empleado',
@@ -925,6 +926,21 @@ export default function VisitCreate({
                                                 onChange={(e) => setData('fecha_nac', e.target.value)}
                                                 className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
                                             />
+                                            {(() => {
+                                                if (!data.fecha_nac || !/^\d{4}-\d{2}-\d{2}$/.test(data.fecha_nac)) return null;
+                                                const [y, m, d] = data.fecha_nac.split('-').map(Number);
+                                                if (y < 1900) return null;
+                                                const now = new Date();
+                                                let age = now.getFullYear() - y;
+                                                const md = (now.getMonth() + 1) - m;
+                                                if (md < 0 || (md === 0 && now.getDate() < d)) age--;
+                                                if (age < 0 || age > 130) return null;
+                                                return (
+                                                    <p className="text-[11px] font-bold text-emerald-700 mt-1">
+                                                        Edad calculada: {age} años
+                                                    </p>
+                                                );
+                                            })()}
                                         </div>
 
                                         <div>
@@ -950,6 +966,14 @@ export default function VisitCreate({
                                             <BarrioInput
                                                 value={data.barrio}
                                                 onChange={(val) => setData('barrio', val)}
+                                                onSelectMeta={(meta) => {
+                                                    setData((prev) => ({
+                                                        ...prev,
+                                                        barrio: meta.barrio,
+                                                        ...(meta.zona ? { zona: meta.zona } : {}),
+                                                        up: meta.up ?? '',
+                                                    }));
+                                                }}
                                                 placeholder="Buscar o escribir barrio / vereda..."
                                                 className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-emerald-600 outline-none bg-white"
                                             />

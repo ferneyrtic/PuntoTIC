@@ -15,21 +15,38 @@ export default function CitizenEdit({ citizen = {}, points = [], documentTypes =
     const citizenId = citizen?.id_form_pvd || citizen?.id || citizen?.documento || 1;
     const citizenDisplayName = citizen?.nombre_completo || `${citizen?.nombres || ''} ${citizen?.apellidos || ''}`.trim() || citizen?.documento || 'Ciudadano';
 
+    const calculateAgeFromYmd = (val: string): number | null => {
+        if (!val || !/^\d{4}-\d{2}-\d{2}$/.test(val)) return null;
+        const [y, m, d] = val.split('-').map(Number);
+        if (y < 1900) return null;
+        const now = new Date();
+        let age = now.getFullYear() - y;
+        const monthDiff = (now.getMonth() + 1) - m;
+        if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < d)) {
+            age--;
+        }
+        return age >= 0 && age <= 130 ? age : null;
+    };
+
+    const initialFechaNac = citizen?.fecha_nac ? String(citizen.fecha_nac).substring(0, 10) : '';
+    const initialComputedAge = calculateAgeFromYmd(initialFechaNac);
+    const initialUp = citizen?.up && String(citizen.up).trim().toLowerCase() !== 'null' ? String(citizen.up).trim() : '';
+
     const { data, setData, post, processing, errors } = useForm({
         _method: 'put',
         documento: citizen?.documento || (citizen?.id ? String(citizen.id) : ''),
         id_tipo: citizen?.id_tipo || citizen?.tipo_id || 1,
         nombres: citizen?.nombres || '',
         apellidos: citizen?.apellidos || '',
-        fecha_nac: citizen?.fecha_nac ? String(citizen.fecha_nac).substring(0, 10) : '',
-        edad: citizen?.edad ? String(citizen.edad) : '',
+        fecha_nac: initialFechaNac,
+        edad: initialComputedAge !== null ? String(initialComputedAge) : (citizen?.edad ? String(citizen.edad) : ''),
         genero: citizen?.genero || 'Femenino',
         correo: citizen?.correo || '',
         telefono: citizen?.telefono || '',
         direccion: citizen?.direccion || '',
         barrio: citizen?.barrio || '',
         zona: citizen?.zona || 'Urbana',
-        up: citizen?.up || '',
+        up: initialUp,
         estrato: citizen?.estrato || 1,
         grupo_etnico: citizen?.grupo_etnico || 'Ninguno',
         nivel_educativo: citizen?.nivel_educativo || 'Bachillerato completo', // 100% editable
@@ -40,23 +57,18 @@ export default function CitizenEdit({ citizen = {}, points = [], documentTypes =
         activo: citizen?.activo ?? true,
     });
 
-    const [calculatingAge, setCalculatingAge] = useState<number | null>(citizen?.edad ? Number(citizen.edad) : null);
+    const [calculatingAge, setCalculatingAge] = useState<number | null>(
+        initialComputedAge !== null ? initialComputedAge : (citizen?.edad ? Number(citizen.edad) : null)
+    );
 
     const handleBirthDateChange = (val: string) => {
-        setData('fecha_nac', val);
-        if (val) {
-            const birth = new Date(val);
-            const now = new Date();
-            let age = now.getFullYear() - birth.getFullYear();
-            const m = now.getMonth() - birth.getMonth();
-            if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
-                age--;
-            }
-            if (!isNaN(age) && age >= 0) {
-                setCalculatingAge(age);
-                setData('edad', age.toString());
-            }
-        }
+        const age = calculateAgeFromYmd(val);
+        setCalculatingAge(age);
+        setData((prev) => ({
+            ...prev,
+            fecha_nac: val,
+            edad: age !== null ? age.toString() : '',
+        }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -264,6 +276,14 @@ export default function CitizenEdit({ citizen = {}, points = [], documentTypes =
                             <BarrioInput
                                 value={data.barrio}
                                 onChange={(val) => setData('barrio', val)}
+                                onSelectMeta={(meta) => {
+                                    setData((prev) => ({
+                                        ...prev,
+                                        barrio: meta.barrio,
+                                        ...(meta.zona ? { zona: meta.zona } : {}),
+                                        up: meta.up ?? '',
+                                    }));
+                                }}
                                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green focus:ring-1 focus:ring-alcaldia-green outline-none bg-white"
                             />
                         </div>
@@ -297,10 +317,17 @@ export default function CitizenEdit({ citizen = {}, points = [], documentTypes =
                             <label className="block text-xs font-bold text-slate-700 mb-1">Unidad Poblacional / Comuna</label>
                             <input
                                 type="text"
+                                list="up-options-edit"
+                                placeholder="Ej: UPZ1, UPZ2, UPR1..."
                                 value={data.up}
                                 onChange={(e) => setData('up', e.target.value)}
                                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-alcaldia-green focus:ring-1 focus:ring-alcaldia-green outline-none"
                             />
+                            <datalist id="up-options-edit">
+                                {['UPZ1', 'UPZ2', 'UPZ3', 'UPZ4', 'UPR1', 'UPR2', 'UPR3', 'UPR4', 'UPR5', 'UPR6', 'OTRO'].map((u) => (
+                                    <option key={u} value={u} />
+                                ))}
+                            </datalist>
                         </div>
                     </div>
 

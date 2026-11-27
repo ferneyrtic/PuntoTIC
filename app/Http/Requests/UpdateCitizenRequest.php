@@ -13,13 +13,24 @@ class UpdateCitizenRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $merge = [];
+        if ($this->has('documento')) {
+            $merge['documento'] = trim((string) $this->input('documento'));
+        }
+        if ($this->has('correo') && $this->input('correo') !== null) {
+            $trimmed = trim((string) $this->input('correo'));
+            $merge['correo'] = $trimmed === '' ? null : $trimmed;
+        }
         if ($this->has('zona')) {
             $val = trim((string) $this->input('zona'));
             if (strcasecmp($val, 'urbano') === 0 || strcasecmp($val, 'urbana') === 0) {
-                $this->merge(['zona' => 'Urbana']);
+                $merge['zona'] = 'Urbana';
             } elseif (strcasecmp($val, 'rural') === 0) {
-                $this->merge(['zona' => 'Rural']);
+                $merge['zona'] = 'Rural';
             }
+        }
+        if (! empty($merge)) {
+            $this->merge($merge);
         }
     }
 

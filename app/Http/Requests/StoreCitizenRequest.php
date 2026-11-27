@@ -11,6 +11,21 @@ class StoreCitizenRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $merge = [];
+        if ($this->has('documento')) {
+            $merge['documento'] = trim((string) $this->input('documento'));
+        }
+        if ($this->has('correo') && $this->input('correo') !== null) {
+            $trimmed = trim((string) $this->input('correo'));
+            $merge['correo'] = $trimmed === '' ? null : $trimmed;
+        }
+        if (! empty($merge)) {
+            $this->merge($merge);
+        }
+    }
+
     public function rules(): array
     {
         return [

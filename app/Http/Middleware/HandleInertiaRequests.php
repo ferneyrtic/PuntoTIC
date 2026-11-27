@@ -50,7 +50,7 @@ class HandleInertiaRequests extends Middleware
                 fn () => Point::where('activo', true)->get(['id_punto', 'nombre_punto', 'zona'])->toArray()
             ),
             'catalogs' => fn () => Cache::remember(
-                'shared_demographics_catalogs_v1',
+                'shared_demographics_catalogs_v2',
                 600,
                 function () {
                     $barrios = Category::with('subcategorias')->find(35)?->subcategorias
@@ -71,8 +71,12 @@ class HandleInertiaRequests extends Middleware
                         ->values()
                         ->toArray() ?? ['Ninguno'];
 
+                    $barriosMeta = \App\Services\CitizenService::getBarriosMetaMap();
+
                     return [
                         'barrios' => $barrios,
+                        'barrios_meta' => $barriosMeta,
+                        'unidades_poblacionales' => ['UPZ1', 'UPZ2', 'UPZ3', 'UPZ4', 'UPR1', 'UPR2', 'UPR3', 'UPR4', 'UPR5', 'UPR6', 'OTRO'],
                         'grupos_poblacionales' => $grupos,
                     ];
                 }

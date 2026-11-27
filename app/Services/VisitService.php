@@ -190,8 +190,18 @@ class VisitService
                         'nivel_educativo' => $data['nivel_educativo'] ?? null,
                         'ocupacion' => $data['ocupacion'] ?? null,
                         'barrio' => $data['barrio'] ?? null,
+                        'zona' => $data['zona'] ?? null,
+                        'up' => $data['up'] ?? null,
                         'estrato' => $data['estrato'] ?? null,
                     ], fn ($val) => ! is_null($val) && $val !== '');
+
+                    if (! empty($updatable['barrio']) && empty($updatable['up'])) {
+                        $meta = CitizenService::resolveBarrioMeta($updatable['barrio']);
+                        if ($meta) {
+                            $updatable['up'] = $meta['up'];
+                            $updatable['zona'] = $meta['zona'];
+                        }
+                    }
 
                     if (! empty($updatable)) {
                         $citizen->update($updatable);
