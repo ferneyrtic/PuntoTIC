@@ -148,7 +148,12 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                 });
 
                 const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+                const ratio = Math.min(pdfWidth / canvas.width, pdfHeight / canvas.height);
+                const renderW = canvas.width * ratio;
+                const renderH = canvas.height * ratio;
+                const offsetX = (pdfWidth - renderW) / 2;
+                const offsetY = (pdfHeight - renderH) / 2;
+                pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderW, renderH, undefined, 'FAST');
             }
 
             const cleanScopeName = (scope?.nombre || 'General').replace(/[^a-zA-Z0-9]/g, '_');
@@ -236,77 +241,9 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                     className="flex-1 p-4 sm:p-6 overflow-y-auto bg-slate-200/90 flex flex-col items-center gap-6"
                 >
                     {/* ========================================================= */}
-                    {/* PÁGINA 1: ENCABEZADO + KPIS + GRÁFICAS 1 Y 2             */}
+                    {/* PÁGINA 1: SOLO GRÁFICAS (AFLUENCIA + SEDES/GÉNERO)        */}
                     {/* ========================================================= */}
                     <div className="a4-page bg-white w-[800px] p-8 rounded-2xl shadow-lg border border-slate-300 text-slate-900 font-sans shrink-0">
-                        {/* ENCABEZADO SIMPLE Y DIRECTO */}
-                        <div className="border-b border-slate-200 pb-3 mb-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h1 className="text-lg font-black tracking-tight text-slate-900">
-                                        Reporte de Estadísticas y Gráficas
-                                    </h1>
-                                    <p className="text-xs text-slate-500 font-medium">
-                                        Monitoreo de afluencia, atenciones y demografía
-                                    </p>
-                                </div>
-                                <div className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                                    Página 1 de 3
-                                </div>
-                            </div>
-
-                            {/* METADATOS */}
-                            <div className="grid grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-slate-100 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
-                                <div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Ámbito / Sede:</span>
-                                    <span className="font-black text-slate-800 text-[11px] block truncate">
-                                        {scope?.nombre} {scope?.zona ? `(${scope.zona})` : ''}
-                                    </span>
-                                </div>
-                                <div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Período Analizado:</span>
-                                    <span className="font-bold text-slate-800 text-[11px] block truncate">
-                                        {periodo?.label} ({periodo?.fecha_desde} a {periodo?.fecha_hasta})
-                                    </span>
-                                </div>
-                                <div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Generado el:</span>
-                                    <span className="font-bold text-slate-800 text-[11px] block">
-                                        {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* RESUMEN EJECUTIVO (KPIS CLAVE) */}
-                        <div className="grid grid-cols-4 gap-2 mb-5 text-center">
-                            <div className="p-2 rounded-xl bg-emerald-50/70 border border-emerald-200">
-                                <span className="text-[9px] font-bold text-emerald-800 uppercase block">Total Atenciones</span>
-                                <span className="text-lg font-black text-emerald-700">
-                                    {kpis?.visitas_periodo?.toLocaleString() || 0}
-                                </span>
-                            </div>
-                            <div className="p-2 rounded-xl bg-blue-50/70 border border-blue-200">
-                                <span className="text-[9px] font-bold text-blue-800 uppercase block">Ciudadanos Únicos</span>
-                                <span className="text-lg font-black text-blue-700">
-                                    {kpis?.ciudadanos_unicos?.toLocaleString() || 0}
-                                </span>
-                            </div>
-                            <div className="p-2 rounded-xl bg-purple-50/70 border border-purple-200">
-                                <span className="text-[9px] font-bold text-purple-800 uppercase block">Préstamos de Salas</span>
-                                <span className="text-lg font-black text-purple-700">
-                                    {kpis?.prestamos_salas || 0}{' '}
-                                    <span className="text-[10px] font-bold">({kpis?.asistentes_salas || 0} p.)</span>
-                                </span>
-                            </div>
-                            <div className="p-2 rounded-xl bg-amber-50/70 border border-amber-200">
-                                <span className="text-[9px] font-bold text-amber-800 uppercase block">Hojas Impresas</span>
-                                <span className="text-lg font-black text-amber-700">
-                                    {kpis?.impresiones_hojas?.toLocaleString() || 0}
-                                </span>
-                            </div>
-                        </div>
-
                         {/* GRÁFICA 1: AFLUENCIA TEMPORAL */}
                         <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 mb-5">
                             <div className="flex items-center justify-between mb-2">
@@ -442,15 +379,6 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                     {/* PÁGINA 2: CATEGORÍAS + TRÁMITES                           */}
                     {/* ========================================================= */}
                     <div className="a4-page bg-white w-[800px] p-8 rounded-2xl shadow-lg border border-slate-300 text-slate-900 font-sans shrink-0">
-                        <div className="border-b border-slate-200 pb-2.5 mb-5 flex items-center justify-between">
-                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight">
-                                Categorías de Atención & Servicios
-                            </h2>
-                            <div className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                                Página 2 de 3
-                            </div>
-                        </div>
-
                         {/* GRÁFICA 3: CATEGORÍAS */}
                         <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 mb-5">
                             <div className="flex items-center justify-between mb-2">
@@ -522,15 +450,6 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                     {/* PÁGINA 3: SALAS + PERFIL DEMOGRÁFICO POR EDAD             */}
                     {/* ========================================================= */}
                     <div className="a4-page bg-white w-[800px] p-8 rounded-2xl shadow-lg border border-slate-300 text-slate-900 font-sans shrink-0">
-                        <div className="border-b border-slate-200 pb-2.5 mb-5 flex items-center justify-between">
-                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight">
-                                Salas & Perfil Demográfico Etario
-                            </h2>
-                            <div className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                                Página 3 de 4
-                            </div>
-                        </div>
-
                         {/* GRÁFICA 5: SALAS */}
                         <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 mb-5">
                             <div className="flex items-center justify-between mb-2">
@@ -601,15 +520,6 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                     {/* PÁGINA 4: INFORME DE METAS (ETNIAS, EDUCACIÓN, OCUPACIÓN, POBLACIÓN) */}
                     {/* ========================================================= */}
                     <div className="a4-page bg-white w-[800px] p-8 rounded-2xl shadow-lg border border-slate-300 text-slate-900 font-sans shrink-0">
-                        <div className="border-b border-slate-200 pb-2.5 mb-5 flex items-center justify-between">
-                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight">
-                                Informe de Metas · Perfil Sociodemográfico
-                            </h2>
-                            <div className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                                Página 4 de 4
-                            </div>
-                        </div>
-
                         <div className="grid grid-cols-1 gap-4">
                             {[
                                 {
