@@ -21,6 +21,7 @@ interface Point {
     id_punto: number;
     nombre_punto: string;
     alias?: string;
+    subtitulo?: string;
     barrio?: string;
     zona?: string;
     direccion?: string;
@@ -630,7 +631,7 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                                     <div className="h-36 sm:h-40 w-full overflow-hidden rounded-xl bg-slate-200 relative">
                                         <img
                                             src={asset(p.imagen || `images/sedes/sede_${p.id_punto}.jpg`)}
-                                            alt={`Fachada de ${p.alias || p.nombre_punto}`}
+                                            alt={`Fachada de ${p.alias || p.nombre_punto}${p.subtitulo ? ` - ${p.subtitulo}` : ''}`}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             onError={(e) => {
                                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -648,9 +649,16 @@ export default function Welcome({ points = [], capacitaciones = [] }: Props) {
                                         </div>
                                     </div>
 
-                                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
-                                        {p.alias || p.nombre_punto}
-                                    </h3>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                                            {p.alias || p.nombre_punto}
+                                        </h3>
+                                        {p.subtitulo && (
+                                            <p className="text-xs font-medium text-slate-500 mt-0.5">
+                                                {p.subtitulo}
+                                            </p>
+                                        )}
+                                    </div>
 
                                     <div className="space-y-1 text-xs text-slate-600">
                                         <p className="flex items-start gap-1">
