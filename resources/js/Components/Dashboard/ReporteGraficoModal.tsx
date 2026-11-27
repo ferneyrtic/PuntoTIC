@@ -527,7 +527,7 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                                 Salas & Perfil Demográfico Etario
                             </h2>
                             <div className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                                Página 3 de 3
+                                Página 3 de 4
                             </div>
                         </div>
 
@@ -594,6 +594,83 @@ export default function ReporteGraficoModal({ isOpen, onClose, stats, user }: Pr
                         {/* PIE DE PÁGINA SIMPLE */}
                         <div className="mt-5 pt-3 border-t border-slate-200 text-center text-[10px] text-slate-400">
                             PuntoTIC · Reporte Gráfico de Estadísticas
+                        </div>
+                    </div>
+
+                    {/* ========================================================= */}
+                    {/* PÁGINA 4: INFORME DE METAS (ETNIAS, EDUCACIÓN, OCUPACIÓN, POBLACIÓN) */}
+                    {/* ========================================================= */}
+                    <div className="a4-page bg-white w-[800px] p-8 rounded-2xl shadow-lg border border-slate-300 text-slate-900 font-sans shrink-0">
+                        <div className="border-b border-slate-200 pb-2.5 mb-5 flex items-center justify-between">
+                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                                Informe de Metas · Perfil Sociodemográfico
+                            </h2>
+                            <div className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
+                                Página 4 de 4
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                            {[
+                                {
+                                    title: '7. Distribución Etnias',
+                                    items: dependencia_formacion?.etnias || [],
+                                    color: '#059669',
+                                },
+                                {
+                                    title: '8. Distribución Nivel Educativo',
+                                    items: dependencia_formacion?.nivel_educativo_distribucion || [],
+                                    color: '#2563eb',
+                                },
+                                {
+                                    title: '9. Distribución Ocupación',
+                                    items: dependencia_formacion?.ocupacion || [],
+                                    color: '#7c3aed',
+                                },
+                                {
+                                    title: '10. Distribución Poblacional',
+                                    items: dependencia_formacion?.grupos_poblacionales || [],
+                                    color: '#d97706',
+                                },
+                            ].map((sec) => {
+                                const chartData = sec.items.slice(0, 6).map((item: any) => ({
+                                    name: item.nombre && item.nombre.length > 26 ? item.nombre.substring(0, 24) + '...' : item.nombre,
+                                    total: item.total,
+                                }));
+                                return (
+                                    <div key={sec.title} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50">
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight">
+                                                {sec.title}
+                                            </h3>
+                                            <span className="text-[10px] font-bold text-slate-500">
+                                                {dependencia_formacion?.total_ciudadanos_analizados || 0} ciudadanos
+                                            </span>
+                                        </div>
+                                        {chartData.length > 0 ? (
+                                            <BarChart
+                                                width={736}
+                                                height={155}
+                                                data={chartData}
+                                                layout="vertical"
+                                                margin={{ top: 2, right: 25, left: 10, bottom: 2 }}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
+                                                <XAxis type="number" fontSize={9} stroke="#64748B" allowDecimals={false} />
+                                                <YAxis dataKey="name" type="category" fontSize={9} stroke="#475569" width={190} tickLine={false} />
+                                                <Tooltip formatter={(val: any) => [`${val} ciudadanos`, 'Total']} />
+                                                <Bar dataKey="total" fill={sec.color} radius={[0, 4, 4, 0]} />
+                                            </BarChart>
+                                        ) : (
+                                            <div className="text-xs text-slate-400 py-6 text-center">Sin datos en el período</div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-200 text-center text-[10px] text-slate-400">
+                            PuntoTIC · Informe de Metas · {scope?.nombre || 'Consolidado'}
                         </div>
                     </div>
                 </div>

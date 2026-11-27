@@ -130,6 +130,10 @@ interface Props {
                 ninos: number;
             };
             nivel_educativo: Record<string, number>;
+            nivel_educativo_distribucion?: Array<{ nombre: string; total: number; porcentaje: number }>;
+            etnias?: Array<{ nombre: string; total: number; porcentaje: number }>;
+            ocupacion?: Array<{ nombre: string; total: number; porcentaje: number }>;
+            grupos_poblacionales?: Array<{ nombre: string; total: number; porcentaje: number }>;
             zona_residencia: {
                 urbana: number;
                 rural: number;
@@ -1207,12 +1211,96 @@ export default function Dashboard({
                         </div>
                     </div>
 
-                    {/* Gráficos Demográficos */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Género */}
-                        <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs">
-                            <h3 className="text-sm font-bold text-slate-900 mb-1">Distribución por Género</h3>
-                            <p className="text-xs text-slate-500 font-medium mb-3">Participación ciudadana en la oferta TIC</p>
+                    {/* Gráficas para Informe de Metas (6 Distribuciones Clave) */}
+                    <div className="space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <h2 className="text-base font-black text-slate-900">Gráficas para Informe de Metas</h2>
+                                <p className="text-xs text-slate-500">Etnias, Nivel Educativo, Ocupación, Grupo Poblacional, Género y Servicios Prestados</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsModalReporteOpen(true)}
+                                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors self-start sm:self-auto"
+                            >
+                                Exportar Informe Gráfico (PDF)
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[
+                                {
+                                    title: '1. Distribución Etnias',
+                                    subtitle: 'Pertenencia étnica de los ciudadanos atendidos',
+                                    items: stats.dependencia_formacion.etnias || [],
+                                    color: '#059669',
+                                },
+                                {
+                                    title: '2. Distribución Nivel Educativo',
+                                    subtitle: 'Escolaridad de los beneficiarios',
+                                    items: stats.dependencia_formacion.nivel_educativo_distribucion || [],
+                                    color: '#2563eb',
+                                },
+                                {
+                                    title: '3. Distribución Ocupación',
+                                    subtitle: 'Actividad ocupacional declarada',
+                                    items: stats.dependencia_formacion.ocupacion || [],
+                                    color: '#7c3aed',
+                                },
+                                {
+                                    title: '4. Distribución Poblacional',
+                                    subtitle: 'Grupos poblacionales y enfoque diferencial',
+                                    items: stats.dependencia_formacion.grupos_poblacionales || [],
+                                    color: '#d97706',
+                                },
+                            ].map((chart) => (
+                                <div key={chart.title} className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs">
+                                    <h3 className="text-sm font-bold text-slate-900 mb-0.5">{chart.title}</h3>
+                                    <p className="text-xs text-slate-500 font-medium mb-3">{chart.subtitle}</p>
+                                    {chart.items.length > 0 ? (
+                                        <div className="space-y-3">
+                                            <div className="h-52 w-full">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart
+                                                        data={chart.items.map((item) => ({
+                                                            name: item.nombre.length > 22 ? item.nombre.substring(0, 20) + '...' : item.nombre,
+                                                            fullName: item.nombre,
+                                                            total: item.total,
+                                                        }))}
+                                                        layout="vertical"
+                                                        margin={{ top: 4, right: 20, left: 4, bottom: 4 }}
+                                                    >
+                                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" opacity={0.5} />
+                                                        <XAxis type="number" fontSize={10} stroke="#64748B" allowDecimals={false} />
+                                                        <YAxis dataKey="name" type="category" width={130} fontSize={10} stroke="#475569" tickLine={false} />
+                                                        <Tooltip
+                                                            formatter={(val: any, _n: any, props: any) => [`${val} ciudadanos`, props?.payload?.fullName || 'Total']}
+                                                        />
+                                                        <Bar dataKey="total" fill={chart.color} radius={[0, 6, 6, 0]} />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-100 text-[11px]">
+                                                {chart.items.slice(0, 6).map((item) => (
+                                                    <div key={item.nombre} className="flex items-center justify-between px-2 py-1 rounded-lg bg-slate-50">
+                                                        <span className="truncate text-slate-700 font-medium mr-2" title={item.nombre}>{item.nombre}</span>
+                                                        <span className="font-bold text-slate-900 shrink-0">{item.total} ({item.porcentaje}%)</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="h-44 flex items-center justify-center text-xs text-slate-400">
+                                            Sin registros en el período seleccionado
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+
+                            {/* 5. Género */}
+                            <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs">
+                                <h3 className="text-sm font-bold text-slate-900 mb-0.5">5. Distribución Género</h3>
+                                <p className="text-xs text-slate-500 font-medium mb-3">Participación ciudadana en la oferta TIC</p>
                             
                             <div className="h-44 w-full flex items-center justify-center mb-3">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -1303,6 +1391,58 @@ export default function Dashboard({
                                     <div className="text-[10px] font-bold text-amber-700 uppercase mt-0.5">Mayores (60+)</div>
                                 </div>
                             </div>
+                        </div>
+                        </div>
+
+                        {/* 6. Distribución Servicios Prestados */}
+                        <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs">
+                            <h3 className="text-sm font-bold text-slate-900 mb-0.5">6. Distribución Servicios Prestados</h3>
+                            <p className="text-xs text-slate-500 font-medium mb-3">Visitas y participantes por categoría de servicio en el período</p>
+                            {distribucion_categorias.length > 0 ? (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+                                    <div className="h-56 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart
+                                                data={distribucion_categorias.map((c) => ({
+                                                    name: c.nombre.length > 26 ? c.nombre.substring(0, 24) + '...' : c.nombre,
+                                                    fullName: c.nombre,
+                                                    total: c.total_visitas,
+                                                    color: c.color || '#059669',
+                                                }))}
+                                                layout="vertical"
+                                                margin={{ top: 4, right: 20, left: 4, bottom: 4 }}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" opacity={0.5} />
+                                                <XAxis type="number" fontSize={10} stroke="#64748B" allowDecimals={false} />
+                                                <YAxis dataKey="name" type="category" width={160} fontSize={10} stroke="#475569" tickLine={false} />
+                                                <Tooltip formatter={(val: any, _n: any, props: any) => [`${val} atenciones`, props?.payload?.fullName || 'Total']} />
+                                                <Bar dataKey="total" radius={[0, 6, 6, 0]}>
+                                                    {distribucion_categorias.map((c, idx) => (
+                                                        <Cell key={`srv-${idx}`} fill={c.color || '#059669'} />
+                                                    ))}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {distribucion_categorias.map((c) => (
+                                            <div key={c.id_categoria} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color || '#059669' }} />
+                                                    <span className="font-semibold text-slate-700 truncate">{c.nombre}</span>
+                                                </div>
+                                                <span className="font-black text-slate-900 shrink-0 ml-2">
+                                                    {c.total_visitas.toLocaleString()} ({c.porcentaje}%)
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="h-36 flex items-center justify-center text-xs text-slate-400">
+                                    Sin servicios registrados en el período
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

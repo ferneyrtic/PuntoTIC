@@ -693,21 +693,39 @@ class StatsService
 
         $formacionVisitas += $asistentesFormacionSalas;
 
-        // Obtenemos los ciudadanos únicos atendidos en este período para la analítica demográfica
+        // Obtenemos los ciudadanos únicos atendidos en este período (visitas + participantes de salas)
         $cols = Citizen::getTableColumns();
         $pkColumn = in_array('id', $cols, true) ? 'id' : 'id_form_pvd';
 
-        $citizensSubQuery = (clone $visitsQuery)
+        $visitCitizenIds = (clone $visitsQuery)
             ->whereNotNull('id_form_pvd')
-            ->select('id_form_pvd')
-            ->distinct();
+            ->distinct()
+            ->pluck('id_form_pvd');
 
-        $citizens = DB::table('form_pvd')
-            ->joinSub($citizensSubQuery, 'unique_visitors', function ($join) use ($pkColumn) {
-                $join->on("form_pvd.{$pkColumn}", '=', 'unique_visitors.id_form_pvd');
+        $loanCitizenIds = DB::table('prestamo_sala_participantes as psp')
+            ->join('prestamo_sala as ps', DB::raw('COALESCE(ps.id_prestamo, ps.id)'), '=', 'psp.id_prestamo')
+            ->whereBetween(
+                DB::raw('COALESCE(NULLIF(ps.fecha_prestamo, "0000-00-00"), DATE(ps.created_at))'),
+                [$startDate->toDateString(), $endDate->toDateString()]
+            )
+            ->whereNotIn('ps.estado', ['Cancelado', 'Rechazado'])
+            ->when($targetPointIds, function ($q) use ($targetPointIds) {
+                $q->where(function ($sub) use ($targetPointIds) {
+                    $sub->whereIn('ps.id_punto', $targetPointIds)->orWhereIn('ps.id_puntos', $targetPointIds);
+                });
             })
-            ->select(['genero', 'edad', 'fecha_nac', 'nivel_educativo', 'zona'])
-            ->get();
+            ->whereNotNull('psp.id_form_pvd')
+            ->distinct()
+            ->pluck('psp.id_form_pvd');
+
+        $uniqueCitizenIds = $visitCitizenIds->merge($loanCitizenIds)->unique()->values()->all();
+
+        $citizens = empty($uniqueCitizenIds)
+            ? collect()
+            : DB::table('form_pvd')
+                ->whereIn($pkColumn, $uniqueCitizenIds)
+                ->select(['genero', 'edad', 'fecha_nac', 'nivel_educativo', 'zona', 'grupo_etnico', 'ocupacion', 'g_poblacional'])
+                ->get();
 
         $totalCitizens = $citizens->count() ?: 1;
 
@@ -762,14 +780,75 @@ class StatsService
             }
         }
 
-        // 3. Demografía por Nivel Educativo
-        $educacion = $citizens->groupBy(fn ($c) => $c->nivel_educativo ?: 'Sin Registrar')
-            ->map(fn ($group) => $group->count())
-            ->sortDesc()
-            ->take(5)
-            ->toArray();
+        $buildDist = function (callable $normalizer, string $field, int $limit = 8) use ($citizens, $totalCitizens): array {
+            return $citizens
+                ->groupBy(fn ($c) => $normalizer($c->{$field} ?? null))
+                ->map(fn ($group, $label) => [
+                    'nombre' => $label,
+                    'total' => $group->count(),
+                    'porcentaje' => round(($group->count() / $totalCitizens) * 100, 1),
+                ])
+                ->sortByDesc('total')
+                ->take($limit)
+                ->values()
+                ->toArray();
+        };
 
-        // 4. Demografía por Zona de Origen (Normalización insensible a URBANO/RURAL)
+        // 3. Demografía por Nivel Educativo
+        $normalizeEducacion = function (?string $raw): string {
+            $v = mb_strtoupper(trim((string) $raw));
+            if ($v === '' || $v === 'NULL') return 'Sin Registrar';
+            if (str_contains($v, 'BACHILLERATO')) return str_contains($v, 'INCOMPLETO') ? 'Bachillerato Incompleto' : 'Bachillerato';
+            if (str_contains($v, 'PRIMARIA')) return str_contains($v, 'INCOMPLETA') ? 'Primaria Incompleta' : 'Primaria';
+            if (str_contains($v, 'TECNOLOG')) return 'Tecnológico';
+            if (str_contains($v, 'TECNIC') || str_contains($v, 'TÉCNIC')) return 'Técnico';
+            if (str_contains($v, 'PROFESIONAL') || str_contains($v, 'UNIVERSIT')) return 'Universitario / Profesional';
+            if (str_contains($v, 'POSGRADO')) return 'Posgrado';
+            if ($v === 'NINGUNO' || $v === 'NINGUNA') return 'Ninguno';
+            return mb_convert_case(mb_strtolower($v), MB_CASE_TITLE, 'UTF-8');
+        };
+        $nivelEducativoDist = $buildDist($normalizeEducacion, 'nivel_educativo', 8);
+        $educacion = collect($nivelEducativoDist)->pluck('total', 'nombre')->toArray();
+
+        // 4. Demografía por Etnia
+        $etniasDist = $buildDist(function (?string $raw): string {
+            $v = mb_strtoupper(trim((string) $raw));
+            if ($v === '' || $v === 'NULL' || $v === 'NINGUNO' || $v === 'NINGUNA') return 'Ninguno';
+            if (str_contains($v, 'AFRO')) return 'Afrodescendiente';
+            if (str_contains($v, 'INDIG') || str_contains($v, 'INDÍG')) return 'Indígena';
+            if (str_contains($v, 'RAIZAL')) return 'Raizal';
+            if (str_contains($v, 'PALENQ')) return 'Palenquero';
+            if ($v === 'ROM' || str_contains($v, 'GITAN')) return 'Rom / Gitano';
+            return mb_convert_case(mb_strtolower($v), MB_CASE_TITLE, 'UTF-8');
+        }, 'grupo_etnico', 8);
+
+        // 5. Demografía por Ocupación
+        $ocupacionDist = $buildDist(function (?string $raw): string {
+            $v = mb_strtoupper(trim((string) $raw));
+            if ($v === '' || $v === 'NULL') return 'Sin Registrar';
+            if ($v === 'AMA_CASA' || str_contains($v, 'AMA DE CASA') || str_contains($v, 'HOGAR')) return 'Ama de Casa';
+            if (str_contains($v, 'INDEPEND') || str_contains($v, 'INDEPENT')) return 'Independiente';
+            if (str_contains($v, 'ESTUDIANT')) return 'Estudiante';
+            if (str_contains($v, 'EMPLEAD')) return 'Empleado';
+            if (str_contains($v, 'DESEMPLEAD')) return 'Desempleado';
+            if (str_contains($v, 'PENSION') || str_contains($v, 'JUBIL')) return 'Pensionado';
+            return mb_convert_case(mb_strtolower(str_replace('_', ' ', $v)), MB_CASE_TITLE, 'UTF-8');
+        }, 'ocupacion', 8);
+
+        // 6. Demografía por Grupo Poblacional
+        $poblacionalDist = $buildDist(function (?string $raw): string {
+            $v = mb_strtoupper(trim((string) $raw));
+            if ($v === '' || $v === 'NULL' || $v === 'NINGUNO' || $v === 'NINGUNA') return 'Ninguno';
+            if (str_contains($v, 'DESPLAZ')) return 'Desplazados';
+            if (str_contains($v, 'DISCAPAC')) return 'Personas con Discapacidad';
+            if ($v === 'MADRESC' || str_contains($v, 'MADRE CABEZA')) return 'Madres Cabeza de Hogar';
+            if (str_contains($v, 'MIGRANT')) return 'Migrantes';
+            if (str_contains($v, 'VICTIM') || str_contains($v, 'VÍCTIM')) return 'Víctima del Conflicto';
+            if (str_contains($v, 'LGTB') || str_contains($v, 'LGBT')) return 'Comunidad LGBTIQ+';
+            return mb_convert_case(mb_strtolower($v), MB_CASE_TITLE, 'UTF-8');
+        }, 'g_poblacional', 8);
+
+        // 7. Demografía por Zona de Origen (Normalización insensible a URBANO/RURAL)
         $zonaOrigen = [
             'urbana' => 0,
             'rural' => 0,
@@ -790,6 +869,10 @@ class StatsService
             'genero' => $generoStats,
             'grupos_edad' => $etarios,
             'nivel_educativo' => $educacion,
+            'nivel_educativo_distribucion' => $nivelEducativoDist,
+            'etnias' => $etniasDist,
+            'ocupacion' => $ocupacionDist,
+            'grupos_poblacionales' => $poblacionalDist,
             'zona_residencia' => $zonaOrigen,
         ];
     }
