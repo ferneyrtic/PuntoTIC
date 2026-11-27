@@ -42,15 +42,19 @@ class StatsService
 
     /**
      * Expresión SQL de asistentes efectivos por préstamo:
-     * 1) Si tiene participantes registrados en lista, usa el conteo real (ej. 30 aunque el estimado fuera 25).
-     * 2) Si no tiene lista individual, solo suma `num_asistentes` cuando el préstamo está 'Completado' o 'En curso'
-     *    (nunca suma reservas 'Pendiente' o 'Reservado' que aún no tienen asistencia).
+     * - Para préstamos recientes (>= 2026-11-24, cuando existe la lista de participantes):
+     *   SOLO suma participantes reales agregados manualmente (`psp_counts.real_count`).
+     *   El campo `num_asistentes` es solo aforo previsto y NO se suma al crear el préstamo.
+     * - Para préstamos históricos (< 2026-11-24) ya 'Completado' o 'En curso' sin lista:
+     *   conserva `num_asistentes` para no alterar reportes pasados.
      */
     protected function effectiveAttendeesSql(): string
     {
         return "CASE
             WHEN COALESCE(psp_counts.real_count, 0) > 0 THEN psp_counts.real_count
-            WHEN prestamo_sala.estado IN ('Completado', 'En curso') THEN COALESCE(prestamo_sala.num_asistentes, 0)
+            WHEN COALESCE(NULLIF(prestamo_sala.fecha_prestamo, '0000-00-00'), DATE(prestamo_sala.created_at)) < '2026-11-24'
+                 AND prestamo_sala.estado IN ('Completado', 'En curso')
+            THEN COALESCE(prestamo_sala.num_asistentes, 0)
             ELSE 0
         END";
     }
